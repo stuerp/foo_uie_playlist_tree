@@ -16,7 +16,7 @@
 /// </summary>
 playlists_uielement_t::playlists_uielement_t()
 {
-    playlist_manager::get()->register_callback(this, (t_uint32) flag_all);
+    _PlaylistManager->register_callback(this, (t_uint32) flag_all);
 }
 
 /// <summary>
@@ -24,7 +24,9 @@ playlists_uielement_t::playlists_uielement_t()
 /// </summary>
 playlists_uielement_t::~playlists_uielement_t()
 {
-    playlist_manager::get()->unregister_callback(this);
+    _PlaylistManager->unregister_callback(this);
+
+    OnDestroy();
 }
 
 /// <summary>
@@ -42,7 +44,7 @@ _State.Reset(); // TODO: Remove me
     if (!_TreeView.Create(m_hWnd, IDC_TREEVIEW))
         return -1;
 
-    _DarkMode.AddCtrlAuto(_TreeView.GetHandle());
+    _DarkMode.AddCtrlAuto(_TreeView.Get());
 
     {
         const auto IconSize = (uint32_t) ::GetSystemMetrics(SM_CXSMICON);
@@ -57,16 +59,12 @@ _State.Reset(); // TODO: Remove me
 
     GetPlaylists();
 
+    // Select the active playlist.
     {
-        size_t Index = playlist_manager::get()->get_active_playlist();
+        size_t Index = _PlaylistManager->get_active_playlist();
 
-        if (Index != ~0u)
-        {
-            HTREEITEM hTreeItem = _Items[Index];
-
-            if (hTreeItem != NULL)
-                _TreeView.SelectItem(hTreeItem);
-        }
+        if (Index != ~0llu)
+            SelectPlaylist(Index);
     }
 
     return 0;
@@ -89,7 +87,7 @@ void playlists_uielement_t::OnSize(UINT type, CSize size) noexcept
 {
     uielement_t::OnSize(type, size);
 
-    ::MoveWindow(_TreeView.GetHandle(), 0, 0, size.cx, size.cy, TRUE);
+    ::MoveWindow(_TreeView.Get(), 0, 0, size.cx, size.cy, TRUE);
 }
 
 /// <summary>
@@ -99,21 +97,55 @@ void playlists_uielement_t::OnCommand(_In_ UINT notifyCode, _In_ int id, _In_ CW
 {
     switch (id)
     {
+        // Handles the "New Folder" command.
         case IDM_NEW_FOLDER:
         {
-            HTREEITEM hTreeItem = _TreeView.Additem(L"New Folder", 0, Icon::Folder);
+            HTREEITEM hTreeItem = (_hDropTarget != NULL) ? _hDropTarget : _TreeView.GetSelectedItem();
 
-            if (hTreeItem != NULL)
-                _Items.push_back(hTreeItem);
+            _hDropTarget = NULL;
+
+            GUID Id;
+
+            HRESULT hResult = ::CoCreateGuid(&Id);
+
+            if (!SUCCEEDED(hResult))
+                break;
+
+            pfc::string Name;
+
+            hResult = title_formatter_t::Evaluate(_State._NameFormat, Id, Name);
+
+            if (!SUCCEEDED(hResult))
+                return;
+
+            _TreeView.AddItem(hTreeItem, TVI_LAST, Icon::Folder, new node_t(Name.c_str(), Id, true));
             break;
         }
 
+        // Handles the "New Playlist" command.
         case IDM_NEW_PLAYLIST:
         {
-            HTREEITEM hTreeItem = _TreeView.Additem(L"New Playlist", 0, Icon::File);
+            HTREEITEM hTreeItem = (_hDropTarget != NULL) ? _hDropTarget : _TreeView.GetSelectedItem();
 
-            if (hTreeItem != NULL)
-                _Items.push_back(hTreeItem);
+            _hDropTarget = NULL;
+
+            const auto Node = (node_t *) _TreeView.GetData(hTreeItem);
+
+            if (Node == nullptr)
+                break;
+
+            std::string Name("New Playlist");
+
+            size_t Index = _PlaylistManager->find_playlist_by_guid(Node->Id);
+
+            if (Index == ~0llu)
+                break;
+
+            size_t NewIndex = _PlaylistManager->create_playlist(Name.c_str(), Name.size(), Index + 1);
+
+            if (NewIndex == ~0llu)
+                break;
+
             break;
         }
     }
@@ -129,6 +161,7 @@ LRESULT playlists_uielement_t::OnNotify(_In_ int id, _In_ NMHDR * nmhd) noexcept
 
     switch (nmhd->code)
     {
+        // Handles a right mouse button click within the control.
         case NM_RCLICK:
         {
             const DWORD Position = ::GetMessagePos();
@@ -136,12 +169,12 @@ LRESULT playlists_uielement_t::OnNotify(_In_ int id, _In_ NMHDR * nmhd) noexcept
             const POINT pt = { GET_X_LPARAM(Position), GET_Y_LPARAM(Position) };
 
             {
-                const TVHITTESTINFO ht = { .pt = pt };
+                _hDropTarget = _TreeView.GetItem(pt);
 
-                HTREEITEM hTreeItem = (HTREEITEM) ::SendMessageW(_TreeView.GetHandle(), TVM_HITTEST, 0, (LPARAM) &ht);
-
-                if (hTreeItem != NULL)
-                    ::SendMessageW(_TreeView.GetHandle(), TVM_SELECTITEM, TVGN_CARET, (LPARAM) hTreeItem);
+            /* Uncomment if the hit item should become the selected item
+                if (_hHitTreeItem != NULL)
+                    _TreeView.SelectItem(_hHitTreeItem);
+            */
             }
 
             {
@@ -164,13 +197,37 @@ LRESULT playlists_uielement_t::OnNotify(_In_ int id, _In_ NMHDR * nmhd) noexcept
             break;
         }
 
+        // Handles a change of the selected item.
         case TVN_SELCHANGED:
         {
             const auto nmtv = (NMTREEVIEWW *) nmhd;
 
-            const auto Index = (size_t) nmtv->itemNew.lParam;
+            const auto Node = (node_t *) nmtv->itemNew.lParam;
 
-            playlist_manager::get()->set_active_playlist(Index);
+            if (Node == nullptr)
+                break;
+
+            size_t Index = _PlaylistManager->find_playlist_by_guid(Node->Id);
+
+            if (Index == ~0llu)
+                break;
+
+            _PlaylistManager->set_active_playlist(Index);
+            break;
+        }
+
+        // Handles a deletion of an item.
+        case TVN_DELETEITEM:
+        {
+            break;
+        }
+
+        // Handles the initiation of a drag-and-drop operation involving the left mouse button.
+        case TVN_BEGINDRAG:
+        {
+            const auto nmtv = (NMTREEVIEWW *) nmhd;
+
+            _TreeView.BeginDrag(nmtv);
             break;
         }
     }
@@ -179,113 +236,153 @@ LRESULT playlists_uielement_t::OnNotify(_In_ int id, _In_ NMHDR * nmhd) noexcept
 }
 
 /// <summary>
+/// Handles the WM_MOUSEMOVE message.
+/// </summary>
+void playlists_uielement_t::OnMouseMove(_In_ UINT flags, _In_ CPoint point) noexcept
+{
+    _TreeView.DragMove(point);
+}
+
+/// <summary>
+/// Handles the WM_LBUTTONUP message.
+/// </summary>
+void playlists_uielement_t::OnLButtonUp(_In_ UINT flags, _In_ CPoint point) noexcept
+{
+    _TreeView.EndDrag();
+}
+
+/// <summary>
 /// 
 /// </summary>
-void playlists_uielement_t::on_items_added(t_size p_playlist,t_size p_start, const pfc::list_base_const_t<metadb_handle_ptr> & p_data,const bit_array & p_selection) noexcept
+void playlists_uielement_t::on_items_added(size_t playlistIndex, size_t start, const pfc::list_base_const_t<metadb_handle_ptr> & data, const bit_array & selection) noexcept
+{
+}
+
+/// <summary>
+/// 
+/// </summary>
+void playlists_uielement_t::on_items_reordered(size_t playlistIndex, const size_t * order, size_t count) noexcept
 {}
 
 /// <summary>
 /// 
 /// </summary>
-void playlists_uielement_t::on_items_reordered(t_size p_playlist,const t_size * p_order,t_size p_count) noexcept
+void playlists_uielement_t::on_items_removing(size_t playlistIndex, const bit_array & mask, size_t oldCount, size_t newCount) noexcept
 {}
 
 /// <summary>
 /// 
 /// </summary>
-void playlists_uielement_t::on_items_removing(t_size p_playlist,const bit_array & p_mask,t_size p_old_count,t_size p_new_count) noexcept
+void playlists_uielement_t::on_items_removed(size_t playlistIndex, const bit_array & mask, size_t oldCount, size_t newCount) noexcept
 {}
 
 /// <summary>
 /// 
 /// </summary>
-void playlists_uielement_t::on_items_removed(t_size p_playlist,const bit_array & p_mask,t_size p_old_count,t_size p_new_count) noexcept
+void playlists_uielement_t::on_items_selection_change(size_t playlistIndex, const bit_array & p_affected, const bit_array & p_state) noexcept
 {}
 
 /// <summary>
 /// 
 /// </summary>
-void playlists_uielement_t::on_items_selection_change(t_size p_playlist,const bit_array & p_affected,const bit_array & p_state) noexcept
-{}
-
-/// <summary>
-/// 
-/// </summary>
-void playlists_uielement_t::on_item_focus_change(t_size p_playlist,t_size p_from,t_size p_to) noexcept
+void playlists_uielement_t::on_item_focus_change(size_t playlistIndex, size_t p_from, size_t p_to) noexcept
 {}
 	
 /// <summary>
 /// 
 /// </summary>
-void playlists_uielement_t::on_items_modified(t_size p_playlist,const bit_array & p_mask) noexcept
+void playlists_uielement_t::on_items_modified(size_t playlistIndex, const bit_array & p_mask) noexcept
 {}
 
 /// <summary>
 /// 
 /// </summary>
-void playlists_uielement_t::on_items_modified_fromplayback(t_size p_playlist,const bit_array & p_mask,play_control::t_display_level p_level) noexcept
+void playlists_uielement_t::on_items_modified_fromplayback(size_t playlistIndex, const bit_array & p_mask,play_control::t_display_level p_level) noexcept
 {}
 
 /// <summary>
 /// 
 /// </summary>
-void playlists_uielement_t::on_items_replaced(t_size p_playlist,const bit_array & p_mask,const pfc::list_base_const_t<t_on_items_replaced_entry> & p_data) noexcept
+void playlists_uielement_t::on_items_replaced(size_t playlistIndex, const bit_array & p_mask, const pfc::list_base_const_t<t_on_items_replaced_entry> & p_data) noexcept
 {}
 
 /// <summary>
 /// 
 /// </summary>
-void playlists_uielement_t::on_item_ensure_visible(t_size p_playlist,t_size p_idx) noexcept
+void playlists_uielement_t::on_item_ensure_visible(size_t playlistIndex, size_t p_idx) noexcept
 {}
 
 /// <summary>
-/// 
+/// Handles the activation of a new playlist.
 /// </summary>
-void playlists_uielement_t::on_playlist_activate(t_size oldIndex, t_size newIndex) noexcept
+void playlists_uielement_t::on_playlist_activate(size_t oldIndex, size_t newIndex) noexcept
 {
-    _TreeView.SelectItem(_Items[newIndex]);
+    SelectPlaylist(newIndex);
 }
 
 /// <summary>
-/// 
+/// Handles the creation of a new playlist.
 /// </summary>
-void playlists_uielement_t::on_playlist_created(t_size index, const char * name, t_size size) noexcept
+void playlists_uielement_t::on_playlist_created(size_t index, const char * name, size_t size) noexcept
 {
-    if ((index == ~0u) || (name == nullptr) || (size == 0))
+    if ((index == ~0llu) || (name == nullptr) || (size == 0))
         return;
 
-    const size_t ItemCount = playlist_manager::get()->playlist_get_item_count(index);
+    const auto Id = _PlaylistManager->playlist_get_guid(index);
 
-    const std::wstring Text = msc::FormatText(L"%S (%d)", name, ItemCount);
+    pfc::string Name;
 
-    _TreeView.Additem(Text, index, Icon::File);
+    HRESULT hResult = title_formatter_t::Evaluate(_State._NameFormat, Id, Name);
+
+    if (!SUCCEEDED(hResult))
+        return;
+
+    _TreeView.AddItem(TVI_ROOT, TVI_LAST, Icon::File, new node_t(Name.c_str(), Id));
 }
 
 /// <summary>
 /// 
 /// </summary>
-void playlists_uielement_t::on_playlists_reorder(const t_size * p_order,t_size p_count) noexcept
+void playlists_uielement_t::on_playlists_reorder(const size_t * order, size_t count) noexcept
 {
 }
 
 /// <summary>
-/// 
+/// Handles playlists that are being removed.
 /// </summary>
-void playlists_uielement_t::on_playlists_removing(const bit_array & p_mask,t_size p_old_count,t_size p_new_count) noexcept
+void playlists_uielement_t::on_playlists_removing(const bit_array & mask, size_t oldCount, size_t newCount) noexcept
 {
+    for (size_t index = mask.find_first(true, 0, oldCount); index < oldCount; index = mask.find_next(true, index, oldCount))
+    {
+        const auto Id = _PlaylistManager->playlist_get_guid(index);
+
+        _TreeView.Walk([&](HTREEITEM hItem) -> bool
+        {
+            const auto Node = (node_t *) _TreeView.GetData(hItem);
+
+            if ((Node != nullptr) && (Node->Id == Id))
+            {
+                _TreeView.RemoveItem(hItem);
+
+                return false;
+            }
+
+            return true; // Continue enumerating
+        });
+    }
 }
 
 /// <summary>
 /// 
 /// </summary>
-void playlists_uielement_t::on_playlists_removed(const bit_array & p_mask,t_size p_old_count,t_size p_new_count) noexcept
+void playlists_uielement_t::on_playlists_removed(const bit_array & mask, size_t oldCount, size_t newCount) noexcept
 {
 }
 
 /// <summary>
-/// 
+/// Handles the renaming of a playlist.
 /// </summary>
-void playlists_uielement_t::on_playlist_renamed(t_size p_index,const char * p_new_name,t_size p_new_name_len) noexcept
+void playlists_uielement_t::on_playlist_renamed(size_t index, const char * newName, size_t newSize) noexcept
 {
 }
 
@@ -299,14 +396,14 @@ void playlists_uielement_t::on_default_format_changed() noexcept
 /// <summary>
 /// 
 /// </summary>
-void playlists_uielement_t::on_playback_order_changed(t_size p_new_index) noexcept
+void playlists_uielement_t::on_playback_order_changed(size_t p_new_index) noexcept
 {
 }
 
 /// <summary>
 /// 
 /// </summary>
-void playlists_uielement_t::on_playlist_locked(t_size p_playlist,bool p_locked) noexcept
+void playlists_uielement_t::on_playlist_locked(size_t index, bool isLocked) noexcept
 {
 }
 
@@ -315,24 +412,43 @@ void playlists_uielement_t::on_playlist_locked(t_size p_playlist,bool p_locked) 
 /// </summary>
 void playlists_uielement_t::GetPlaylists() noexcept
 {
-    static_api_ptr_t<playlist_manager> pm;
-
-    const size_t PlaylistCount = pm->get_playlist_count();
+    const size_t PlaylistCount = _PlaylistManager->get_playlist_count();
 
     for (size_t PlaylistIndex = 0; PlaylistIndex < PlaylistCount; ++PlaylistIndex)
     {
-        pfc::string Result;
+        const auto Id = _PlaylistManager->playlist_get_guid(PlaylistIndex);
 
-        HRESULT hResult = title_formatter_t::Evaluate(_State._NameFormat, PlaylistIndex, Result);
+        pfc::string Name;
+
+        HRESULT hResult = title_formatter_t::Evaluate(_State._NameFormat, Id, Name);
 
         if (!SUCCEEDED(hResult))
             return;
 
-        {
-            auto hTreeItem = _TreeView.Additem(msc::UTF8ToWide(Result.c_str()), PlaylistIndex, Icon::File);
+        auto Node = new node_t(Name.c_str(), Id);
 
-            if (hTreeItem != NULL)
-                _Items.push_back(hTreeItem);
-        }
+        _TreeView.AddItem(TVI_ROOT, TVI_LAST, Icon::File, Node);
     }
+}
+
+/// <summary>
+/// Selects the specified playlist in the tree view.
+/// </summary>
+void playlists_uielement_t::SelectPlaylist(size_t index) const noexcept
+{
+    const auto Id = _PlaylistManager->playlist_get_guid(index);
+
+    _TreeView.Walk([&](HTREEITEM hItem) -> bool
+    {
+        auto Node = (node_t *) _TreeView.GetData(hItem);
+
+        if ((Node != nullptr) && (Node->Id == Id))
+        {
+            _TreeView.SelectItem(hItem);
+
+            return false;
+        }
+
+        return true; // Continue enumerating
+    });
 }

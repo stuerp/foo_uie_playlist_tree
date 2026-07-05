@@ -37,55 +37,62 @@ private:
 
     void OnCommand(_In_ UINT notifyCode, _In_ int id, _In_ CWindow wnd) noexcept;
     LRESULT OnNotify(_In_ int id, _In_ NMHDR * nmhd) noexcept;
+    void OnMouseMove(_In_ UINT flags, _In_ CPoint point) noexcept;
+    void OnLButtonUp(_In_ UINT flags, _In_ CPoint point) noexcept;
 
     BEGIN_MSG_MAP(playlists_uielement_t)
         CHAIN_MSG_MAP(uielement_t)
 
         MSG_WM_COMMAND(OnCommand);
         MSG_WM_NOTIFY(OnNotify);
+        MSG_WM_MOUSEMOVE(OnMouseMove);
+        MSG_WM_LBUTTONUP(OnLButtonUp);
     END_MSG_MAP()
 
     #pragma region playlist_callback
 
-    void on_items_added(t_size p_playlist, t_size p_start, const pfc::list_base_const_t<metadb_handle_ptr> & p_data,const bit_array & p_selection) noexcept override;
-    void on_items_reordered(t_size playlistIndex, const t_size * order, t_size count) noexcept override;
-    void on_items_removing(t_size playlistIndex, const bit_array & mask, t_size oldCount, t_size newCount) noexcept override;
-    void on_items_removed(t_size playlistIndex, const bit_array & mask, t_size oldCount, t_size newCount) noexcept override;
+    void on_items_added(size_t p_playlist, size_t p_start, const pfc::list_base_const_t<metadb_handle_ptr> & p_data,const bit_array & p_selection) noexcept override;
+    void on_items_reordered(size_t playlistIndex, const size_t * order, size_t count) noexcept override;
+    void on_items_removing(size_t playlistIndex, const bit_array & mask, size_t oldCount, size_t newCount) noexcept override;
+    void on_items_removed(size_t playlistIndex, const bit_array & mask, size_t oldCount, size_t newCount) noexcept override;
 
-    void on_items_selection_change(t_size playlistIndex, const bit_array & affectedItems, const bit_array & state) noexcept override;
+    void on_items_selection_change(size_t playlistIndex, const bit_array & affectedItems, const bit_array & state) noexcept override;
 
-    void on_items_modified(t_size playlistIndex, const bit_array & mask) noexcept override;
-    void on_items_modified_fromplayback(t_size playlistIndex, const bit_array & mask, play_control::t_display_level displayLevel) noexcept override;
-    void on_items_replaced(t_size playlistIndex, const bit_array & mask, const pfc::list_base_const_t<playlist_callback::t_on_items_replaced_entry> & data) noexcept override;
+    void on_items_modified(size_t playlistIndex, const bit_array & mask) noexcept override;
+    void on_items_modified_fromplayback(size_t playlistIndex, const bit_array & mask, play_control::t_display_level displayLevel) noexcept override;
+    void on_items_replaced(size_t playlistIndex, const bit_array & mask, const pfc::list_base_const_t<playlist_callback::t_on_items_replaced_entry> & data) noexcept override;
 
-    void on_item_focus_change(t_size playlistIndex, t_size oldItemIndex, t_size newItemIndex) noexcept override;
-    void on_item_ensure_visible(t_size playlistIndex, t_size itemIndex) noexcept override;
+    void on_item_focus_change(size_t playlistIndex, size_t oldItemIndex, size_t newItemIndex) noexcept override;
+    void on_item_ensure_visible(size_t playlistIndex, size_t itemIndex) noexcept override;
 
-    void on_playlist_activate(t_size oldIndex, t_size newIndex) noexcept override;
-    void on_playlist_created(t_size index, const char * name, t_size size) noexcept override;
-    void on_playlists_reorder(const t_size * order, t_size count) noexcept override;
-    void on_playlists_removing(const bit_array & mask, t_size oldCount, t_size newCount) noexcept override;
-    void on_playlists_removed(const bit_array & mask, t_size oldCount, t_size newCount) noexcept override;
-    void on_playlist_renamed(t_size index, const char * name, t_size size) noexcept override;
+    void on_playlist_activate(size_t oldIndex, size_t newIndex) noexcept override;
+    void on_playlist_created(size_t index, const char * name, size_t size) noexcept override;
+    void on_playlists_reorder(const size_t * order, size_t count) noexcept override;
+    void on_playlists_removing(const bit_array & mask, size_t oldCount, size_t newCount) noexcept override;
+    void on_playlists_removed(const bit_array & mask, size_t oldCount, size_t newCount) noexcept override;
+    void on_playlist_renamed(size_t index, const char * name, size_t size) noexcept override;
 
-    void on_playlist_locked(t_size index, bool isLocked) noexcept override;
+    void on_playlist_locked(size_t index, bool isLocked) noexcept override;
 
     void on_default_format_changed() noexcept override;
 
-    void on_playback_order_changed(t_size index) noexcept override;
+    void on_playback_order_changed(size_t index) noexcept override;
 
     #pragma endregion
 
 private:
     void GetPlaylists() noexcept;
+    void SelectPlaylist(size_t playlistIndex) const noexcept;
 
 protected:
     state_t _State;
 
 private:
-    tree_view_t _TreeView;
+    static_api_ptr_t<playlist_manager_v5> _PlaylistManager;
 
-    std::vector<HTREEITEM> _Items;
+    tree_view_t _TreeView;
+    HTREEITEM _hDropTarget = NULL;
+
 /*
     // shell32.dll icons
     enum Icon : int

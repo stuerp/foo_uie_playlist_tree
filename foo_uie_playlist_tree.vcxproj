@@ -230,6 +230,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ImageList.h" />
+    <ClInclude Include="Node.h" />
+    <ClInclude Include="RAII.h" />
     <ClInclude Include="TitleFormat.h" />
     <ClInclude Include="DUIElement.h" />
     <ClInclude Include="pch.h" />

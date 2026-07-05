@@ -16,19 +16,25 @@
 #include <SDK\foobar2000-lite.h>
 #include <SDK\titleformat.h>
 
+/// <summary>
+/// Implements a title formatter.
+/// </summary>
 class title_formatter_t
 {
 private:
     title_formatter_t();
 
 public:
-    static HRESULT Evaluate(_In_ const std::string & script, _In_ size_t playlistIndex, _Out_ pfc::string & result) noexcept;
+    static HRESULT Evaluate(_In_ const std::string & script, _In_ GUID id, _Out_ pfc::string & result) noexcept;
 };
 
+/// <summary>
+/// Implements a title format hook.
+/// </summary>
 class custom_titleformat_hook_t : public titleformat_hook
 {
 public:
-    custom_titleformat_hook_t(size_t playlistIndex) : _PlaylistIndex(playlistIndex) { }
+    custom_titleformat_hook_t(GUID id) : _Id(id) { }
 
     virtual ~custom_titleformat_hook_t() noexcept { }
 
@@ -43,7 +49,7 @@ private:
     static const std::string ExpandEnvironmentStrings(_In_ const std::string & src) noexcept;
 
 private:
-    static_api_ptr_t<playlist_manager> _PlaylistManager;
+    static_api_ptr_t<playlist_manager_v5> _PlaylistManager;
 
-    size_t _PlaylistIndex;
+    GUID _Id;
 };

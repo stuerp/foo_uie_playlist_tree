@@ -20,7 +20,8 @@ state_t::state_t() noexcept
 /// </summary>
 void state_t::Reset() noexcept
 {
-    _NameFormat = "%node_name%$if(%is_folder%,'',' ('%count%') '%playlist_duration% %playlist_size%)";
+    _NameFormat = "%node_name%$if(%is_folder%,,' ('%count%')')";
+//  _NameFormat = "%node_name%$if(%is_folder%,,' ('%count%') '%playlist_duration% %playlist_size%)";
 }
 
 /// <summary>

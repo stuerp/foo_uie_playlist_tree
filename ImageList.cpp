@@ -4,6 +4,7 @@
 #include "pch.h"
 
 #include "ImageList.h"
+#include "RAII.h"
 
 #pragma hdrstop
 
@@ -14,38 +15,35 @@ HIMAGELIST image_list_factory_t::Create(_In_ const std::wstring & fileName, _In_
 {
     #pragma warning(disable: 6388) // 'THIS_HINSTANCE' might not be '0': this does not adhere to the specification for the function 'ExtractIconW'.
 
-    HIMAGELIST hImageList = NULL;
+    module_handle_t hModule(fileName);
 
-    const auto hModule = ::LoadLibraryExW(fileName.c_str(), NULL, LOAD_LIBRARY_AS_DATAFILE);
+    if (!hModule)
+        return NULL;
 
-    if (hModule != NULL)
+    if (maxIcons == ~0)
+        maxIcons = GetIconCount(hModule.Get());
+
+    HIMAGELIST hImageList = ::ImageList_Create((int) iconSize, (int) iconSize, ILC_COLOR32 | ILC_MASK, (int) maxIcons, 0);
+
+    if (hImageList != NULL)
     {
-        if (maxIcons == ~0)
-            maxIcons = GetIconCount(hModule);
-
-        hImageList = ::ImageList_Create((int) iconSize, (int) iconSize, ILC_COLOR32 | ILC_MASK, (int) maxIcons, 0);
-
-        if (hImageList != NULL)
+        for (uint32_t i = 0; i < maxIcons; ++i)
         {
-            for (uint32_t i = 0; i < maxIcons; ++i)
+            HICON hIcon = ::ExtractIconW(THIS_HINSTANCE, fileName.c_str(), (UINT) i);
+
+            if (hIcon != NULL)
             {
-                HICON hIcon = ::ExtractIconW(THIS_HINSTANCE, fileName.c_str(), (UINT) i);
 
-                if (hIcon != NULL)
-                {
-                    const int Index = ImageList_AddIcon(hImageList, hIcon);
+                const int Index = ::ImageList_ReplaceIcon(hImageList, -1, hIcon);
 
-                    if (Index == -1)
-                        break;
+                if (Index == -1)
+                    break;
 
-                    ::DestroyIcon(hIcon);
-                }
-                else
-                    break; // No more icons available
+                ::DestroyIcon(hIcon);
             }
+            else
+                break; // No more icons available
         }
-
-        ::FreeLibrary(hModule);
     }
 
     return hImageList;

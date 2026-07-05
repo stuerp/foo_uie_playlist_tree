@@ -10,13 +10,13 @@
 /// <summary>
 /// Evaluates a foobar2000 Title Format script.
 /// </summary>
-HRESULT title_formatter_t::Evaluate(_In_ const std::string & script, _In_ size_t playlistIndex, _Out_ pfc::string & result) noexcept
+HRESULT title_formatter_t::Evaluate(_In_ const std::string & script, _In_ GUID id, _Out_ pfc::string & result) noexcept
 {
     service_ptr_t<titleformat_object> tfo;
 
     static_api_ptr_t<titleformat_compiler>()->compile_safe_ex(tfo, script.c_str());
 
-    custom_titleformat_hook_t Hook(playlistIndex);
+    custom_titleformat_hook_t Hook(id);
 
     tfo->run(&Hook, result, nullptr);
 
@@ -28,13 +28,15 @@ HRESULT title_formatter_t::Evaluate(_In_ const std::string & script, _In_ size_t
 /// </summary>
 bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const char * name, t_size size, bool & isFound)
 {
+    const size_t Index = playlist_manager_v5::get()->find_playlist_by_guid(_Id);
+
     /** Component specific variables **/
 
     if (::_stricmp(name, "node_name") == 0)
     {
         pfc::string Text;
 
-        _PlaylistManager->playlist_get_name(_PlaylistIndex, Text);
+        _PlaylistManager->playlist_get_name(Index, Text);
 
         out->write(titleformat_inputtypes::unknown, Text);
 
@@ -45,7 +47,7 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
 
     if (::_stricmp(name, "count") == 0)
     {
-        const size_t ItemCount = _PlaylistManager->playlist_get_item_count(_PlaylistIndex);
+        const size_t ItemCount = _PlaylistManager->playlist_get_item_count(Index);
 
         pfc::string Text = pfc::format_uint((t_uint64) ItemCount).c_str();
 
@@ -54,23 +56,20 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
         isFound = true;
 
         return true;
-
     }
 
     if (::_stricmp(name, "is_folder") == 0)
     {
-        bool IsFolder = false;
+        const bool IsFolder = (Index == ~0llu);
 
-        if (IsFolder)
-        {
-            out->write_int(titleformat_inputtypes::unknown, 1);
+        if (!IsFolder)
+            return false;
 
-            isFound = true;
+        out->write_int(titleformat_inputtypes::unknown, 1);
 
-            return true;
-        }
+        isFound = true;
 
-        return false;
+        return true;
     }
 
     if (::_stricmp(name, "playlist_duration") == 0)
@@ -102,7 +101,7 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
 
         callback_t Callback;
 
-        pm->playlist_enum_items(_PlaylistIndex, Callback, bit_array_true());
+        pm->playlist_enum_items(Index, Callback, bit_array_true());
 
         out->write(titleformat_inputtypes::unknown, pfc::format_float(Callback.Duration));
 
@@ -136,7 +135,7 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
 
         callback_t Callback;
 
-        pm->playlist_enum_items(_PlaylistIndex, Callback, bit_array_true());
+        pm->playlist_enum_items(Index, Callback, bit_array_true());
 
         out->write(titleformat_inputtypes::unknown, pfc::format_uint((t_uint64) Callback.Size));
 
