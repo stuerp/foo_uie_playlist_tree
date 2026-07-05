@@ -47,7 +47,7 @@ _State.Reset(); // TODO: Remove me
     {
         const auto IconSize = (uint32_t) ::GetSystemMetrics(SM_CXSMICON);
 
-        HIMAGELIST hImageList = image_list_factory_t::Create(L"shell32.dll", IconSize);
+        HIMAGELIST hImageList = image_list_factory_t::Create(L"imageres.dll", IconSize);
 
         if (hImageList == NULL)
             return false;
@@ -60,10 +60,13 @@ _State.Reset(); // TODO: Remove me
     {
         size_t Index = playlist_manager::get()->get_active_playlist();
 
-        HTREEITEM hTreeItem = _Items[Index];
+        if (Index != ~0u)
+        {
+            HTREEITEM hTreeItem = _Items[Index];
 
-        if (hTreeItem != NULL)
-            _TreeView.SelectItem(hTreeItem);
+            if (hTreeItem != NULL)
+                _TreeView.SelectItem(hTreeItem);
+        }
     }
 
     return 0;
@@ -98,7 +101,7 @@ void playlists_uielement_t::OnCommand(_In_ UINT notifyCode, _In_ int id, _In_ CW
     {
         case IDM_NEW_FOLDER:
         {
-            HTREEITEM hTreeItem = _TreeView.Additem(L"New Folder", 0, shell32::Folder);
+            HTREEITEM hTreeItem = _TreeView.Additem(L"New Folder", 0, Icon::Folder);
 
             if (hTreeItem != NULL)
                 _Items.push_back(hTreeItem);
@@ -107,7 +110,7 @@ void playlists_uielement_t::OnCommand(_In_ UINT notifyCode, _In_ int id, _In_ CW
 
         case IDM_NEW_PLAYLIST:
         {
-            HTREEITEM hTreeItem = _TreeView.Additem(L"New Playlist", 0, shell32::File);
+            HTREEITEM hTreeItem = _TreeView.Additem(L"New Playlist", 0, Icon::File);
 
             if (hTreeItem != NULL)
                 _Items.push_back(hTreeItem);
@@ -248,11 +251,14 @@ void playlists_uielement_t::on_playlist_activate(t_size oldIndex, t_size newInde
 /// </summary>
 void playlists_uielement_t::on_playlist_created(t_size index, const char * name, t_size size) noexcept
 {
+    if ((index == ~0u) || (name == nullptr) || (size == 0))
+        return;
+
     const size_t ItemCount = playlist_manager::get()->playlist_get_item_count(index);
 
     const std::wstring Text = msc::FormatText(L"%S (%d)", name, ItemCount);
 
-    _TreeView.Additem(Text, index, shell32::File);
+    _TreeView.Additem(Text, index, Icon::File);
 }
 
 /// <summary>
@@ -323,7 +329,7 @@ void playlists_uielement_t::GetPlaylists() noexcept
             return;
 
         {
-            auto hTreeItem = _TreeView.Additem(msc::UTF8ToWide(Result.c_str()), PlaylistIndex, shell32::File);
+            auto hTreeItem = _TreeView.Additem(msc::UTF8ToWide(Result.c_str()), PlaylistIndex, Icon::File);
 
             if (hTreeItem != NULL)
                 _Items.push_back(hTreeItem);

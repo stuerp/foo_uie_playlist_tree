@@ -45,7 +45,6 @@ private:
         MSG_WM_NOTIFY(OnNotify);
     END_MSG_MAP()
 
-
     #pragma region playlist_callback
 
     void on_items_added(t_size p_playlist, t_size p_start, const pfc::list_base_const_t<metadb_handle_ptr> & p_data,const bit_array & p_selection) noexcept override;
@@ -87,11 +86,18 @@ private:
     tree_view_t _TreeView;
 
     std::vector<HTREEITEM> _Items;
-
-    // shell32.dll icons indices
-    enum shell32 : int
+/*
+    // shell32.dll icons
+    enum Icon : int
     {
         File    = 0,
         Folder  = 3
+    };
+*/
+    // imageres.dll icons
+    enum Icon : int
+    {
+        File    = 126,
+        Folder  = 4
     };
 };

@@ -47,7 +47,7 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
     {
         const size_t ItemCount = _PlaylistManager->playlist_get_item_count(_PlaylistIndex);
 
-        pfc::string Text = pfc::format_int((int64_t) ItemCount).c_str();
+        pfc::string Text = pfc::format_uint((t_uint64) ItemCount).c_str();
 
         out->write(titleformat_inputtypes::unknown, Text);
 
@@ -71,6 +71,80 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
         }
 
         return false;
+    }
+
+    if (::_stricmp(name, "playlist_duration") == 0)
+    {
+        class callback_t : public playlist_manager::enum_items_callback
+        {
+        public:
+            virtual ~callback_t() { }
+
+            bool on_item(t_size itemIndex, const metadb_handle_ptr & item, bool isSelected) override
+            {
+                if (item.is_valid())
+                {
+                    const double Length = item->get_length(); // in seconds
+
+                    // Ignore unknown lengths (-1.0 or similar)
+                    if (Length > 0.)
+                        Duration += Length;
+                }
+
+                return true; // continue enumerating
+            }
+
+        public:
+            double Duration = 0.; // in seconds
+        };
+
+        static_api_ptr_t<playlist_manager> pm;
+
+        callback_t Callback;
+
+        pm->playlist_enum_items(_PlaylistIndex, Callback, bit_array_true());
+
+        out->write(titleformat_inputtypes::unknown, pfc::format_float(Callback.Duration));
+
+//      auto NaturalDuration = pfc::format_time(Callback.Duration);
+
+        isFound = true;
+
+        return true;
+    }
+
+    if (::_stricmp(name, "playlist_size") == 0)
+    {
+        class callback_t : public playlist_manager::enum_items_callback
+        {
+        public:
+            virtual ~callback_t() { }
+
+            bool on_item(t_size itemIndex, const metadb_handle_ptr & item, bool isSelected) override
+            {
+                if (item.is_valid())
+                    Size += item->get_filesize();
+
+                return true; // continue enumerating
+            }
+
+        public:
+            t_filesize Size = 0; // in bytes
+        };
+
+        static_api_ptr_t<playlist_manager> pm;
+
+        callback_t Callback;
+
+        pm->playlist_enum_items(_PlaylistIndex, Callback, bit_array_true());
+
+        out->write(titleformat_inputtypes::unknown, pfc::format_uint((t_uint64) Callback.Size));
+
+//      auto NaturalSize = pfc::format_file_size_short(Callback.Size);
+
+        isFound = true;
+
+        return true;
     }
 
     /** Common foobar2000 variables **/

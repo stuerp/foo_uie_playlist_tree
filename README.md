@@ -1,9 +1,9 @@
 
 # foo_uie_playlist_tree
 
-[foo_uie_playlist_tree](https://github.com/stuerp/foo_uie_playlist_tree/releases) is a [foobar2000](https://www.foobar2000.org/) component that allows you to organize playlists in a treeview.
+[foo_uie_playlist_tree](https://github.com/stuerp/foo_uie_playlist_tree/releases) is a [foobar2000](https://www.foobar2000.org/) component to organize playlists in a tree view.
 
-It attemps to recreate the functionality of [foo_plorg](https://wiki.hydrogenaudio.org/index.php?title=Foobar2000:Components/Playlist_Organizer_%28foo_plorg%29).
+It attempts to recreate the functionality of [foo_plorg](https://wiki.hydrogenaudio.org/index.php?title=Foobar2000:Components/Playlist_Organizer_%28foo_plorg%29).
 
 ## Features
 
@@ -13,9 +13,9 @@ It attemps to recreate the functionality of [foo_plorg](https://wiki.hydrogenaud
 * Title formatting variables
   * %node_name%: the name of the node, either a playlist or a folder.
   * %is_folder%: boolean value for use in $if( ...) expressions and is true when the node is a folder.
-  * %count%: number of playlists in a folder or number of items in a playlist.
-  * %playlist_duration%: duration of the playlist (in seconds).
-  * %playlist_size%: size of the playlist (in bytes).
+  * %count%: the number of playlists in a folder or number of items in a playlist.
+  * %playlist_duration%: the duration of the playlist (in seconds).
+  * %playlist_size%: the size of the playlist (in bytes).
 
 ## Requirements
 
@@ -89,12 +89,14 @@ v0.1.0.0-alpha1, 2026-xx-xx, *"Scratchin' the itch"*
 
 ## Reference Material
 
+* [Windows Icons](https://diymediahome.org/windows-icons-reference-list-with-details-locations-images/)
+
 ## Links
 
 * Home page: [https://github.com/stuerp/foo_uie_playlist_tree](https://github.com/stuerp/foo_uie_playlist_tree)
 * Repository: [https://github.com/stuerp/foo_uie_playlist_tree.git](https://github.com/stuerp/foo_uie_playlist_tree.git)
 * Issue tracker: [https://github.com/stuerp/foo_uie_playlist_tree/issues](https://github.com/stuerp/foo_uie_playlist_tree/issues)
-* Wiki: [https://wiki.hydrogenaud.io/index.php?title=Foobar2000:Components/WebView_(foo_uie_playlist_tree)](https://wiki.hydrogenaud.io/index.php?title=Foobar2000:Components/WebView_(foo_uie_playlist_tree)).
+* Support: []()
 
 ## License
 
