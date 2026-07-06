@@ -12,6 +12,7 @@
     <ClCompile Include="TreeView.cpp" />
     <ClCompile Include="UIElement.cpp" />
     <ClCompile Include="UIElementTracker.cpp" />
+    <ClCompile Include="Log.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DUIElement.h" />
@@ -27,6 +28,7 @@
     <ClInclude Include="TreeView.h" />
     <ClInclude Include="UIElement.h" />
     <ClInclude Include="UIElementTracker.h" />
+    <ClInclude Include="Log.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />
@@ -36,6 +38,8 @@
     <None Include=".gitattributes" />
     <None Include=".editorconfig" />
     <None Include="LICENSE" />
+    <None Include="docs\History.md" />
+    <None Include="docs\README.md" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resources.rc" />

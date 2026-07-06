@@ -215,6 +215,7 @@
     <ClCompile Include="ImageList.cpp" />
     <ClCompile Include="Component.cpp" />
     <ClCompile Include="DUIElement.cpp" />
+    <ClCompile Include="Log.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -231,6 +232,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ImageList.h" />
+    <ClInclude Include="Log.h" />
     <ClInclude Include="Node.h" />
     <ClInclude Include="PlaylistsTreeView.h" />
     <ClInclude Include="RAII.h" />
@@ -253,6 +255,8 @@
     <None Include=".gitignore" />
     <None Include="Build-FB2KComponent.ps1" />
     <None Include="cpp.hint" />
+    <None Include="docs\History.md" />
+    <None Include="docs\README.md" />
     <None Include="LICENSE" />
     <None Include="README.md" />
   </ItemGroup>

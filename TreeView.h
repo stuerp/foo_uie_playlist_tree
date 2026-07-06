@@ -9,8 +9,6 @@
 
 #include <Windows.h>
 
-#include "Node.h"
-
 class tree_view_t
 {
 public:
@@ -81,24 +79,9 @@ public:
         return hDropTarget;
     }
 
-    /// <summary>
-    /// Gets the data associated with the item.
-    /// </summary>
-    void * GetData(_In_ HTREEITEM hItem) const noexcept
-    {
-        TVITEMW tvi
-        {
-            .mask = TVIF_PARAM,
-            .hItem = hItem,
-        };
+    void * GetData(_In_ HTREEITEM hItem) const noexcept;
 
-        if (!TreeView_GetItem(_hTreeView, &tvi))
-            return nullptr;
-
-        return (node_t *) tvi.lParam;
-    }
-
-    HTREEITEM AddItem(_In_ HTREEITEM hParent, _In_ HTREEITEM hInsertAfter, _In_ int iconIndex, _In_ const node_t * node) const noexcept;
+    HTREEITEM AddItem(_In_ HTREEITEM hParent, _In_ HTREEITEM hInsertAfter, _In_ const wchar_t* text, _In_ int iconIndex, _In_ const void* data) const noexcept;
     bool RemoveItem(_In_ HTREEITEM hItem) const noexcept;
 
     void MoveItem(_In_ HTREEITEM hTreeItem, _In_ HTREEITEM hDropTarget) const noexcept;

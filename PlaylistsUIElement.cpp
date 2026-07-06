@@ -1,11 +1,12 @@
 
-/** $VER: PlaylistsUIElement.cpp (2026.07.05) P. Stuer **/
+/** $VER: PlaylistsUIElement.cpp (2026.07.06) P. Stuer **/
 
 #include "pch.h"
 
 #include "PlaylistsUIElement.h"
 #include "ImageList.h"
 #include "TitleFormat.h"
+#include "Node.h"
 
 #include <SDK\playlist.h>
 
@@ -118,7 +119,10 @@ void playlists_uielement_t::OnCommand(_In_ UINT notifyCode, _In_ int id, _In_ CW
             if (!SUCCEEDED(hResult))
                 return;
 
-            _TreeView.AddItem(hTreeItem, TVI_LAST, Icon::Folder, new node_t(Name.c_str(), Id, true));
+            std::wstring Text = msc::UTF8ToWide(Name.c_str());
+            auto Node = new node_t(Name.c_str(), Id, true);
+
+            _TreeView.AddItem(hTreeItem, TVI_LAST, Text.c_str(), Icon::Folder, Node);
             break;
         }
 
@@ -337,7 +341,10 @@ void playlists_uielement_t::on_playlist_created(size_t index, const char * name,
     if (!SUCCEEDED(hResult))
         return;
 
-    _TreeView.AddItem(TVI_ROOT, TVI_LAST, Icon::File, new node_t(Name.c_str(), Id));
+    std::wstring Text = msc::UTF8ToWide(Name.c_str());
+    auto Node = new node_t(Name.c_str(), Id, false);
+
+    _TreeView.AddItem(TVI_ROOT, TVI_LAST, Text.c_str(), Icon::File, Node);
 }
 
 /// <summary>
@@ -425,9 +432,10 @@ void playlists_uielement_t::GetPlaylists() noexcept
         if (!SUCCEEDED(hResult))
             return;
 
-        auto Node = new node_t(Name.c_str(), Id);
+        std::wstring Text = msc::UTF8ToWide(Name.c_str());
+        auto Node = new node_t(Name.c_str(), Id, false);
 
-        _TreeView.AddItem(TVI_ROOT, TVI_LAST, Icon::File, Node);
+        _TreeView.AddItem(TVI_ROOT, TVI_LAST, Text.c_str(), Icon::File, Node);
     }
 }
 

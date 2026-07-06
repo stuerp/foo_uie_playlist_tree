@@ -34,10 +34,8 @@ void tree_view_t::Destroy() noexcept
 /// <summary>
 /// Adds the specified item to the treeview.
 /// </summary>
-HTREEITEM tree_view_t::AddItem(_In_ HTREEITEM hParent, _In_ HTREEITEM hInsertAfter, _In_ int iconIndex, _In_ const node_t * node) const noexcept
+HTREEITEM tree_view_t::AddItem(_In_ HTREEITEM hParent, _In_ HTREEITEM hInsertAfter, _In_ const wchar_t * text, _In_ int iconIndex, _In_ const void * data) const noexcept
 {
-    std::wstring Text = msc::UTF8ToWide(node->Name);
-
     const TVINSERTSTRUCTW tvis
     {
         .hParent      = hParent,
@@ -45,10 +43,10 @@ HTREEITEM tree_view_t::AddItem(_In_ HTREEITEM hParent, _In_ HTREEITEM hInsertAft
         .item         =
         {
             .mask           = Mask,
-            .pszText        = (LPWSTR) Text.c_str(),
+            .pszText        = (LPWSTR) text,
             .iImage         = iconIndex,
             .iSelectedImage = iconIndex,
-            .lParam         = (LPARAM) node,
+            .lParam         = (LPARAM) data,
         },
     };
 
@@ -107,6 +105,23 @@ void tree_view_t::MoveItem(_In_ HTREEITEM hTreeItem, _In_ HTREEITEM hDropTarget)
 
     // Delete the original item.
     TreeView_DeleteItem(_hTreeView, hTreeItem);
+}
+
+/// <summary>
+/// Gets the data associated with the item.
+/// </summary>
+void * tree_view_t::GetData(_In_ HTREEITEM hItem) const noexcept
+{
+    TVITEMEXW tvi
+    {
+        .mask = TVIF_PARAM,
+        .hItem = hItem,
+    };
+
+    if (!TreeView_GetItem(_hTreeView, &tvi))
+        return nullptr;
+
+    return (void *) tvi.lParam;
 }
 
 /// <summary>

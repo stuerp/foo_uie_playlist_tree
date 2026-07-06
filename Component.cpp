@@ -1,11 +1,12 @@
 
-/** $VER: Component.cpp (2026.04.07) P. Stuer **/
+/** $VER: Component.cpp (2026.07.06) P. Stuer **/
 
 #include "pch.h"
 
-#include <sdk/componentversion.h>
+#include <SDK\componentversion.h>
 
 #include "Resources.h"
+#include "Log.h"
 
 #pragma hdrstop
 
@@ -27,3 +28,17 @@ namespace
     )
     VALIDATE_COMPONENT_FILENAME(STR_COMPONENT_FILENAME)
 }
+
+class Component : public init_stage_callback
+{
+public:
+    void on_init_stage(t_uint32 stage) noexcept override
+    {
+        if (stage == init_stages::after_config_read)
+        {
+            Log.SetLevel((LogLevel) CfgLogLevel.get());
+        }
+    }
+};
+
+static initquit_factory_t<Component> _Component;
