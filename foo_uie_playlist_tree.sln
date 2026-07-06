@@ -21,6 +21,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pfc", "..\sdk\pfc\pfc.vcxpr
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libmsc", "3rdParty\libmsc\libmsc.vcxproj", "{30271063-52C9-4151-B200-444990DA01E0}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "columns_ui_sdk", "..\3rdParty\columns_ui_sdk\columns_ui-sdk-public.vcxproj", "{93EC0EDE-01CD-4FB0-B8E8-4F2A027E026E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -85,6 +87,14 @@ Global
 		{30271063-52C9-4151-B200-444990DA01E0}.Release|x64.Build.0 = Release|x64
 		{30271063-52C9-4151-B200-444990DA01E0}.Release|x86.ActiveCfg = Release|Win32
 		{30271063-52C9-4151-B200-444990DA01E0}.Release|x86.Build.0 = Release|Win32
+		{93EC0EDE-01CD-4FB0-B8E8-4F2A027E026E}.Debug|x64.ActiveCfg = Debug|x64
+		{93EC0EDE-01CD-4FB0-B8E8-4F2A027E026E}.Debug|x64.Build.0 = Debug|x64
+		{93EC0EDE-01CD-4FB0-B8E8-4F2A027E026E}.Debug|x86.ActiveCfg = Debug|Win32
+		{93EC0EDE-01CD-4FB0-B8E8-4F2A027E026E}.Debug|x86.Build.0 = Debug|Win32
+		{93EC0EDE-01CD-4FB0-B8E8-4F2A027E026E}.Release|x64.ActiveCfg = Release|x64
+		{93EC0EDE-01CD-4FB0-B8E8-4F2A027E026E}.Release|x64.Build.0 = Release|x64
+		{93EC0EDE-01CD-4FB0-B8E8-4F2A027E026E}.Release|x86.ActiveCfg = Release|Win32
+		{93EC0EDE-01CD-4FB0-B8E8-4F2A027E026E}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -97,6 +107,7 @@ Global
 		{7729EB82-4069-4414-964B-AD399091A03F} = {61F29BCA-DF8A-4378-B768-07C5ADDCC920}
 		{EBFFFB4E-261D-44D3-B89C-957B31A0BF9C} = {61F29BCA-DF8A-4378-B768-07C5ADDCC920}
 		{30271063-52C9-4151-B200-444990DA01E0} = {BAF26895-1D2A-4A00-95C0-42388496F94F}
+		{93EC0EDE-01CD-4FB0-B8E8-4F2A027E026E} = {BAF26895-1D2A-4A00-95C0-42388496F94F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {18104725-47F6-4603-ABA9-CA2C3888EF89}
