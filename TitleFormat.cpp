@@ -10,13 +10,13 @@
 /// <summary>
 /// Evaluates a foobar2000 Title Format script.
 /// </summary>
-HRESULT title_formatter_t::Evaluate(_In_ const std::string & script, _In_ GUID id, _Out_ pfc::string & result) noexcept
+HRESULT title_formatter_t::Evaluate(_In_ const std::string & script, _In_ const GUID & id, _In_ playlists_tree_view_t & treeView, _Out_ pfc::string & result) noexcept
 {
     service_ptr_t<titleformat_object> tfo;
 
     static_api_ptr_t<titleformat_compiler>()->compile_safe_ex(tfo, script.c_str());
 
-    custom_titleformat_hook_t Hook(id);
+    custom_titleformat_hook_t Hook(id, treeView);
 
     tfo->run(&Hook, result, nullptr);
 
@@ -30,13 +30,20 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
 {
     const size_t Index = playlist_manager_v5::get()->find_playlist_by_guid(_Id);
 
+    const bool IsFolder = (Index == ~0llu);
+
     /** Component specific variables **/
 
     if (::_stricmp(name, "node_name") == 0)
     {
         pfc::string Text;
 
-        _PlaylistManager->playlist_get_name(Index, Text);
+        if (IsFolder)
+        {
+            _TreeView.GetText(_Id);
+        }
+        else
+            _PlaylistManager->playlist_get_name(Index, Text);
 
         out->write(titleformat_inputtypes::unknown, Text);
 
@@ -60,8 +67,6 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
 
     if (::_stricmp(name, "is_folder") == 0)
     {
-        const bool IsFolder = (Index == ~0llu);
-
         if (!IsFolder)
             return false;
 

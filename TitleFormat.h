@@ -1,5 +1,5 @@
 
-/** $VER: TitleFormat.h (2026.07.05) P. Stuer - Implements a custom hook to expand title formatting **/
+/** $VER: TitleFormat.h (2026.07.06) P. Stuer - Implements a custom hook to expand title formatting **/
 
 #pragma once
 
@@ -16,6 +16,8 @@
 #include <SDK\foobar2000-lite.h>
 #include <SDK\titleformat.h>
 
+#include "PlaylistsTreeView.h"
+
 /// <summary>
 /// Implements a title formatter.
 /// </summary>
@@ -25,7 +27,7 @@ private:
     title_formatter_t();
 
 public:
-    static HRESULT Evaluate(_In_ const std::string & script, _In_ GUID id, _Out_ pfc::string & result) noexcept;
+    static HRESULT Evaluate(_In_ const std::string & script, _In_ const GUID & id, _In_ playlists_tree_view_t & treeView, _Out_ pfc::string & result) noexcept;
 };
 
 /// <summary>
@@ -34,7 +36,7 @@ public:
 class custom_titleformat_hook_t : public titleformat_hook
 {
 public:
-    custom_titleformat_hook_t(GUID id) : _Id(id) { }
+    custom_titleformat_hook_t(_In_ const GUID & id, _In_ playlists_tree_view_t & treeView) : _Id(id), _TreeView(treeView) { }
 
     virtual ~custom_titleformat_hook_t() noexcept { }
 
@@ -51,5 +53,6 @@ private:
 private:
     static_api_ptr_t<playlist_manager_v5> _PlaylistManager;
 
-    GUID _Id;
+    const GUID & _Id;
+    playlists_tree_view_t & _TreeView;
 };

@@ -1,5 +1,5 @@
 
-/** $VER: TreeView.h (2026.07.05) P. Stuer **/
+/** $VER: TreeView.h (2026.07.06) P. Stuer **/
 
 #pragma once
 
@@ -49,7 +49,11 @@ public:
     }
 
     HTREEITEM GetItem(_In_ const POINT & point) noexcept;
+
+    std::wstring GetText(_In_ HTREEITEM hItem) const noexcept;
     void * GetData(_In_ HTREEITEM hItem) const noexcept;
+
+    void SetText(_In_ HTREEITEM hItem, _In_ const std::wstring & newName) const noexcept;
 
     HTREEITEM AddItem(_In_ HTREEITEM hParent, _In_ HTREEITEM hInsertAfter, _In_ const wchar_t* text, _In_ int iconIndex, _In_ const void* data) const noexcept;
     bool RemoveItem(_In_ HTREEITEM hItem) const noexcept;
@@ -75,21 +79,6 @@ public:
     void RemoveInsertMarker() const noexcept
     {
         TreeView_SetInsertMark(_hTreeView, NULL, FALSE);
-    }
-
-    /// <summary>
-    /// Renames the specified item.
-    /// </summary>
-    void RenameItem(_In_ HTREEITEM hItem, _In_ const std::wstring & newName) const noexcept
-    {
-        TVITEMEX tvix =
-        {
-            .mask    = TVIF_TEXT,
-            .hItem   = hItem,
-            .pszText = (LPWSTR) newName.c_str(),
-        };
-
-        TreeView_SetItem(_hTreeView, &tvix);
     }
 
     /// <summary>

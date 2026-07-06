@@ -151,6 +151,43 @@ HTREEITEM tree_view_t::GetItem(_In_ const POINT & point) noexcept
 }
 
 /// <summary>
+/// Gets the text of the specified item.
+/// </summary>
+std::wstring tree_view_t::GetText(_In_ HTREEITEM hItem) const noexcept
+{
+    std::wstring Text;
+
+    Text.resize(256);
+
+    TVITEMEXW tvix =
+    {
+        .mask    = TVIF_TEXT,
+        .hItem   = hItem,
+        .pszText = (LPWSTR) Text.c_str(),
+    };
+
+    if (!TreeView_GetItem(_hTreeView, &tvix))
+        return { };
+
+    return Text;
+}
+
+/// <summary>
+/// Sets the text of the specified item.
+/// </summary>
+void tree_view_t::SetText(_In_ HTREEITEM hItem, _In_ const std::wstring & newName) const noexcept
+{
+    TVITEMEXW tvix =
+    {
+        .mask    = TVIF_TEXT,
+        .hItem   = hItem,
+        .pszText = (LPWSTR) newName.c_str(),
+    };
+
+    TreeView_SetItem(_hTreeView, &tvix);
+}
+
+/// <summary>
 /// Gets the data associated with the item.
 /// </summary>
 void * tree_view_t::GetData(_In_ HTREEITEM hItem) const noexcept

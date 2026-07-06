@@ -95,19 +95,4 @@ private:
 
     playlists_tree_view_t _TreeView;
     HTREEITEM _hDropTarget = NULL;
-
-/*
-    // shell32.dll icons
-    enum Icon : int
-    {
-        File    = 0,
-        Folder  = 3
-    };
-*/
-    // imageres.dll icons
-    enum Icon : int
-    {
-        File    = 126,
-        Folder  = 4
-    };
 };

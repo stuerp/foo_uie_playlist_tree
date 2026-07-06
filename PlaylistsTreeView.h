@@ -22,15 +22,27 @@ public:
 
     virtual ~playlists_tree_view_t() noexcept { };
 
+    std::wstring GetText(_In_ const GUID & id) const noexcept;
+
     /// <summary>
     /// Renames the specified node.
     /// </summary>
-    void RenameNode(_In_ const GUID & id, _In_ const std::wstring & newName) const noexcept
+    void SetText(_In_ const GUID & id, _In_ const std::wstring & text) const noexcept
     {
         HTREEITEM hItem = FindNode(id);
 
         if (hItem != NULL)
-            RenameItem(hItem, newName);
+            tree_view_t::SetText(hItem, text);
+    }
+
+    /// <summary>
+    /// Adds a node.
+    /// </summary>
+    void AddNode(_In_ const GUID & id, _In_ const std::wstring & text, _In_ bool isFolder) const noexcept
+    {
+        auto Node = new node_t(id, false);
+
+        AddItem(TVI_ROOT, TVI_LAST, text.c_str(), isFolder ? Icon::Folder :  Icon::File, Node);
     }
 
     /// <summary>
@@ -67,4 +79,19 @@ public:
 
         return hFoundItem;
     }
+
+/*
+    // shell32.dll icons
+    enum Icon : int
+    {
+        File    = 0,
+        Folder  = 3
+    };
+*/
+    // imageres.dll icons
+    enum Icon : int
+    {
+        File    = 126,
+        Folder  = 4
+    };
 };
