@@ -1,16 +1,17 @@
 
-/** $VER: UIElementTracker.h (2026.07.04) P. Stuer - Tracks the instances of the panel. **/
+/** $VER: UIElementTracker.h (2026.07.06) P. Stuer - Implements a tracker for user interface elements. **/
 
 #pragma once
 
 #include "UIElement.h"
 
+/// <summary>
+/// Implements a tracker for user interface elements.
+/// </summary>
 class uielement_tracker_t
 {
 public:
-    uielement_tracker_t() : _CurrentUIElement()
-    {
-    }
+    uielement_tracker_t() : _CurrentItem() { }
 
     uielement_tracker_t(const uielement_tracker_t &) = delete;
     uielement_tracker_t & operator=(const uielement_tracker_t &) = delete;
@@ -23,7 +24,7 @@ public:
     {
         std::unique_lock Lock(_Mutex);
 
-        _UIElements.push_back(element);
+        _Items.push_back(element);
 
         SetCurrentElement(element);
     }
@@ -32,11 +33,11 @@ public:
     {
         std::unique_lock Lock(_Mutex);
 
-        auto Iter = std::find(_UIElements.begin(), _UIElements.end(), element); 
+        auto Iter = std::find(_Items.begin(), _Items.end(), element); 
   
-        if (Iter != _UIElements.end())
+        if (Iter != _Items.end())
         {
-            _UIElements.erase(Iter); 
+            _Items.erase(Iter); 
 
             SetCurrentElement(nullptr);
         }
@@ -44,19 +45,19 @@ public:
 
     uielement_t * GetCurrentElement() const noexcept
     {
-        return _CurrentUIElement;
+        return _CurrentItem;
     }
 
     void SetCurrentElement(uielement_t * element) noexcept
     {
-        _CurrentUIElement = element;
+        _CurrentItem = element;
     }
 
 private:
     std::mutex _Mutex;
+    std::vector<uielement_t *> _Items;
 
-    uielement_t * _CurrentUIElement;
-    std::vector<uielement_t *> _UIElements;
+    uielement_t * _CurrentItem;
 };
 
 extern uielement_tracker_t _UIElementTracker;

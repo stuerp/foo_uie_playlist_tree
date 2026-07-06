@@ -8,7 +8,6 @@
 #define NOMINMAX
 
 #include <Windows.h>
-#include <functional>
 
 #include "Node.h"
 

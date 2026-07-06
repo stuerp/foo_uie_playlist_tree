@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.h (2026.07.05) P. Stuer **/
+/** $VER: PlaylistsUIElement.h (2026.07.06) P. Stuer **/
 
 #pragma once
 
@@ -7,12 +7,12 @@
 
 #include "UIElement.h"
 #include "State.h"
-#include "TreeView.h"
+#include "PlaylistsTreeView.h"
 
 #include <SDK/playlist.h>
 
 /// <summary>
-/// Implements the UIElement and Playback interface.
+/// Implements the user interface element base class.
 /// </summary>
 class playlists_uielement_t : public uielement_t, public playlist_callback
 {
@@ -90,7 +90,7 @@ protected:
 private:
     static_api_ptr_t<playlist_manager_v5> _PlaylistManager;
 
-    tree_view_t _TreeView;
+    playlists_tree_view_t _TreeView;
     HTREEITEM _hDropTarget = NULL;
 
 /*

@@ -1,5 +1,5 @@
 
-/** $VER: UIElement.h (2026.07.04) P. Stuer **/
+/** $VER: UIElement.h (2026.07.06) P. Stuer **/
 
 #pragma once
 
@@ -7,14 +7,10 @@
 
 #include "Resources.h"
 
-#include <SDK/coreDarkMode.h>
-
-#include <wrl.h>
-
-using namespace Microsoft::WRL;
+#include <SDK\coreDarkMode.h>
 
 /// <summary>
-/// Implements the UIElement and Playback interface.
+/// Implements the user interface element base class.
 /// </summary>
 class uielement_t : public CWindowImpl<uielement_t>
 {

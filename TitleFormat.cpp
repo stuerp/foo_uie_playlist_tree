@@ -1,5 +1,5 @@
 
-/** $VER: TitleFormat.cpp (2026.07.05) P. Stuer **/
+/** $VER: TitleFormat.cpp (2026.07.06) P. Stuer **/
 
 #include "pch.h"
 
@@ -90,7 +90,7 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
                         Duration += Length;
                 }
 
-                return true; // continue enumerating
+                return true; // Continue enumerating
             }
 
         public:
@@ -124,7 +124,7 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
                 if (item.is_valid())
                     Size += item->get_filesize();
 
-                return true; // continue enumerating
+                return true; // Continue enumerating
             }
 
         public:

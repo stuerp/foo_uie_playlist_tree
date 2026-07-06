@@ -221,6 +221,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="PlaylistsTreeView.cpp" />
     <ClCompile Include="PlaylistsUIElement.cpp" />
     <ClCompile Include="State.cpp" />
     <ClCompile Include="TitleFormat.cpp" />
@@ -231,6 +232,7 @@
   <ItemGroup>
     <ClInclude Include="ImageList.h" />
     <ClInclude Include="Node.h" />
+    <ClInclude Include="PlaylistsTreeView.h" />
     <ClInclude Include="RAII.h" />
     <ClInclude Include="TitleFormat.h" />
     <ClInclude Include="DUIElement.h" />
