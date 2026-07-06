@@ -10,17 +10,17 @@
 /// <summary>
 /// Implements a tree view that understands nodes.
 /// </summary>
-class playlists_tree_view_t : public tree_view_t
+class playlist_tree_view_t : public tree_view_t
 {
 public:
-    playlists_tree_view_t() : tree_view_t() { };
+    playlist_tree_view_t() : tree_view_t() { };
 
-    playlists_tree_view_t(const playlists_tree_view_t &) = delete;
-    playlists_tree_view_t(const playlists_tree_view_t &&) = delete;
-    playlists_tree_view_t & operator=(const playlists_tree_view_t &) = delete;
-    playlists_tree_view_t & operator=(playlists_tree_view_t &&) = delete;
+    playlist_tree_view_t(const playlist_tree_view_t &) = delete;
+    playlist_tree_view_t(const playlist_tree_view_t &&) = delete;
+    playlist_tree_view_t & operator=(const playlist_tree_view_t &) = delete;
+    playlist_tree_view_t & operator=(playlist_tree_view_t &&) = delete;
 
-    virtual ~playlists_tree_view_t() noexcept { };
+    virtual ~playlist_tree_view_t() noexcept { };
 
     std::wstring GetText(_In_ const GUID & id) const noexcept;
 

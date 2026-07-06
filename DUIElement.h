@@ -3,12 +3,12 @@
 
 #pragma once
 
-#include "PlaylistsUIElement.h"
+#include "PlaylistUIElement.h"
 
 /// <summary>
 /// Implements a Default UI element.
 /// </summary>
-class duielement_t : public playlists_uielement_t, public ui_element_instance
+class duielement_t : public playlist_uielement_t, public ui_element_instance
 {
 public:
     duielement_t(ui_element_config::ptr data, ui_element_instance_callback::ptr callback);

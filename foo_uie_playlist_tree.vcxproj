@@ -169,7 +169,7 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
-      <AdditionalDependencies>$(SolutionDir)..\sdk\foobar2000\shared\shared-$(Platform).lib;$(SolutionDir)..\out\$(PlatformTarget)-$(Configuration)-columns_ui_sdk\columns_ui_sdk.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)..\sdk\foobar2000\shared\shared-$(Platform).lib;$(SolutionDir)..\out\$(PlatformTarget)-$(Configuration)\columns_ui_sdk.lib</AdditionalDependencies>
       <EnableUAC>false</EnableUAC>
     </Link>
     <PostBuildEvent>
@@ -212,6 +212,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="FolderManager.cpp" />
     <ClCompile Include="ImageList.cpp" />
     <ClCompile Include="Component.cpp" />
     <ClCompile Include="DUIElement.cpp" />
@@ -222,8 +223,8 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="PlaylistsTreeView.cpp" />
-    <ClCompile Include="PlaylistsUIElement.cpp" />
+    <ClCompile Include="PlaylistTreeView.cpp" />
+    <ClCompile Include="PlaylistUIElement.cpp" />
     <ClCompile Include="State.cpp" />
     <ClCompile Include="TitleFormat.cpp" />
     <ClCompile Include="TreeView.cpp" />
@@ -231,14 +232,15 @@
     <ClCompile Include="UIElementTracker.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="FolderManager.h" />
     <ClInclude Include="ImageList.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="Node.h" />
-    <ClInclude Include="PlaylistsTreeView.h" />
+    <ClInclude Include="PlaylistTreeView.h" />
     <ClInclude Include="TitleFormat.h" />
     <ClInclude Include="DUIElement.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="PlaylistsUIElement.h" />
+    <ClInclude Include="PlaylistUIElement.h" />
     <ClInclude Include="Resources.h" />
     <ClInclude Include="State.h" />
     <ClInclude Include="TreeView.h" />

@@ -16,7 +16,7 @@
 #include <SDK\foobar2000-lite.h>
 #include <SDK\titleformat.h>
 
-#include "PlaylistsTreeView.h"
+#include "FolderManager.h"
 
 /// <summary>
 /// Implements a title formatter.
@@ -27,7 +27,7 @@ private:
     title_formatter_t();
 
 public:
-    static HRESULT Evaluate(_In_ const std::string & script, _In_ const GUID & id, _In_ playlists_tree_view_t & treeView, _Out_ pfc::string & result) noexcept;
+    static HRESULT Evaluate(_In_ const std::string & script, _In_ const GUID & id, _Out_ pfc::string & result) noexcept;
 };
 
 /// <summary>
@@ -36,7 +36,7 @@ public:
 class custom_titleformat_hook_t : public titleformat_hook
 {
 public:
-    custom_titleformat_hook_t(_In_ const GUID & id, _In_ playlists_tree_view_t & treeView) : _Id(id), _TreeView(treeView) { }
+    custom_titleformat_hook_t(_In_ const GUID & id) : _Id(id) { }
 
     virtual ~custom_titleformat_hook_t() noexcept { }
 
@@ -52,7 +52,7 @@ private:
 
 private:
     static_api_ptr_t<playlist_manager_v5> _PlaylistManager;
+    static_api_ptr_t<folder_manager_t> _FolderManager;
 
     const GUID & _Id;
-    playlists_tree_view_t & _TreeView;
 };

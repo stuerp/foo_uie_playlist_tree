@@ -10,13 +10,13 @@
 /// <summary>
 /// Evaluates a foobar2000 Title Format script.
 /// </summary>
-HRESULT title_formatter_t::Evaluate(_In_ const std::string & script, _In_ const GUID & id, _In_ playlists_tree_view_t & treeView, _Out_ pfc::string & result) noexcept
+HRESULT title_formatter_t::Evaluate(_In_ const std::string & script, _In_ const GUID & id, _Out_ pfc::string & result) noexcept
 {
     service_ptr_t<titleformat_object> tfo;
 
     static_api_ptr_t<titleformat_compiler>()->compile_safe_ex(tfo, script.c_str());
 
-    custom_titleformat_hook_t Hook(id, treeView);
+    custom_titleformat_hook_t Hook(id);
 
     tfo->run(&Hook, result, nullptr);
 
@@ -28,7 +28,7 @@ HRESULT title_formatter_t::Evaluate(_In_ const std::string & script, _In_ const 
 /// </summary>
 bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const char * name, t_size size, bool & isFound)
 {
-    const size_t Index = playlist_manager_v5::get()->find_playlist_by_guid(_Id);
+    const size_t Index = _PlaylistManager->find_playlist_by_guid(_Id);
 
     const bool IsFolder = (Index == ~0llu);
 
@@ -39,9 +39,7 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
         pfc::string Text;
 
         if (IsFolder)
-        {
-            _TreeView.GetText(_Id);
-        }
+            _FolderManager->GetFolderName(_Id, Text);
         else
             _PlaylistManager->playlist_get_name(Index, Text);
 

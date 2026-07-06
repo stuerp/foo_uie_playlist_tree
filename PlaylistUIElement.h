@@ -7,24 +7,25 @@
 
 #include "UIElement.h"
 #include "State.h"
-#include "PlaylistsTreeView.h"
+#include "PlaylistTreeView.h"
+#include "FolderManager.h"
 
-#include <SDK/playlist.h>
+#include <SDK\playlist.h>
 
 /// <summary>
 /// Implements the user interface element base class.
 /// </summary>
-class playlists_uielement_t : public uielement_t, public playlist_callback
+class playlist_uielement_t : public uielement_t, public playlist_callback
 {
 public:
-    playlists_uielement_t();
+    playlist_uielement_t();
 
-    playlists_uielement_t(const playlists_uielement_t &) = delete;
-    playlists_uielement_t & operator=(const playlists_uielement_t &) = delete;
-    playlists_uielement_t(playlists_uielement_t &&) = delete;
-    playlists_uielement_t & operator=(playlists_uielement_t &&) = delete;
+    playlist_uielement_t(const playlist_uielement_t &) = delete;
+    playlist_uielement_t & operator=(const playlist_uielement_t &) = delete;
+    playlist_uielement_t(playlist_uielement_t &&) = delete;
+    playlist_uielement_t & operator=(playlist_uielement_t &&) = delete;
 
-    virtual ~playlists_uielement_t();
+    virtual ~playlist_uielement_t();
 
 private:
     #pragma region CWindowImpl
@@ -42,7 +43,7 @@ private:
     void OnMouseLeave() noexcept;
     void OnLButtonUp(_In_ UINT flags, _In_ CPoint point) noexcept;
 
-    BEGIN_MSG_MAP(playlists_uielement_t)
+    BEGIN_MSG_MAP(playlist_uielement_t)
         CHAIN_MSG_MAP(uielement_t)
 
         MSG_WM_COMMAND(OnCommand);
@@ -92,7 +93,8 @@ protected:
 
 private:
     static_api_ptr_t<playlist_manager_v5> _PlaylistManager;
+    static_api_ptr_t<folder_manager_t> _FolderManager;
 
-    playlists_tree_view_t _TreeView;
+    playlist_tree_view_t _TreeView;
     HTREEITEM _hDropTarget = NULL;
 };

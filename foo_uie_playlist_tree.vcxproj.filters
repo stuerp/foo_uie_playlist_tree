@@ -5,22 +5,23 @@
     <ClCompile Include="DUIElement.cpp" />
     <ClCompile Include="ImageList.cpp" />
     <ClCompile Include="pch.cpp" />
-    <ClCompile Include="PlaylistsTreeView.cpp" />
-    <ClCompile Include="PlaylistsUIElement.cpp" />
+    <ClCompile Include="PlaylistTreeView.cpp" />
+    <ClCompile Include="PlaylistUIElement.cpp" />
     <ClCompile Include="State.cpp" />
     <ClCompile Include="TitleFormat.cpp" />
     <ClCompile Include="TreeView.cpp" />
     <ClCompile Include="UIElement.cpp" />
     <ClCompile Include="UIElementTracker.cpp" />
     <ClCompile Include="Log.cpp" />
+    <ClCompile Include="FolderManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DUIElement.h" />
     <ClInclude Include="ImageList.h" />
     <ClInclude Include="Node.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="PlaylistsTreeView.h" />
-    <ClInclude Include="PlaylistsUIElement.h" />
+    <ClInclude Include="PlaylistTreeView.h" />
+    <ClInclude Include="PlaylistUIElement.h" />
     <ClInclude Include="Resources.h" />
     <ClInclude Include="State.h" />
     <ClInclude Include="TitleFormat.h" />
@@ -28,6 +29,7 @@
     <ClInclude Include="UIElement.h" />
     <ClInclude Include="UIElementTracker.h" />
     <ClInclude Include="Log.h" />
+    <ClInclude Include="FolderManager.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />

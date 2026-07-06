@@ -3,14 +3,14 @@
 
 #include "pch.h"
 
-#include "PlaylistsTreeView.h"
+#include "PlaylistTreeView.h"
 
 #pragma hdrstop
 
 /// <summary>
 /// Gets the text of the specified node.
 /// </summary>
-std::wstring playlists_tree_view_t::GetText(_In_ const GUID & id) const noexcept
+std::wstring playlist_tree_view_t::GetText(_In_ const GUID & id) const noexcept
 {
     HTREEITEM hItem = FindNode(id);
 

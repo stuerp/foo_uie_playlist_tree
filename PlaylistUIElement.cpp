@@ -3,7 +3,7 @@
 
 #include "pch.h"
 
-#include "PlaylistsUIElement.h"
+#include "PlaylistUIElement.h"
 #include "ImageList.h"
 #include "TitleFormat.h"
 #include "Node.h"
@@ -15,7 +15,7 @@
 /// <summary>
 /// Initializes a new instance.
 /// </summary>
-playlists_uielement_t::playlists_uielement_t()
+playlist_uielement_t::playlist_uielement_t()
 {
     _PlaylistManager->register_callback(this, (t_uint32) flag_all);
 }
@@ -23,7 +23,7 @@ playlists_uielement_t::playlists_uielement_t()
 /// <summary>
 /// Deletes this instance.
 /// </summary>
-playlists_uielement_t::~playlists_uielement_t()
+playlist_uielement_t::~playlist_uielement_t()
 {
     _PlaylistManager->unregister_callback(this);
 
@@ -33,7 +33,7 @@ playlists_uielement_t::~playlists_uielement_t()
 /// <summary>
 /// Creates the window.
 /// </summary>
-LRESULT playlists_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
+LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
 {
 _State.Reset(); // TODO: Remove me
 
@@ -74,7 +74,7 @@ _State.Reset(); // TODO: Remove me
 /// <summary>
 /// Destroys the window.
 /// </summary>
-void playlists_uielement_t::OnDestroy() noexcept
+void playlist_uielement_t::OnDestroy() noexcept
 {
     _TreeView.Destroy();
 
@@ -84,7 +84,7 @@ void playlists_uielement_t::OnDestroy() noexcept
 /// <summary>
 /// Handles the WM_SIZE message.
 /// </summary>
-void playlists_uielement_t::OnSize(UINT type, CSize size) noexcept
+void playlist_uielement_t::OnSize(UINT type, CSize size) noexcept
 {
     uielement_t::OnSize(type, size);
 
@@ -94,7 +94,7 @@ void playlists_uielement_t::OnSize(UINT type, CSize size) noexcept
 /// <summary>
 /// Handles the WM_COMMAND message.
 /// </summary>
-void playlists_uielement_t::OnCommand(_In_ UINT notifyCode, _In_ int id, _In_ CWindow wnd) noexcept
+void playlist_uielement_t::OnCommand(_In_ UINT notifyCode, _In_ int id, _In_ CWindow wnd) noexcept
 {
     switch (id)
     {
@@ -108,9 +108,11 @@ void playlists_uielement_t::OnCommand(_In_ UINT notifyCode, _In_ int id, _In_ CW
             if (!SUCCEEDED(hResult))
                 break;
 
+            _FolderManager->CreateFolder("New Folder", Id);
+
             pfc::string Name;
 
-            hResult = title_formatter_t::Evaluate(_State._NameFormat, Id, _TreeView, Name);
+            hResult = title_formatter_t::Evaluate(_State._NameFormat, Id, Name);
 
             if (!SUCCEEDED(hResult))
                 return;
@@ -124,26 +126,9 @@ void playlists_uielement_t::OnCommand(_In_ UINT notifyCode, _In_ int id, _In_ CW
         // Handles the "New Playlist" command.
         case IDM_NEW_PLAYLIST:
         {
-/*
-            HTREEITEM hTreeItem = (_hDropTarget != NULL) ? _hDropTarget : _TreeView.GetSelectedItem();
+            pfc::string Name("New Playlist");
 
-            _hDropTarget = NULL;
-
-            const auto Node = (node_t *) _TreeView.GetData(hTreeItem);
-
-            if (Node == nullptr)
-                break;
-
-            std::string Name("New Playlist");
-
-            size_t Index = _PlaylistManager->find_playlist_by_guid(Node->Id);
-
-            if (Index == ~0llu)
-                break;
-*/
-            std::string Name("New Playlist");
-
-            size_t NewIndex = _PlaylistManager->create_playlist(Name.c_str(), Name.size(), ~0llu);
+            size_t NewIndex = _PlaylistManager->create_playlist(Name, Name.length(), ~0llu);
 
             if (NewIndex == ~0llu)
                 break;
@@ -156,7 +141,7 @@ void playlists_uielement_t::OnCommand(_In_ UINT notifyCode, _In_ int id, _In_ CW
 /// <summary>
 /// Handles the WM_NOTIFY message.
 /// </summary>
-LRESULT playlists_uielement_t::OnNotify(_In_ int id, _In_ NMHDR * nmhd) noexcept
+LRESULT playlist_uielement_t::OnNotify(_In_ int id, _In_ NMHDR * nmhd) noexcept
 {
     if (nmhd->idFrom != IDC_TREEVIEW)
         return 0;
@@ -250,7 +235,7 @@ LRESULT playlists_uielement_t::OnNotify(_In_ int id, _In_ NMHDR * nmhd) noexcept
 /// <summary>
 /// Handles the WM_MOUSEMOVE message.
 /// </summary>
-void playlists_uielement_t::OnMouseMove(_In_ UINT flags, _In_ CPoint point) noexcept
+void playlist_uielement_t::OnMouseMove(_In_ UINT flags, _In_ CPoint point) noexcept
 {
     _TreeView.DragMove(point);
 }
@@ -258,7 +243,7 @@ void playlists_uielement_t::OnMouseMove(_In_ UINT flags, _In_ CPoint point) noex
 /// <summary>
 /// Handles the WM_MOUSELEAVE message.
 /// </summary>
-void playlists_uielement_t::OnMouseLeave() noexcept
+void playlist_uielement_t::OnMouseLeave() noexcept
 {
     _TreeView.RemoveInsertMarker();
 }
@@ -266,7 +251,7 @@ void playlists_uielement_t::OnMouseLeave() noexcept
 /// <summary>
 /// Handles the WM_LBUTTONUP message.
 /// </summary>
-void playlists_uielement_t::OnLButtonUp(_In_ UINT flags, _In_ CPoint point) noexcept
+void playlist_uielement_t::OnLButtonUp(_In_ UINT flags, _In_ CPoint point) noexcept
 {
     _TreeView.EndDrag(false);
 }
@@ -274,68 +259,68 @@ void playlists_uielement_t::OnLButtonUp(_In_ UINT flags, _In_ CPoint point) noex
 /// <summary>
 /// 
 /// </summary>
-void playlists_uielement_t::on_items_added(size_t playlistIndex, size_t start, const pfc::list_base_const_t<metadb_handle_ptr> & data, const bit_array & selection) noexcept
+void playlist_uielement_t::on_items_added(size_t playlistIndex, size_t start, const pfc::list_base_const_t<metadb_handle_ptr> & data, const bit_array & selection) noexcept
 {
 }
 
 /// <summary>
 /// 
 /// </summary>
-void playlists_uielement_t::on_items_reordered(size_t playlistIndex, const size_t * order, size_t count) noexcept
+void playlist_uielement_t::on_items_reordered(size_t playlistIndex, const size_t * order, size_t count) noexcept
 {}
 
 /// <summary>
 /// 
 /// </summary>
-void playlists_uielement_t::on_items_removing(size_t playlistIndex, const bit_array & mask, size_t oldCount, size_t newCount) noexcept
+void playlist_uielement_t::on_items_removing(size_t playlistIndex, const bit_array & mask, size_t oldCount, size_t newCount) noexcept
 {}
 
 /// <summary>
 /// 
 /// </summary>
-void playlists_uielement_t::on_items_removed(size_t playlistIndex, const bit_array & mask, size_t oldCount, size_t newCount) noexcept
+void playlist_uielement_t::on_items_removed(size_t playlistIndex, const bit_array & mask, size_t oldCount, size_t newCount) noexcept
 {}
 
 /// <summary>
 /// 
 /// </summary>
-void playlists_uielement_t::on_items_selection_change(size_t playlistIndex, const bit_array & p_affected, const bit_array & p_state) noexcept
+void playlist_uielement_t::on_items_selection_change(size_t playlistIndex, const bit_array & p_affected, const bit_array & p_state) noexcept
 {}
 
 /// <summary>
 /// 
 /// </summary>
-void playlists_uielement_t::on_item_focus_change(size_t playlistIndex, size_t p_from, size_t p_to) noexcept
+void playlist_uielement_t::on_item_focus_change(size_t playlistIndex, size_t p_from, size_t p_to) noexcept
 {}
 	
 /// <summary>
 /// 
 /// </summary>
-void playlists_uielement_t::on_items_modified(size_t playlistIndex, const bit_array & p_mask) noexcept
+void playlist_uielement_t::on_items_modified(size_t playlistIndex, const bit_array & p_mask) noexcept
 {}
 
 /// <summary>
 /// 
 /// </summary>
-void playlists_uielement_t::on_items_modified_fromplayback(size_t playlistIndex, const bit_array & p_mask,play_control::t_display_level p_level) noexcept
+void playlist_uielement_t::on_items_modified_fromplayback(size_t playlistIndex, const bit_array & p_mask,play_control::t_display_level p_level) noexcept
 {}
 
 /// <summary>
 /// 
 /// </summary>
-void playlists_uielement_t::on_items_replaced(size_t playlistIndex, const bit_array & p_mask, const pfc::list_base_const_t<t_on_items_replaced_entry> & p_data) noexcept
+void playlist_uielement_t::on_items_replaced(size_t playlistIndex, const bit_array & p_mask, const pfc::list_base_const_t<t_on_items_replaced_entry> & p_data) noexcept
 {}
 
 /// <summary>
 /// 
 /// </summary>
-void playlists_uielement_t::on_item_ensure_visible(size_t playlistIndex, size_t p_idx) noexcept
+void playlist_uielement_t::on_item_ensure_visible(size_t playlistIndex, size_t p_idx) noexcept
 {}
 
 /// <summary>
 /// Handles the activation of a new playlist.
 /// </summary>
-void playlists_uielement_t::on_playlist_activate(size_t oldIndex, size_t newIndex) noexcept
+void playlist_uielement_t::on_playlist_activate(size_t oldIndex, size_t newIndex) noexcept
 {
     SelectPlaylist(newIndex);
 }
@@ -343,7 +328,7 @@ void playlists_uielement_t::on_playlist_activate(size_t oldIndex, size_t newInde
 /// <summary>
 /// Handles the creation of a new playlist.
 /// </summary>
-void playlists_uielement_t::on_playlist_created(size_t index, const char * name, size_t size) noexcept
+void playlist_uielement_t::on_playlist_created(size_t index, const char * name, size_t size) noexcept
 {
     if ((index == ~0llu) || (name == nullptr) || (size == 0))
         return;
@@ -352,7 +337,7 @@ void playlists_uielement_t::on_playlist_created(size_t index, const char * name,
 
     pfc::string Name;
 
-    HRESULT hResult = title_formatter_t::Evaluate(_State._NameFormat, Id, _TreeView, Name);
+    HRESULT hResult = title_formatter_t::Evaluate(_State._NameFormat, Id, Name);
 
     if (!SUCCEEDED(hResult))
         return;
@@ -365,14 +350,14 @@ void playlists_uielement_t::on_playlist_created(size_t index, const char * name,
 /// <summary>
 /// 
 /// </summary>
-void playlists_uielement_t::on_playlists_reorder(const size_t * order, size_t count) noexcept
+void playlist_uielement_t::on_playlists_reorder(const size_t * order, size_t count) noexcept
 {
 }
 
 /// <summary>
 /// Handles playlists that are being removed.
 /// </summary>
-void playlists_uielement_t::on_playlists_removing(const bit_array & mask, size_t oldCount, size_t newCount) noexcept
+void playlist_uielement_t::on_playlists_removing(const bit_array & mask, size_t oldCount, size_t newCount) noexcept
 {
     for (size_t index = mask.find_first(true, 0, oldCount); index < oldCount; index = mask.find_next(true, index, oldCount))
     {
@@ -385,14 +370,14 @@ void playlists_uielement_t::on_playlists_removing(const bit_array & mask, size_t
 /// <summary>
 /// Handles a removed playlist.
 /// </summary>
-void playlists_uielement_t::on_playlists_removed(const bit_array & mask, size_t oldCount, size_t newCount) noexcept
+void playlist_uielement_t::on_playlists_removed(const bit_array & mask, size_t oldCount, size_t newCount) noexcept
 {
 }
 
 /// <summary>
 /// Handles a renamed playlist.
 /// </summary>
-void playlists_uielement_t::on_playlist_renamed(size_t index, const char * newName, size_t newSize) noexcept
+void playlist_uielement_t::on_playlist_renamed(size_t index, const char * newName, size_t newSize) noexcept
 {
     if ((index == ~0llu) || (newName == nullptr) || (newSize == 0))
         return;
@@ -401,7 +386,7 @@ void playlists_uielement_t::on_playlist_renamed(size_t index, const char * newNa
 
     pfc::string Name;
 
-    HRESULT hResult = title_formatter_t::Evaluate(_State._NameFormat, Id, _TreeView, Name);
+    HRESULT hResult = title_formatter_t::Evaluate(_State._NameFormat, Id, Name);
 
     if (!SUCCEEDED(hResult))
         return;
@@ -414,28 +399,28 @@ void playlists_uielement_t::on_playlist_renamed(size_t index, const char * newNa
 /// <summary>
 /// 
 /// </summary>
-void playlists_uielement_t::on_default_format_changed() noexcept
+void playlist_uielement_t::on_default_format_changed() noexcept
 {
 }
 
 /// <summary>
 /// 
 /// </summary>
-void playlists_uielement_t::on_playback_order_changed(size_t p_new_index) noexcept
+void playlist_uielement_t::on_playback_order_changed(size_t p_new_index) noexcept
 {
 }
 
 /// <summary>
 /// 
 /// </summary>
-void playlists_uielement_t::on_playlist_locked(size_t index, bool isLocked) noexcept
+void playlist_uielement_t::on_playlist_locked(size_t index, bool isLocked) noexcept
 {
 }
 
 /// <summary>
 /// Gets all the playlists and adds them to the treeview.
 /// </summary>
-void playlists_uielement_t::GetPlaylists() noexcept
+void playlist_uielement_t::GetPlaylists() noexcept
 {
     const size_t PlaylistCount = _PlaylistManager->get_playlist_count();
 
@@ -445,7 +430,7 @@ void playlists_uielement_t::GetPlaylists() noexcept
 
         pfc::string Name;
 
-        HRESULT hResult = title_formatter_t::Evaluate(_State._NameFormat, Id, _TreeView, Name);
+        HRESULT hResult = title_formatter_t::Evaluate(_State._NameFormat, Id, Name);
 
         if (!SUCCEEDED(hResult))
             return;
@@ -459,7 +444,7 @@ void playlists_uielement_t::GetPlaylists() noexcept
 /// <summary>
 /// Selects the specified playlist in the tree view.
 /// </summary>
-void playlists_uielement_t::SelectPlaylist(size_t index) const noexcept
+void playlist_uielement_t::SelectPlaylist(size_t index) const noexcept
 {
     const auto Id = _PlaylistManager->playlist_get_guid(index);
 
