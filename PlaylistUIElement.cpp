@@ -135,6 +135,13 @@ void playlist_uielement_t::OnCommand(_In_ UINT notifyCode, _In_ int id, _In_ CWi
 
             break;
         }
+
+        // Handles the "Rename" command.
+        case IDM_RENAME:
+        {
+            TreeView_EditLabel(_TreeView.Get(), TreeView_GetSelection(_TreeView.Get()));
+            break;
+        }
     }
 }
 
@@ -216,6 +223,26 @@ LRESULT playlist_uielement_t::OnNotify(_In_ int id, _In_ NMHDR * nmhd) noexcept
         // Handles a deletion of an item.
         case TVN_DELETEITEM:
         {
+            break;
+        }
+
+        // Handles the beginning of label editing.
+        case TVN_BEGINLABELEDIT:
+        {
+            auto hEdit = TreeView_GetEditControl(_TreeView.Get());
+
+            ::SetFocus(hEdit);
+            break;
+        }
+
+        // Handles the completion or cancellation label editing.
+        case TVN_ENDLABELEDIT:
+        {
+            const auto nmdi = (NMTVDISPINFOW *) nmhd;
+
+            if (nmdi->item.pszText != nullptr)
+                return TRUE; // Keep the text.
+
             break;
         }
 
