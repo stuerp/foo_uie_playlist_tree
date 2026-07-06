@@ -70,6 +70,29 @@ public:
     void EndDrag(_In_ bool cancel) noexcept;
 
     /// <summary>
+    /// Removes the insert marker.
+    /// </summary>
+    void RemoveInsertMarker() const noexcept
+    {
+        TreeView_SetInsertMark(_hTreeView, NULL, FALSE);
+    }
+
+    /// <summary>
+    /// Renames the specified item.
+    /// </summary>
+    void RenameItem(_In_ HTREEITEM hItem, _In_ const std::wstring & newName) const noexcept
+    {
+        TVITEMEX tvix =
+        {
+            .mask    = TVIF_TEXT,
+            .hItem   = hItem,
+            .pszText = (LPWSTR) newName.c_str(),
+        };
+
+        TreeView_SetItem(_hTreeView, &tvix);
+    }
+
+    /// <summary>
     /// Recursively walks the tree starting from the root item.
     /// </summary>
     template<typename Visitor> bool Walk(_In_ Visitor && visitor) const noexcept

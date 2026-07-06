@@ -1,5 +1,5 @@
 
-/** $VER: TreeView.cpp (2026.07.05) P. Stuer **/
+/** $VER: TreeView.cpp (2026.07.06) P. Stuer **/
 
 #include "pch.h"
 
@@ -57,7 +57,7 @@ HTREEITEM tree_view_t::AddItem(_In_ HTREEITEM hParent, _In_ HTREEITEM hInsertAft
 }
 
 /// <summary>
-/// Removes the specified item from the treeview.
+/// Removes the specified item from the tree.
 /// </summary>
 bool tree_view_t::RemoveItem(_In_ HTREEITEM hItem) const noexcept
 {
@@ -65,7 +65,7 @@ bool tree_view_t::RemoveItem(_In_ HTREEITEM hItem) const noexcept
 }
 
 /// <summary>
-/// Moves an item into another.
+/// Moves an item.
 /// </summary>
 void tree_view_t::MoveItem(_In_ HTREEITEM hPivotItem, _In_ HTREEITEM hChildItem, _In_ DropZone dropZone) const noexcept
 {
@@ -179,10 +179,14 @@ void tree_view_t::BeginDrag(_In_ const NMTREEVIEW * nmtv) noexcept
 
     RECT rcItem;
 
-    TreeView_GetItemRect(_hTreeView, nmtv->itemNew.hItem, &rcItem, TRUE);
+    if (!TreeView_GetItemRect(_hTreeView, nmtv->itemNew.hItem, &rcItem, TRUE))
+        return;
 
-    ::ImageList_BeginDrag(_hDragImageList, 0, 0, 0);
-    ::ImageList_DragEnter(_hTreeView, nmtv->ptDrag.x, nmtv->ptDrag.y);
+    if (!::ImageList_BeginDrag(_hDragImageList, 0, 0, 0))
+        return;
+
+    if (!::ImageList_DragEnter(_hTreeView, nmtv->ptDrag.x, nmtv->ptDrag.y))
+        return;
 
     ::ShowCursor(FALSE);
     ::SetCapture(::GetParent(_hTreeView));

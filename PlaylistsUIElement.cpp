@@ -262,8 +262,7 @@ void playlists_uielement_t::OnMouseMove(_In_ UINT flags, _In_ CPoint point) noex
 /// </summary>
 void playlists_uielement_t::OnMouseLeave() noexcept
 {
-    // Remove the insertion marker when the mouse leaves the client area.
-    TreeView_SetInsertMark(_TreeView.Get(), NULL, FALSE);
+    _TreeView.RemoveInsertMarker();
 }
 
 /// <summary>
@@ -382,34 +381,37 @@ void playlists_uielement_t::on_playlists_removing(const bit_array & mask, size_t
     {
         const auto Id = _PlaylistManager->playlist_get_guid(index);
 
-        _TreeView.Walk([&](HTREEITEM hItem) -> bool
-        {
-            const auto Node = (node_t *) _TreeView.GetData(hItem);
-
-            if ((Node != nullptr) && (Node->Id == Id))
-            {
-                _TreeView.RemoveItem(hItem);
-
-                return false;
-            }
-
-            return true; // Continue enumerating
-        });
+        _TreeView.RemoveNode(Id);
     }
 }
 
 /// <summary>
-/// 
+/// Handles a removed playlist.
 /// </summary>
 void playlists_uielement_t::on_playlists_removed(const bit_array & mask, size_t oldCount, size_t newCount) noexcept
 {
 }
 
 /// <summary>
-/// Handles the renaming of a playlist.
+/// Handles a renamed playlist.
 /// </summary>
 void playlists_uielement_t::on_playlist_renamed(size_t index, const char * newName, size_t newSize) noexcept
 {
+    if ((index == ~0llu) || (newName == nullptr) || (newSize == 0))
+        return;
+
+    const auto Id = _PlaylistManager->playlist_get_guid(index);
+
+    pfc::string Name;
+
+    HRESULT hResult = title_formatter_t::Evaluate(_State._NameFormat, Id, Name);
+
+    if (!SUCCEEDED(hResult))
+        return;
+
+    std::wstring Text = msc::UTF8ToWide(Name.c_str());
+
+    _TreeView.RenameNode(Id, Text);
 }
 
 /// <summary>
