@@ -17,6 +17,10 @@ It attempts to recreate the functionality of [foo_plorg](https://wiki.hydrogenau
   * %playlist_duration%: the duration of the playlist (in seconds).
   * %playlist_size%: the size of the playlist (in bytes).
 
+## To Do
+
+* Cancel the drag operation when the user presses the Esc key.
+
 ## Requirements
 
 * [foobar2000](https://www.foobar2000.org/download) v2.0 or later (32 or 64-bit). ![foobar2000](https://www.foobar2000.org/button-small.png)

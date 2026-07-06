@@ -1,5 +1,5 @@
 
-/** $VER: RAII.h (2026.06.10) P. Stuer - Various RAII wrappers for common OS resources **/
+/** $VER: RAII.h (2026.07.06) P. Stuer - RAII wrappers **/
 
 #pragma once
 
@@ -8,25 +8,28 @@
 #include <sdkddkver.h>
 #include <windows.h>
 
+#include <string>
 #include <filesystem>
+#include <utility> // std::exchange
 
 namespace fs = std::filesystem;
 
 #include "CriticalSection.h"
 
+#pragma once
+
 namespace msc
 {
 
 /// <summary>
-/// Implements a safe HANDLE wrapper. 
+/// Implements a RAII wrapper for HANDLE. 
 /// </summary>
 class handle_t
 {
 public:
-    handle_t(HANDLE handle) noexcept : _Handle(handle)
-    {
-    }
+    explicit handle_t(HANDLE handle) noexcept : _Handle(handle) { }
 
+    // Move-only type
     handle_t(const handle_t & other) = delete;
     handle_t & operator=(const handle_t & other) = delete;
 
@@ -39,7 +42,7 @@ public:
     {
         if (this != &other)
         {
-            Close();
+            Reset();
 
             _Handle = other._Handle;
             other._Handle = INVALID_HANDLE_VALUE;
@@ -50,7 +53,12 @@ public:
 
     ~handle_t() noexcept
     {
-        Close();
+        Reset();
+    }
+
+    HANDLE Get() const noexcept
+    {
+        return _Handle;
     }
 
     operator HANDLE() const noexcept
@@ -58,15 +66,17 @@ public:
         return _Handle;
     }
 
+    explicit operator bool() const noexcept
+    {
+        return _Handle != INVALID_HANDLE_VALUE;
+    }
+
     bool IsValid() const noexcept
     {
         return _Handle != INVALID_HANDLE_VALUE;
     }
 
-private:
-    HANDLE _Handle = INVALID_HANDLE_VALUE;
-
-    void Close() noexcept
+    void Reset() noexcept
     {
         if (_Handle != INVALID_HANDLE_VALUE)
         {
@@ -74,6 +84,9 @@ private:
             _Handle = INVALID_HANDLE_VALUE;
         }
     }
+
+private:
+    HANDLE _Handle = INVALID_HANDLE_VALUE;
 };
 
 /// <summary>
@@ -99,6 +112,75 @@ public:
      
 private:
     critical_section_t & _cs;
+};
+
+/// <summary>
+/// Implements a RAII wrapper for HMODULE.
+/// </summary>
+class module_handle_t
+{
+public:
+    explicit module_handle_t(const std::wstring filePath) noexcept : _hModule(::LoadLibraryExW(filePath.c_str(), NULL, LOAD_LIBRARY_AS_DATAFILE)) { }
+
+    explicit module_handle_t(HMODULE hModule) noexcept : _hModule(hModule) { }
+
+    // Move-only type
+    module_handle_t(const module_handle_t & other) = delete;
+    module_handle_t & operator=(const module_handle_t & other) = delete;
+
+    module_handle_t(module_handle_t && other) noexcept : _hModule(other.Release()) { }
+
+    module_handle_t & operator=(module_handle_t && other) noexcept
+    {
+        if (this != &other)
+        {
+            Reset();
+
+            _hModule = other.Release();
+        }
+
+        return *this;
+    }
+
+    ~module_handle_t()
+    {
+        Reset();
+    }
+
+    HMODULE Get() const noexcept
+    {
+        return _hModule;
+    }
+
+    operator HMODULE() const noexcept
+    {
+        return _hModule;
+    }
+
+    explicit operator bool() const noexcept
+    {
+        return _hModule != nullptr;
+    }
+
+    HMODULE Release() noexcept
+    {
+        return std::exchange(_hModule, nullptr);
+    }
+
+    bool Reset() noexcept
+    {
+        if (_hModule == nullptr)
+            return true;
+
+        const BOOL Result = ::FreeLibrary(_hModule);
+
+        _hModule = nullptr;
+
+        return Result != FALSE;
+    }
+
+private:
+    HMODULE _hModule = nullptr;
 };
 
 }

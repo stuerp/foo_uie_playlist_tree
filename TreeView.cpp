@@ -4,6 +4,7 @@
 #include "pch.h"
 
 #include "TreeView.h"
+#include "Log.h"
 
 #pragma hdrstop
 
@@ -66,22 +67,50 @@ bool tree_view_t::RemoveItem(_In_ HTREEITEM hItem) const noexcept
 /// <summary>
 /// Moves an item into another.
 /// </summary>
-void tree_view_t::MoveItem(_In_ HTREEITEM hTreeItem, _In_ HTREEITEM hDropTarget) const noexcept
+void tree_view_t::MoveItem(_In_ HTREEITEM hPivotItem, _In_ HTREEITEM hChildItem, _In_ DropZone dropZone) const noexcept
 {
     wchar_t Text[512] = { };
 
-    TVINSERTSTRUCTW tvis =
+    TVINSERTSTRUCTW tvis = 
     {
-        .hParent = hDropTarget,
-        .hInsertAfter = TVI_LAST,
         .item =
         {
-            .mask = Mask,
-            .hItem = hTreeItem,
-            .pszText = Text,
+            .mask       = Mask,
+            .hItem      = hChildItem,
+            .pszText    = Text,
             .cchTextMax = _countof(Text),
         }
     };
+
+    switch (dropZone)
+    {
+        case DropZone::Top:
+        {
+            tvis.hParent      = TreeView_GetParent(_hTreeView, hPivotItem);
+            tvis.hInsertAfter = TreeView_GetPrevSibling(_hTreeView, hPivotItem);
+
+            if (tvis.hInsertAfter == NULL)
+                tvis.hInsertAfter = TVI_FIRST;
+            break;
+        }
+
+        case DropZone::Middle:
+        {
+            tvis.hParent      = hPivotItem;
+            tvis.hInsertAfter = TVI_LAST;
+            break;
+        }
+
+        case DropZone::Bottom:
+        {
+            tvis.hParent      = TreeView_GetParent(_hTreeView, hPivotItem);
+            tvis.hInsertAfter = hPivotItem;
+            break;
+        }
+
+        case DropZone::Unknown:
+            return;
+    }
 
     TreeView_GetItem(_hTreeView, &tvis.item);
 
@@ -92,19 +121,33 @@ void tree_view_t::MoveItem(_In_ HTREEITEM hTreeItem, _In_ HTREEITEM hDropTarget)
         return;
 
     // Recursively move the children.
-    HTREEITEM hChild = TreeView_GetChild(_hTreeView, hTreeItem);
+    HTREEITEM hChild = TreeView_GetChild(_hTreeView, hChildItem);
 
     while (hChild != NULL)
     {
         HTREEITEM hNextChild = TreeView_GetNextSibling(_hTreeView, hChild);
 
-        MoveItem(hChild, hNew);
+        MoveItem(hNew, hChild, DropZone::Middle);
 
         hChild = hNextChild;
     }
 
     // Delete the original item.
-    TreeView_DeleteItem(_hTreeView, hTreeItem);
+    TreeView_DeleteItem(_hTreeView, hChildItem);
+}
+
+/// <summary>
+/// Gets the item at the specified point.
+/// </summary>
+HTREEITEM tree_view_t::GetItem(_In_ const POINT & point) noexcept
+{
+    TVHITTESTINFO ht = { .pt = point };
+
+    ::ScreenToClient(_hTreeView, &ht.pt);
+
+    auto hTreeItem = TreeView_HitTest(_hTreeView, &ht);
+
+    return hTreeItem;
 }
 
 /// <summary>
@@ -144,7 +187,7 @@ void tree_view_t::BeginDrag(_In_ const NMTREEVIEW * nmtv) noexcept
     ::ShowCursor(FALSE);
     ::SetCapture(::GetParent(_hTreeView));
 
-    _hDraggedItem = nmtv->itemNew.hItem;
+    _hDragItem = nmtv->itemNew.hItem;
 }
 
 /// <summary>
@@ -152,7 +195,7 @@ void tree_view_t::BeginDrag(_In_ const NMTREEVIEW * nmtv) noexcept
 /// </summary>
 void tree_view_t::DragMove(_In_ const CPoint & point) noexcept
 {
-    if (_hDraggedItem == NULL)
+    if (_hDragItem == NULL)
         return;
 
     POINT pt = point;
@@ -168,12 +211,32 @@ void tree_view_t::DragMove(_In_ const CPoint & point) noexcept
     {
         ::ImageList_DragShowNolock(FALSE);
 
+        TreeView_SetInsertMark(_hTreeView, NULL, FALSE); // Remove the insertion marker.
+
         const TVHITTESTINFO tvht = { .pt = pt };
 
-        const HTREEITEM hDropTarget = TreeView_HitTest(_hTreeView, &tvht);
+        const HTREEITEM hTreeItem = TreeView_HitTest(_hTreeView, &tvht);
 
-        if (hDropTarget != NULL)
-            TreeView_SelectDropTarget(_hTreeView, hDropTarget);
+        if ((hTreeItem != NULL) && (hTreeItem != _hDragItem))
+        {
+            TreeView_SelectDropTarget(_hTreeView, hTreeItem);
+
+            RECT rc = { };
+
+            if (TreeView_GetItemRect(_hTreeView, hTreeItem, &rc, TRUE))
+            {
+                _DropZone = GetItemZone(rc, pt);
+
+                if (_DropZone != DropZone::Middle)
+                {
+                    const BOOL PlaceAfter = (_DropZone == DropZone::Bottom) ? TRUE : FALSE;
+
+                    TreeView_SetInsertMark(_hTreeView, hTreeItem, PlaceAfter); // Add the insertion marker:
+                }
+            }
+
+            _hDropTarget = hTreeItem;
+        }
 
         ::ImageList_DragShowNolock(TRUE);
     }
@@ -182,28 +245,29 @@ void tree_view_t::DragMove(_In_ const CPoint & point) noexcept
 /// <summary>
 /// Ends the drag operation.
 /// </summary>
-void tree_view_t::EndDrag() noexcept
+void tree_view_t::EndDrag(_In_ bool cancel) noexcept
 {
-    if (_hDraggedItem == NULL)
+    if (_hDragItem == NULL)
         return;
 
     ::ImageList_EndDrag();
 
-    {
-        const HTREEITEM hDropTarget = TreeView_GetDropHilight(_hTreeView);
+    TreeView_SetInsertMark(_hTreeView, NULL, FALSE); // Remove the insertion marker.
 
-        if ((hDropTarget != NULL) && (hDropTarget != _hDraggedItem))
-            MoveItem(_hDraggedItem, hDropTarget);
+    if ((_hDropTarget != NULL) && (_hDropTarget != _hDragItem) && !cancel)
+        MoveItem(_hDropTarget, _hDragItem, _DropZone);
 
-        TreeView_SelectDropTarget(_hTreeView, NULL);
-    }
+    TreeView_SelectDropTarget(_hTreeView, NULL); // Remove the drop target highlight.
 
     ::ReleaseCapture();
     ::ShowCursor(TRUE);
 
-    _hDraggedItem = NULL;
+    _hDragItem = NULL;
 
-    if (_hDragImageList)
+    _hDropTarget = NULL;
+    _DropZone = DropZone::Unknown;
+
+    if (_hDragImageList != NULL)
     {
         ::ImageList_Destroy(_hDragImageList);
         _hDragImageList = NULL;

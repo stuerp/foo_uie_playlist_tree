@@ -37,7 +37,9 @@ private:
 
     void OnCommand(_In_ UINT notifyCode, _In_ int id, _In_ CWindow wnd) noexcept;
     LRESULT OnNotify(_In_ int id, _In_ NMHDR * nmhd) noexcept;
+
     void OnMouseMove(_In_ UINT flags, _In_ CPoint point) noexcept;
+    void OnMouseLeave() noexcept;
     void OnLButtonUp(_In_ UINT flags, _In_ CPoint point) noexcept;
 
     BEGIN_MSG_MAP(playlists_uielement_t)
@@ -46,6 +48,7 @@ private:
         MSG_WM_COMMAND(OnCommand);
         MSG_WM_NOTIFY(OnNotify);
         MSG_WM_MOUSEMOVE(OnMouseMove);
+        MSG_WM_MOUSELEAVE(OnMouseLeave);
         MSG_WM_LBUTTONUP(OnLButtonUp);
     END_MSG_MAP()
 

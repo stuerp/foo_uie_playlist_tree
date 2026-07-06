@@ -48,47 +48,26 @@ public:
         return TreeView_GetSelection(_hTreeView);
     }
 
-    /// <summary>
-    /// Gets the item at the specified point.
-    /// </summary>
-    HTREEITEM GetItem(_In_ const POINT & point) noexcept
-    {
-        TVHITTESTINFO ht = { .pt = point };
-
-        ::ScreenToClient(_hTreeView, &ht.pt);
-
-        auto hDropTarget = TreeView_HitTest(_hTreeView, &ht);
-
-        if (hDropTarget == NULL)
-            return NULL;
-/*
-        RECT rcItem;
-
-        TreeView_GetItemRect(_hTreeView, hDropTarget, &rcItem, TRUE);
-        
-        const auto Center = (rcItem.top + rcItem.bottom) / 2;
-
-        if (point.y < Center - 4)
-            _hDropTarget = TreeView_GetPrevSibling(_hTreeView, hDropTarget);    // Insert before drop target
-        else
-        if (point.y > Center + 4)
-            _hDropTarget = TreeView_GetNextSibling(_hTreeView, hDropTarget);    // Insert after drop target
-        else
-            _hDropTarget = TVI_LAST;                                            // Add as child to drop target
-*/
-        return hDropTarget;
-    }
-
+    HTREEITEM GetItem(_In_ const POINT & point) noexcept;
     void * GetData(_In_ HTREEITEM hItem) const noexcept;
 
     HTREEITEM AddItem(_In_ HTREEITEM hParent, _In_ HTREEITEM hInsertAfter, _In_ const wchar_t* text, _In_ int iconIndex, _In_ const void* data) const noexcept;
     bool RemoveItem(_In_ HTREEITEM hItem) const noexcept;
 
-    void MoveItem(_In_ HTREEITEM hTreeItem, _In_ HTREEITEM hDropTarget) const noexcept;
+    enum DropZone
+    {
+        Unknown = -1,
+
+        Top,
+        Middle,
+        Bottom
+    };
+
+    void MoveItem(_In_ HTREEITEM hParentItem, _In_ HTREEITEM hChildItem, _In_ DropZone dropZone) const noexcept;
 
     void BeginDrag(_In_ const NMTREEVIEW * nmtv) noexcept;
     void DragMove(_In_ const CPoint & point) noexcept;
-    void EndDrag() noexcept;
+    void EndDrag(_In_ bool cancel) noexcept;
 
     /// <summary>
     /// Recursively walks the tree starting from the root item.
@@ -135,11 +114,31 @@ public:
     }
 
 private:
+    /// <summary>
+    /// Gets the item zone that contains the specified point.
+    /// </summary>
+    DropZone GetItemZone(_In_ const RECT & r, _In_ const POINT & pt) const noexcept
+    {
+        // Divide the item into 3 zones.
+        const LONG ZoneHeight = (r.bottom - r.top) / 3;
+
+        if (pt.y < r.top + ZoneHeight)
+            return DropZone::Top;
+
+        if (pt.y >= r.bottom - ZoneHeight)
+            return DropZone::Bottom;
+
+        return DropZone::Middle;
+    }
+
+private:
     HWND _hTreeView;
 
     HIMAGELIST _hDragImageList = NULL;
-    HTREEITEM _hDraggedItem = NULL;
+    HTREEITEM _hDragItem = NULL;
+
     HTREEITEM _hDropTarget = NULL;
+    DropZone _DropZone = DropZone::Unknown;
 
     const UINT Mask =  TVIF_STATE | TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_PARAM;
 };

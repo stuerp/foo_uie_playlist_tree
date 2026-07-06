@@ -171,16 +171,15 @@ LRESULT playlists_uielement_t::OnNotify(_In_ int id, _In_ NMHDR * nmhd) noexcept
             const DWORD Position = ::GetMessagePos();
 
             const POINT pt = { GET_X_LPARAM(Position), GET_Y_LPARAM(Position) };
-
+/*
             {
-                _hDropTarget = _TreeView.GetItem(pt);
+                auto hTreeItem = _TreeView.GetItem(pt);
 
-            /* Uncomment if the hit item should become the selected item
-                if (_hHitTreeItem != NULL)
-                    _TreeView.SelectItem(_hHitTreeItem);
-            */
+                // Uncomment if the item pointed to should become the selected item.
+                //if (hTreeItem != NULL)
+                //    _TreeView.SelectItem(hTreeItem);
             }
-
+*/
             {
                 const HMENU hMenu = ::LoadMenuW(THIS_HINSTANCE, MAKEINTRESOURCE(IDM_CONTEXT_MENU));
 
@@ -198,6 +197,17 @@ LRESULT playlists_uielement_t::OnNotify(_In_ int id, _In_ NMHDR * nmhd) noexcept
 
                 ::DestroyMenu(hMenu);
             }
+            break;
+        }
+
+        // Handles a key press within the control.
+        case NM_KEYDOWN:
+        {
+            const auto nmtv = (NMKEY *) nmhd;
+
+            if (nmtv->nVKey == VK_ESCAPE)
+                _TreeView.EndDrag(true);
+
             break;
         }
 
@@ -248,11 +258,20 @@ void playlists_uielement_t::OnMouseMove(_In_ UINT flags, _In_ CPoint point) noex
 }
 
 /// <summary>
+/// Handles the WM_MOUSELEAVE message.
+/// </summary>
+void playlists_uielement_t::OnMouseLeave() noexcept
+{
+    // Remove the insertion marker when the mouse leaves the client area.
+    TreeView_SetInsertMark(_TreeView.Get(), NULL, FALSE);
+}
+
+/// <summary>
 /// Handles the WM_LBUTTONUP message.
 /// </summary>
 void playlists_uielement_t::OnLButtonUp(_In_ UINT flags, _In_ CPoint point) noexcept
 {
-    _TreeView.EndDrag();
+    _TreeView.EndDrag(false);
 }
 
 /// <summary>
