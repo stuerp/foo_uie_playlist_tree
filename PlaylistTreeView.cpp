@@ -4,6 +4,7 @@
 #include "pch.h"
 
 #include "PlaylistTreeView.h"
+#include "Node.h"
 
 #pragma hdrstop
 
@@ -66,7 +67,7 @@ void playlist_tree_view_t::RemoveItem(_In_ const GUID id) const noexcept
 /// </summary>
 void playlist_tree_view_t::Clear() const noexcept
 {
-    tree_view_t::Walk([&](HTREEITEM hItem) -> bool
+    tree_view_t::Walk([&](HTREEITEM hItem, void * context) -> bool
     {
         auto Node = (const node_t *) GetData(hItem);
 
@@ -86,7 +87,7 @@ HTREEITEM playlist_tree_view_t::FindItem(_In_ const GUID id) const noexcept
 {
     HTREEITEM hFoundItem = NULL;
 
-    tree_view_t::Walk([&](HTREEITEM hItem) -> bool
+    tree_view_t::Walk([&](HTREEITEM hItem, void * context) -> bool
     {
         auto Node = (const node_t *) GetData(hItem);
 

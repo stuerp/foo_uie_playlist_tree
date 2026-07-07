@@ -4,7 +4,7 @@
 #include "pch.h"
 
 #include "DUIElement.h"
-#include "Log.h"
+#include "Node.h"
 
 #include <helpers/BumpableElem.h>
 
@@ -94,23 +94,27 @@ ui_element_config::ptr duielement_t::get_configuration()
 {
     auto Object = _State.ToJSON();
 
-    Object["nodes"] = json::array();
+    auto Nodes = new json::array_t();
 
-    _TreeView.Walk([&](HTREEITEM hItem, json::array_t & nodes) -> bool
+    _TreeView.ToJSON([&](HTREEITEM hItem, json::object_t * node) -> bool
     {
         auto Node = (const node_t *) _TreeView.GetData(hItem);
 
         if (Node == nullptr)
             return true; // Continue enumerating. Should not occur.
 
-        nodes.push_back(Node->Name);
+        (*node)["name"] = Node->Name;
 
         return true; // Continue enumerating.
-    });
+    }, Nodes);
 
     _TreeView.Clear();
 
+    Object["nodes"] = *Nodes;
+
     std::string Config = Object.dump(-1);
+
+    ::OutputDebugStringA(Object.dump(4).c_str());
 
     return ui_element_config::g_create(g_get_guid(), Config.c_str(), Config.size());
 }

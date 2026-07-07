@@ -86,17 +86,20 @@ public:
     /// <summary>
     /// Recursively walks the tree starting from the root item.
     /// </summary>
-    template<typename Visitor> bool Walk(_In_ Visitor && visitor) const noexcept
+    template<typename Visitor> bool Walk(_In_ Visitor && visitor, void * context = nullptr) const noexcept
     {
         // Visit the root and its siblings.
-        HTREEITEM hRoot = TreeView_GetRoot(_hTreeView);
+        HTREEITEM hItem = TreeView_GetRoot(_hTreeView);
 
-        while (hRoot != NULL)
+        while (hItem != NULL)
         {
-            if (!Walk(hRoot, visitor))
+            if (!visitor(hItem, context))
                 return false;
 
-            hRoot = TreeView_GetNextSibling(_hTreeView, hRoot);
+            if (!Walk(hItem, visitor, context))
+                return false;
+
+            hItem = TreeView_GetNextSibling(_hTreeView, hItem);
         }
 
         return true;
@@ -105,23 +108,19 @@ public:
     /// <summary>
     /// Recursively walks the branch starting with the specified item.
     /// </summary>
-    template<typename Visitor> bool Walk(HTREEITEM hItem, _In_ Visitor && visitor) const noexcept
+    template<typename Visitor> bool Walk(HTREEITEM hParent, _In_ Visitor && visitor, void * context = nullptr) const noexcept
     {
-        if (_hTreeView == NULL)
-            return false;
+        HTREEITEM hItem = TreeView_GetChild(_hTreeView, hParent);
 
-        if (!visitor(hItem))
-            return false;
-
-        // Recurse into its children.
-        HTREEITEM hChild = TreeView_GetChild(_hTreeView, hItem);
-
-        while (hChild)
+        while (hItem)
         {
-            if (!Walk(hChild, visitor))
+            if (!visitor(hItem, context))
                 return false;
 
-            hChild = TreeView_GetNextSibling(_hTreeView, hChild);
+            if (!Walk(hItem, visitor, context))
+                return false;
+
+            hItem = TreeView_GetNextSibling(_hTreeView, hItem);
         }
 
         return true;

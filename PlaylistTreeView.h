@@ -5,9 +5,9 @@
 
 #include "TreeView.h"
 
-#include "Node.h"
+#include <nlohmann\json.hpp>
 
-using namespace msc;
+using json = nlohmann::ordered_json;
 
 /// <summary>
 /// Implements a tree view that understands nodes.
@@ -34,6 +34,46 @@ public:
 
     HTREEITEM FindItem(_In_ const GUID id) const noexcept;
 
+    /// <summary>
+    /// Serializes this intance to JSON.
+    /// </summary>
+    template<typename Visitor> bool ToJSON(_In_ Visitor && visitor, json::array_t * nodes) const noexcept
+    {
+        return ToJSON_(NULL, visitor, nodes);
+    }
+
+private:
+    /// <summary>
+    /// Serializes this intance to JSON.
+    /// </summary>
+    template<typename Visitor> bool ToJSON_(HTREEITEM hParent, _In_ Visitor && visitor, json::array_t * nodes) const noexcept
+    {
+        HTREEITEM hItem = (hParent == NULL) ? TreeView_GetRoot(Get()) : TreeView_GetChild(Get(), hParent);
+
+        while (hItem != NULL)
+        {
+            json::object_t * Object = new json::object_t;
+
+            if (!visitor(hItem, Object))
+                return false;
+
+            json::array_t Nodes;
+
+            if (!ToJSON_(hItem, visitor, &Nodes))
+                return false;
+
+            if (Nodes.size() != 0)
+                (*Object)["nodes"] = Nodes;
+
+            (*nodes).push_back(*Object);
+
+            hItem = TreeView_GetNextSibling(Get(), hItem);
+        }
+
+        return true;
+    }
+
+public:
 /*
 
     // shell32.dll icons

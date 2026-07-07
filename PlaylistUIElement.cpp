@@ -477,7 +477,7 @@ void playlist_uielement_t::SelectPlaylist(size_t index) const noexcept
 {
     const auto Id = _PlaylistManager->playlist_get_guid(index);
 
-    _TreeView.Walk([&](HTREEITEM hItem) -> bool
+    _TreeView.Walk([&](HTREEITEM hItem, void * context) -> bool
     {
         auto Node = (node_t *) _TreeView.GetData(hItem);
 
