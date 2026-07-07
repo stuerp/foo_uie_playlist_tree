@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.cpp (2026.07.06) P. Stuer **/
+/** $VER: PlaylistsUIElement.cpp (2026.07.07) P. Stuer **/
 
 #include "pch.h"
 
@@ -50,7 +50,7 @@ _State.Reset(); // TODO: Remove me
     {
         const auto IconSize = (uint32_t) ::GetSystemMetrics(SM_CXSMICON);
 
-        HIMAGELIST hImageList = image_list_factory_t::Create(L"imageres.dll", IconSize);
+        HIMAGELIST hImageList = image_list_factory_t::Create("imageres.dll", IconSize);
 
         if (hImageList == NULL)
             return false;
@@ -101,6 +101,8 @@ void playlist_uielement_t::OnCommand(_In_ UINT notifyCode, _In_ int id, _In_ CWi
         // Handles the "New Folder" command.
         case IDM_NEW_FOLDER:
         {
+            std::string Name("New Folder");
+
             GUID Id;
 
             HRESULT hResult = ::CoCreateGuid(&Id);
@@ -108,18 +110,16 @@ void playlist_uielement_t::OnCommand(_In_ UINT notifyCode, _In_ int id, _In_ CWi
             if (!SUCCEEDED(hResult))
                 return;
 
-            _FolderManager->CreateFolder("New Folder", Id);
+            _FolderManager->CreateFolder(Name, Id);
 
-            pfc::string Name;
+            pfc::string Text;
 
-            hResult = title_formatter_t::Evaluate(_State._NameFormat, Id, Name);
+            hResult = title_formatter_t::Evaluate(_State._NameFormat, Id, Text);
 
             if (!SUCCEEDED(hResult))
                 return;
 
-            std::wstring Text = msc::UTF8ToWide(Name.c_str());
-
-            _TreeView.AddItem(Id, Text, true);
+            _TreeView.AddItem(Id, Name, Text.c_str(), true);
             break;
         }
 
@@ -360,18 +360,20 @@ void playlist_uielement_t::on_playlist_created(size_t index, const char * name, 
     if ((index == ~0llu) || (name == nullptr) || (size == 0))
         return;
 
-    const auto Id = _PlaylistManager->playlist_get_guid(index);
-
     pfc::string Name;
 
-    HRESULT hResult = title_formatter_t::Evaluate(_State._NameFormat, Id, Name);
+    _PlaylistManager->playlist_get_name(index, Name);
+
+    const auto Id = _PlaylistManager->playlist_get_guid(index);
+
+    pfc::string Text;
+
+    HRESULT hResult = title_formatter_t::Evaluate(_State._NameFormat, Id, Text);
 
     if (!SUCCEEDED(hResult))
         return;
 
-    std::wstring Text = msc::UTF8ToWide(Name.c_str());
-
-    _TreeView.AddItem(Id, Text, false);
+    _TreeView.AddItem(Id, Name.c_str(), Text.c_str(), false);
 }
 
 /// <summary>
@@ -418,9 +420,7 @@ void playlist_uielement_t::on_playlist_renamed(size_t index, const char * newNam
     if (!SUCCEEDED(hResult))
         return;
 
-    std::wstring Text = msc::UTF8ToWide(Name.c_str());
-
-    _TreeView.SetText(Id, Text);
+    _TreeView.SetText(Id, Name.c_str());
 }
 
 /// <summary>
@@ -453,18 +453,20 @@ void playlist_uielement_t::GetPlaylists() noexcept
 
     for (size_t PlaylistIndex = 0; PlaylistIndex < PlaylistCount; ++PlaylistIndex)
     {
-        const auto Id = _PlaylistManager->playlist_get_guid(PlaylistIndex);
-
         pfc::string Name;
 
-        HRESULT hResult = title_formatter_t::Evaluate(_State._NameFormat, Id, Name);
+        _PlaylistManager->playlist_get_name(PlaylistIndex, Name);
+
+        const auto Id = _PlaylistManager->playlist_get_guid(PlaylistIndex);
+
+        pfc::string Text;
+
+        HRESULT hResult = title_formatter_t::Evaluate(_State._NameFormat, Id, Text);
 
         if (!SUCCEEDED(hResult))
-            return;
+            break;
 
-        std::wstring Text = msc::UTF8ToWide(Name.c_str());
-
-        _TreeView.AddItem(Id, Text, false);
+        _TreeView.AddItem(Id, Name.c_str(), Text.c_str(), false);
     }
 }
 

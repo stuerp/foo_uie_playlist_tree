@@ -13,8 +13,8 @@ using namespace msc;
 class NOVTABLE folder_manager_t : public service_base
 {
 public:
-    virtual void CreateFolder(_In_ const pfc::string & text, _In_ GUID id) = 0;
-    virtual void GetFolderName(_In_ GUID id, _Out_ pfc::string & text) const = 0;
+    virtual void CreateFolder(_In_ const std::string & name, _In_ GUID id) = 0;
+    virtual void GetFolderName(_In_ GUID id, _Out_ std::string & name) const = 0;
 
     FB2K_MAKE_SERVICE_INTERFACE_ENTRYPOINT(folder_manager_t);
 };
@@ -25,9 +25,9 @@ public:
 class folder_t
 {
 public:
-    folder_t(const pfc::string & name) : Name(name)
+    folder_t(const std::string & name) : Name(name)
     {
     }
 
-    pfc::string Name;
+    std::string Name;
 };

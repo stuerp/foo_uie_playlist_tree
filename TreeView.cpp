@@ -1,5 +1,5 @@
 
-/** $VER: TreeView.cpp (2026.07.06) P. Stuer **/
+/** $VER: TreeView.cpp (2026.07.07) P. Stuer **/
 
 #include "pch.h"
 
@@ -35,8 +35,10 @@ void tree_view_t::Destroy() noexcept
 /// <summary>
 /// Adds the specified item to the treeview.
 /// </summary>
-HTREEITEM tree_view_t::AddItem(_In_ HTREEITEM hParent, _In_ HTREEITEM hInsertAfter, _In_ const wchar_t * text, _In_ int iconIndex, _In_ const void * data) const noexcept
+HTREEITEM tree_view_t::AddItem(_In_ HTREEITEM hParent, _In_ HTREEITEM hInsertAfter, _In_ const std::string & text, _In_ int iconIndex, _In_ const void * data) const noexcept
 {
+    std::wstring Text = msc::UTF8ToWide(text).c_str();
+
     const TVINSERTSTRUCTW tvis
     {
         .hParent      = hParent,
@@ -44,7 +46,7 @@ HTREEITEM tree_view_t::AddItem(_In_ HTREEITEM hParent, _In_ HTREEITEM hInsertAft
         .item         =
         {
             .mask           = Mask,
-            .pszText        = (LPWSTR) text,
+            .pszText        = (LPWSTR) Text.c_str(),
             .iImage         = iconIndex,
             .iSelectedImage = iconIndex,
             .lParam         = (LPARAM) data,
@@ -62,6 +64,14 @@ HTREEITEM tree_view_t::AddItem(_In_ HTREEITEM hParent, _In_ HTREEITEM hInsertAft
 bool tree_view_t::RemoveItem(_In_ HTREEITEM hItem) const noexcept
 {
     return (TreeView_DeleteItem(_hTreeView, hItem) == TRUE);
+}
+
+/// <summary>
+/// Removes all items.
+/// </summary>
+void tree_view_t::Clear() const noexcept
+{
+    TreeView_DeleteAllItems(_hTreeView);
 }
 
 /// <summary>
@@ -153,7 +163,7 @@ HTREEITEM tree_view_t::GetItem(_In_ const POINT & point) noexcept
 /// <summary>
 /// Gets the text of the specified item.
 /// </summary>
-std::wstring tree_view_t::GetText(_In_ HTREEITEM hItem) const noexcept
+std::string tree_view_t::GetText(_In_ HTREEITEM hItem) const noexcept
 {
     std::wstring Text;
 
@@ -161,27 +171,30 @@ std::wstring tree_view_t::GetText(_In_ HTREEITEM hItem) const noexcept
 
     TVITEMEXW tvix =
     {
-        .mask    = TVIF_TEXT,
-        .hItem   = hItem,
-        .pszText = (LPWSTR) Text.c_str(),
+        .mask       = TVIF_TEXT,
+        .hItem      = hItem,
+        .pszText    = (LPWSTR) Text.c_str(),
+        .cchTextMax = (int) Text.size(),
     };
 
     if (!TreeView_GetItem(_hTreeView, &tvix))
         return { };
 
-    return Text;
+    return msc::WideToUTF8(Text);
 }
 
 /// <summary>
 /// Sets the text of the specified item.
 /// </summary>
-void tree_view_t::SetText(_In_ HTREEITEM hItem, _In_ const std::wstring & newName) const noexcept
+void tree_view_t::SetText(_In_ HTREEITEM hItem, _In_ const std::string & text) const noexcept
 {
+    std::wstring Text = msc::UTF8ToWide(text.c_str());
+
     TVITEMEXW tvix =
     {
         .mask    = TVIF_TEXT,
         .hItem   = hItem,
-        .pszText = (LPWSTR) newName.c_str(),
+        .pszText = (LPWSTR) text.c_str(),
     };
 
     TreeView_SetItem(_hTreeView, &tvix);

@@ -1,9 +1,10 @@
 
-/** $VER: DUIElement.cpp (2026.07.04) P. Stuer - Implements Default User Interface support **/
+/** $VER: DUIElement.cpp (2026.07.07) P. Stuer - Implements Default User Interface support **/
 
 #include "pch.h"
 
 #include "DUIElement.h"
+#include "Log.h"
 
 #include <helpers/BumpableElem.h>
 
@@ -77,7 +78,7 @@ void duielement_t::initialize_window(HWND hWndParent)
 }
 
 /// <summary>
-/// Alters element's current configuration. Specified ui_element_config's GUID must be the same as this element's GUID.
+/// Sets the element configuration.
 /// </summary>
 void duielement_t::set_configuration(ui_element_config::ptr data)
 {
@@ -87,11 +88,29 @@ void duielement_t::set_configuration(ui_element_config::ptr data)
 }
 
 /// <summary>
-/// Retrieves element's current configuration. Returned object's GUID must be set to your element's GUID so your element can be re-instantiated with stored settings.
+/// Gets the element configuration.
 /// </summary>
 ui_element_config::ptr duielement_t::get_configuration()
 {
-    std::string Config = _State.ToJSON().dump(-1);
+    auto Object = _State.ToJSON();
+
+    Object["nodes"] = json::array();
+
+    _TreeView.Walk([&](HTREEITEM hItem, json::array_t & nodes) -> bool
+    {
+        auto Node = (const node_t *) _TreeView.GetData(hItem);
+
+        if (Node == nullptr)
+            return true; // Continue enumerating. Should not occur.
+
+        nodes.push_back(Node->Name);
+
+        return true; // Continue enumerating.
+    });
+
+    _TreeView.Clear();
+
+    std::string Config = Object.dump(-1);
 
     return ui_element_config::g_create(g_get_guid(), Config.c_str(), Config.size());
 }

@@ -39,7 +39,13 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
         pfc::string Text;
 
         if (IsFolder)
-            _FolderManager->GetFolderName(_Id, Text);
+        {
+            std::string Name;
+
+            _FolderManager->GetFolderName(_Id, Name);
+
+            Text = Name.c_str();
+        }
         else
             _PlaylistManager->playlist_get_name(Index, Text);
 

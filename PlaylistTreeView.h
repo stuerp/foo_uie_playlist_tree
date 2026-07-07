@@ -24,14 +24,18 @@ public:
 
     virtual ~playlist_tree_view_t() noexcept { };
 
-    std::wstring GetText(_In_ const GUID id) const noexcept;
-    void SetText(_In_ const GUID id, _In_ const std::wstring & text) const noexcept;
+    std::string GetText(_In_ const GUID id) const noexcept;
+    void SetText(_In_ const GUID id, _In_ const std::string & text) const noexcept;
 
-    void AddItem(_In_ const GUID id, _In_ const std::wstring & text, _In_ bool isFolder) const noexcept;
+    void AddItem(_In_ const GUID id, _In_ const std::string & name, _In_ const std::string & text, _In_ bool isFolder) const noexcept;
     void RemoveItem(_In_ const GUID id) const noexcept;
 
+    void Clear() const noexcept override;
+
     HTREEITEM FindItem(_In_ const GUID id) const noexcept;
+
 /*
+
     // shell32.dll icons
     enum Icon : int
     {

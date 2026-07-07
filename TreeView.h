@@ -1,5 +1,5 @@
 
-/** $VER: TreeView.h (2026.07.06) P. Stuer **/
+/** $VER: TreeView.h (2026.07.07) P. Stuer **/
 
 #pragma once
 
@@ -50,13 +50,15 @@ public:
 
     HTREEITEM GetItem(_In_ const POINT & point) noexcept;
 
-    std::wstring GetText(_In_ HTREEITEM hItem) const noexcept;
+    std::string GetText(_In_ HTREEITEM hItem) const noexcept;
     void * GetData(_In_ HTREEITEM hItem) const noexcept;
 
-    void SetText(_In_ HTREEITEM hItem, _In_ const std::wstring & newName) const noexcept;
+    void SetText(_In_ HTREEITEM hItem, _In_ const std::string & text) const noexcept;
 
-    HTREEITEM AddItem(_In_ HTREEITEM hParent, _In_ HTREEITEM hInsertAfter, _In_ const wchar_t* text, _In_ int iconIndex, _In_ const void* data) const noexcept;
+    HTREEITEM AddItem(_In_ HTREEITEM hParent, _In_ HTREEITEM hInsertAfter, _In_ const std::string & text, _In_ int iconIndex, _In_ const void * data) const noexcept;
     bool RemoveItem(_In_ HTREEITEM hItem) const noexcept;
+
+    virtual void Clear() const noexcept;
 
     enum DropZone
     {

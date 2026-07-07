@@ -1,5 +1,5 @@
 
-/** $VER: ImageList.cpp (2026.07.06) P. Stuer **/
+/** $VER: ImageList.cpp (2026.07.07) P. Stuer **/
 
 #include "pch.h"
 
@@ -11,11 +11,13 @@
 /// <summary>
 /// Creates an image list from the icons in the specified file.
 /// </summary>
-HIMAGELIST image_list_factory_t::Create(_In_ const std::wstring & filePath, _In_ uint32_t iconSize, _In_ uint32_t maxIcons) noexcept
+HIMAGELIST image_list_factory_t::Create(_In_ const std::string & filePath, _In_ uint32_t iconSize, _In_ uint32_t maxIcons) noexcept
 {
     #pragma warning(disable: 6388) // 'THIS_HINSTANCE' might not be '0': this does not adhere to the specification for the function 'ExtractIconW'.
 
-    msc::module_handle_t hModule(filePath);
+    std::wstring FilePath = msc::UTF8ToWide(filePath);
+
+    msc::module_handle_t hModule(FilePath);
 
     if (!hModule)
         return NULL;
@@ -29,7 +31,7 @@ HIMAGELIST image_list_factory_t::Create(_In_ const std::wstring & filePath, _In_
     {
         for (uint32_t i = 0; i < maxIcons; ++i)
         {
-            HICON hIcon = ::ExtractIconW(THIS_HINSTANCE, filePath.c_str(), (UINT) i);
+            HICON hIcon = ::ExtractIconW(THIS_HINSTANCE, FilePath.c_str(), (UINT) i);
 
             if (hIcon != NULL)
             {

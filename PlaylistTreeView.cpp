@@ -10,7 +10,7 @@
 /// <summary>
 /// Gets the text of the specified item.
 /// </summary>
-std::wstring playlist_tree_view_t::GetText(_In_ const GUID id) const noexcept
+std::string playlist_tree_view_t::GetText(_In_ const GUID id) const noexcept
 {
     HTREEITEM hItem = FindItem(id);
 
@@ -21,42 +21,62 @@ std::wstring playlist_tree_view_t::GetText(_In_ const GUID id) const noexcept
 }
 
 /// <summary>
-/// Renames the specified item.
+/// Sets the text of the specified item.
 /// </summary>
-void playlist_tree_view_t::SetText(_In_ const GUID id, _In_ const std::wstring & text) const noexcept
+void playlist_tree_view_t::SetText(_In_ const GUID id, _In_ const std::string & text) const noexcept
 {
     HTREEITEM hItem = FindItem(id);
 
-    if (hItem != NULL)
-        tree_view_t::SetText(hItem, text);
+    if (hItem == NULL)
+        return;
+
+    tree_view_t::SetText(hItem, text);
 }
 
 /// <summary>
-/// Adds a node.
+/// Adds an item.
 /// </summary>
-void playlist_tree_view_t::AddItem(_In_ const GUID id, _In_ const std::wstring & text, _In_ bool isFolder) const noexcept
+void playlist_tree_view_t::AddItem(_In_ const GUID id, _In_ const std::string & name, _In_ const std::string & text, _In_ bool isFolder) const noexcept
 {
-    auto Node = new node_t(id, false);
+    auto Node = new node_t(name, id, false);
 
-    tree_view_t::AddItem(TVI_ROOT, TVI_LAST, text.c_str(), isFolder ? Icon::Folder :  Icon::File, Node);
+    tree_view_t::AddItem(TVI_ROOT, TVI_LAST, text, isFolder ? Icon::Folder :  Icon::File, Node);
 }
 
 /// <summary>
-/// Renames the specified node.
+/// Removes the specified item.
 /// </summary>
 void playlist_tree_view_t::RemoveItem(_In_ const GUID id) const noexcept
 {
     HTREEITEM hItem = FindItem(id);
 
-    if (hItem != NULL)
+    if (hItem == NULL)
+        return;
+
+    auto Node = (const node_t *) tree_view_t::GetData(hItem);
+
+    if (Node != nullptr)
+        delete Node;
+
+    tree_view_t::RemoveItem(hItem);
+}
+
+/// <summary>
+/// Removes all items.
+/// </summary>
+void playlist_tree_view_t::Clear() const noexcept
+{
+    tree_view_t::Walk([&](HTREEITEM hItem) -> bool
     {
-        auto Node = (node_t *) tree_view_t::GetData(hItem);
+        auto Node = (const node_t *) GetData(hItem);
 
         if (Node != nullptr)
             delete Node;
 
-        tree_view_t::RemoveItem(hItem);
-    }
+        return true; // Continue enumerating
+    });
+
+    tree_view_t::Clear();
 }
 
 /// <summary>
@@ -68,7 +88,7 @@ HTREEITEM playlist_tree_view_t::FindItem(_In_ const GUID id) const noexcept
 
     tree_view_t::Walk([&](HTREEITEM hItem) -> bool
     {
-        const auto Node = (node_t *) GetData(hItem);
+        auto Node = (const node_t *) GetData(hItem);
 
         if ((Node != nullptr) && (Node->Id == id))
         {

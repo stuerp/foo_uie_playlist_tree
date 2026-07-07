@@ -46,8 +46,11 @@ private:
     BEGIN_MSG_MAP(playlist_uielement_t)
         CHAIN_MSG_MAP(uielement_t)
 
+        MSG_WM_DESTROY(OnDestroy);
+
         MSG_WM_COMMAND(OnCommand);
         MSG_WM_NOTIFY(OnNotify);
+
         MSG_WM_MOUSEMOVE(OnMouseMove);
         MSG_WM_MOUSELEAVE(OnMouseLeave);
         MSG_WM_LBUTTONUP(OnLButtonUp);
@@ -90,11 +93,11 @@ private:
 
 protected:
     state_t _State;
+    playlist_tree_view_t _TreeView;
 
 private:
     static_api_ptr_t<playlist_manager_v5> _PlaylistManager;
     static_api_ptr_t<folder_manager_t> _FolderManager;
 
-    playlist_tree_view_t _TreeView;
     HTREEITEM _hDropTarget = NULL;
 };
