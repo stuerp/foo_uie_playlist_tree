@@ -10,7 +10,7 @@
 /// <summary>
 /// Evaluates a foobar2000 Title Format script.
 /// </summary>
-HRESULT title_formatter_t::Evaluate(_In_ const std::string & script, _In_ const GUID & id, _Out_ pfc::string & result) noexcept
+HRESULT title_formatter_t::Evaluate(_In_ const std::string & script, _In_ const GUID id, _Out_ pfc::string & result) noexcept
 {
     service_ptr_t<titleformat_object> tfo;
 

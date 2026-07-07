@@ -22,6 +22,8 @@
     <ClInclude Include="include\Exception.h" />
     <ClInclude Include="include\CriticalSection.h" />
     <ClInclude Include="include\Enum.h" />
+    <ClInclude Include="include\Win32.h" />
+    <ClInclude Include="include\Direct2D.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

@@ -106,7 +106,7 @@ void playlist_uielement_t::OnCommand(_In_ UINT notifyCode, _In_ int id, _In_ CWi
             HRESULT hResult = ::CoCreateGuid(&Id);
 
             if (!SUCCEEDED(hResult))
-                break;
+                return;
 
             _FolderManager->CreateFolder("New Folder", Id);
 
@@ -119,7 +119,7 @@ void playlist_uielement_t::OnCommand(_In_ UINT notifyCode, _In_ int id, _In_ CWi
 
             std::wstring Text = msc::UTF8ToWide(Name.c_str());
 
-            _TreeView.AddNode(Id, Text, true);
+            _TreeView.AddItem(Id, Text, true);
             break;
         }
 
@@ -371,7 +371,7 @@ void playlist_uielement_t::on_playlist_created(size_t index, const char * name, 
 
     std::wstring Text = msc::UTF8ToWide(Name.c_str());
 
-    _TreeView.AddNode(Id, Text, false);
+    _TreeView.AddItem(Id, Text, false);
 }
 
 /// <summary>
@@ -390,7 +390,7 @@ void playlist_uielement_t::on_playlists_removing(const bit_array & mask, size_t 
     {
         const auto Id = _PlaylistManager->playlist_get_guid(index);
 
-        _TreeView.RemoveNode(Id);
+        _TreeView.RemoveItem(Id);
     }
 }
 
@@ -464,7 +464,7 @@ void playlist_uielement_t::GetPlaylists() noexcept
 
         std::wstring Text = msc::UTF8ToWide(Name.c_str());
 
-        _TreeView.AddNode(Id, Text, false);
+        _TreeView.AddItem(Id, Text, false);
     }
 }
 

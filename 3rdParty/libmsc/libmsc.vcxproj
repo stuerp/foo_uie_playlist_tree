@@ -42,6 +42,7 @@
   <ItemGroup>
     <ClInclude Include="3rdParty\ghc\filesystem.hpp" />
     <ClInclude Include="include\CriticalSection.h" />
+    <ClInclude Include="include\Direct2D.h" />
     <ClInclude Include="include\Encoding.h" />
     <ClInclude Include="include\Enum.h" />
     <ClInclude Include="include\Exception.h" />
@@ -51,6 +52,7 @@
     <ClInclude Include="include\Stream.h" />
     <ClInclude Include="include\Strings.h" />
     <ClInclude Include="include\Support.h" />
+    <ClInclude Include="include\Win32.h" />
     <ClInclude Include="include\Win32Exception.h" />
     <ClInclude Include="src\Encoding.h" />
     <ClInclude Include="src\pch.h" />
@@ -139,27 +141,27 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <IntDir>$(SolutionDir)..\int\$(PlatformTarget)-$(Configuration)-$(ProjectName)\</IntDir>
-    <OutDir>$(SolutionDir)..\out\$(PlatformTarget)-$(Configuration)-$(ProjectName)\</OutDir>
+    <OutDir>$(SolutionDir)..\out\$(PlatformTarget)-$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IntDir>$(SolutionDir)..\int\$(PlatformTarget)-$(Configuration)-$(ProjectName)\</IntDir>
-    <OutDir>$(SolutionDir)..\out\$(PlatformTarget)-$(Configuration)-$(ProjectName)\</OutDir>
+    <OutDir>$(SolutionDir)..\out\$(PlatformTarget)-$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IntDir>$(SolutionDir)..\int\$(PlatformTarget)-$(Configuration)-$(ProjectName)\</IntDir>
-    <OutDir>$(SolutionDir)..\out\$(PlatformTarget)-$(Configuration)-$(ProjectName)\</OutDir>
+    <OutDir>$(SolutionDir)..\out\$(PlatformTarget)-$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <IntDir>$(SolutionDir)..\int\$(PlatformTarget)-$(Configuration)-$(ProjectName)\</IntDir>
-    <OutDir>$(SolutionDir)..\out\$(PlatformTarget)-$(Configuration)-$(ProjectName)\</OutDir>
+    <OutDir>$(SolutionDir)..\out\$(PlatformTarget)-$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IntDir>$(SolutionDir)..\int\$(PlatformTarget)-$(Configuration)-$(ProjectName)\</IntDir>
-    <OutDir>$(SolutionDir)..\out\$(PlatformTarget)-$(Configuration)-$(ProjectName)\</OutDir>
+    <OutDir>$(SolutionDir)..\out\$(PlatformTarget)-$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
     <IntDir>$(SolutionDir)..\int\$(PlatformTarget)-$(Configuration)-$(ProjectName)\</IntDir>
-    <OutDir>$(SolutionDir)..\out\$(PlatformTarget)-$(Configuration)-$(ProjectName)\</OutDir>
+    <OutDir>$(SolutionDir)..\out\$(PlatformTarget)-$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

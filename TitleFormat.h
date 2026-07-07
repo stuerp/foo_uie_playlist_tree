@@ -18,6 +18,8 @@
 
 #include "FolderManager.h"
 
+using namespace msc;
+
 /// <summary>
 /// Implements a title formatter.
 /// </summary>
@@ -27,7 +29,7 @@ private:
     title_formatter_t();
 
 public:
-    static HRESULT Evaluate(_In_ const std::string & script, _In_ const GUID & id, _Out_ pfc::string & result) noexcept;
+    static HRESULT Evaluate(_In_ const std::string & script, _In_ const GUID id, _Out_ pfc::string & result) noexcept;
 };
 
 /// <summary>
