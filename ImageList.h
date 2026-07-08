@@ -15,6 +15,6 @@ private:
     image_list_factory_t();
 
 public:
-    static HIMAGELIST Create(_In_ const std::string & fileName, _In_ uint32_t iconSize, _In_ uint32_t maxIcons = ~0) noexcept;
-    static uint32_t GetIconCount(_In_ HMODULE hModule) noexcept;
+    static HIMAGELIST Create(const std::string & fileName, uint32_t iconSize, uint32_t maxIcons = ~0) noexcept;
+    static uint32_t GetIconCount(HMODULE hModule) noexcept;
 };

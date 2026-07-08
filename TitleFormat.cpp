@@ -10,7 +10,7 @@
 /// <summary>
 /// Evaluates a foobar2000 Title Format script.
 /// </summary>
-HRESULT title_formatter_t::Evaluate(_In_ const std::string & script, _In_ const GUID id, _Out_ pfc::string & result) noexcept
+HRESULT title_formatter_t::Evaluate(const std::string & script, const GUID id, pfc::string & result) noexcept
 {
     service_ptr_t<titleformat_object> tfo;
 
@@ -218,7 +218,7 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
 /// <summary>
 /// Expands the environment variables in the specified string.
 /// </summary>
-const std::string custom_titleformat_hook_t::ExpandEnvironmentStrings(_In_ const std::string & src) noexcept
+const std::string custom_titleformat_hook_t::ExpandEnvironmentStrings(const std::string & src) noexcept
 {
     const DWORD Size = ::ExpandEnvironmentStringsA(src.c_str(), nullptr, 0) + 1;
 

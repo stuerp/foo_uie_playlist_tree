@@ -95,7 +95,7 @@ void playlist_uielement_t::OnSize(UINT type, CSize size) noexcept
 /// <summary>
 /// Handles the WM_COMMAND message.
 /// </summary>
-void playlist_uielement_t::OnCommand(_In_ UINT notifyCode, _In_ int id, _In_ CWindow wnd) noexcept
+void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexcept
 {
     switch (id)
     {
@@ -144,7 +144,7 @@ void playlist_uielement_t::OnCommand(_In_ UINT notifyCode, _In_ int id, _In_ CWi
 /// <summary>
 /// Handles the WM_NOTIFY message.
 /// </summary>
-LRESULT playlist_uielement_t::OnNotify(_In_ int id, _In_ NMHDR * nmhd) noexcept
+LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
 {
     if (nmhd->idFrom != IDC_TREEVIEW)
         return 0;
@@ -288,7 +288,7 @@ LRESULT playlist_uielement_t::OnNotify(_In_ int id, _In_ NMHDR * nmhd) noexcept
 /// <summary>
 /// Handles the WM_MOUSEMOVE message.
 /// </summary>
-void playlist_uielement_t::OnMouseMove(_In_ UINT flags, _In_ CPoint point) noexcept
+void playlist_uielement_t::OnMouseMove(UINT flags, CPoint point) noexcept
 {
     _TreeView.DragMove(point);
 }
@@ -304,7 +304,7 @@ void playlist_uielement_t::OnMouseLeave() noexcept
 /// <summary>
 /// Handles the WM_LBUTTONUP message.
 /// </summary>
-void playlist_uielement_t::OnLButtonUp(_In_ UINT flags, _In_ CPoint point) noexcept
+void playlist_uielement_t::OnLButtonUp(UINT flags, CPoint point) noexcept
 {
     _TreeView.EndDrag(false);
 }

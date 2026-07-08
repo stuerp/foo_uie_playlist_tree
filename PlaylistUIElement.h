@@ -36,12 +36,12 @@ private:
 
     #pragma endregion
 
-    void OnCommand(_In_ UINT notifyCode, _In_ int id, _In_ CWindow wnd) noexcept;
-    LRESULT OnNotify(_In_ int id, _In_ NMHDR * nmhd) noexcept;
+    void OnCommand(UINT notifyCode, int id, CWindow wnd) noexcept;
+    LRESULT OnNotify(int id, NMHDR * nmhd) noexcept;
 
-    void OnMouseMove(_In_ UINT flags, _In_ CPoint point) noexcept;
+    void OnMouseMove(UINT flags, CPoint point) noexcept;
     void OnMouseLeave() noexcept;
-    void OnLButtonUp(_In_ UINT flags, _In_ CPoint point) noexcept;
+    void OnLButtonUp(UINT flags, CPoint point) noexcept;
 
     BEGIN_MSG_MAP(playlist_uielement_t)
         CHAIN_MSG_MAP(uielement_t)

@@ -11,7 +11,7 @@
 /// <summary>
 /// Creates an image list from the icons in the specified file.
 /// </summary>
-HIMAGELIST image_list_factory_t::Create(_In_ const std::string & filePath, _In_ uint32_t iconSize, _In_ uint32_t maxIcons) noexcept
+HIMAGELIST image_list_factory_t::Create(const std::string & filePath, uint32_t iconSize, uint32_t maxIcons) noexcept
 {
     #pragma warning(disable: 6388) // 'THIS_HINSTANCE' might not be '0': this does not adhere to the specification for the function 'ExtractIconW'.
 
@@ -54,7 +54,7 @@ HIMAGELIST image_list_factory_t::Create(_In_ const std::string & filePath, _In_ 
 /// <summary>
 /// Gets the number of icons in a module.
 /// </summary>
-uint32_t image_list_factory_t::GetIconCount(_In_ HMODULE hModule) noexcept
+uint32_t image_list_factory_t::GetIconCount(HMODULE hModule) noexcept
 {
     #pragma warning(disable: 5039) // 'EnumResourceTypesW': pointer or reference to potentially throwing function passed to 'extern "C"' function under -EHc. Undefined behavior may occur if this function throws an exception.
     #pragma warning(disable: 6387) // 'type' could be '0':  this does not adhere to the specification for the function 'EnumResourceNamesW'.
