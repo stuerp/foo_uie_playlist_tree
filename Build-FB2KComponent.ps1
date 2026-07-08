@@ -12,14 +12,14 @@
 [CmdletBinding()]
 param
 (
-    [parameter(Mandatory, HelpMessage='Target Name')]
-        [string] $TargetName,
-    [parameter(Mandatory, HelpMessage='Target File Name')]
-        [string] $TargetFileName,
+    [parameter(Mandatory, HelpMessage='Component Name')]
+        [string] $ComponentName,
+    [parameter(Mandatory, HelpMessage='Component File Name')]
+        [string] $SourceFileName,
     [parameter(Mandatory, HelpMessage='Platform')]
         [string] $Platform,
-    [parameter(Mandatory, HelpMessage='OutputPath')]
-        [string] $OutputPath
+    [parameter(Mandatory, HelpMessage='Source Path')]
+        [string] $SourcePath
 )
 
 #Requires -Version 7.2
@@ -31,23 +31,24 @@ $ErrorActionPreference = 'Stop';
 
 # Note: The working directory is the solution directory.
 
-Write-Host "Building package `"$TargetName`" ($Platform)...";
+Write-Host "Building package `"$ComponentName`" ($Platform)...";
 
 $OutPath     = '..\out';
-$PackagePath = "$OutPath\$TargetName";
+$PackagePath = "$OutPath\$ComponentName";
 
 # Create the package directory (including the x64 subdirectory)
 Write-Host "Creating directory `"$PackagePath`"...";
 
-$null = New-Item -Path $OutPath -Name "$TargetName\x64" -ItemType 'directory' -Force;
+$null = New-Item -Path $OutPath -Name "$ComponentName\x64" -ItemType 'directory' -Force;
+$null = New-Item -Path $OutPath -Name "$ComponentName\ARM64EC" -ItemType 'directory' -Force;
 
 if ($Platform -eq 'x64')
 {
-    if (Test-Path -Path "$OutputPath\$TargetFileName")
+    if (Test-Path -Path "$SourcePath\$SourceFileName")
     {
-        Write-Host "Copying $TargetFileName to `"$PackagePath\x64`"...";
+        Write-Host "Copying $SourceFileName to `"$PackagePath\$Platform`"...";
 
-        Copy-Item "$OutputPath\$TargetFileName" -Destination "$PackagePath\x64" -Force -Verbose;
+        Copy-Item "$SourcePath\$SourceFileName" -Destination "$PackagePath\$Platform" -Force -Verbose;
     }
 
     # Install the component in the foobar2000 x64 components directory.
@@ -57,13 +58,13 @@ if ($Platform -eq 'x64')
     {
         $ComponentPath = "$foobar2000Path\profile\user-components-x64";
 
-        Write-Host "Creating directory `"$ComponentPath\$TargetName`"...";
+        Write-Host "Creating directory `"$ComponentPath\$ComponentName`"...";
 
-        $null = New-Item -Path "$ComponentPath" -Name "$TargetName" -ItemType 'directory' -Force;
+        $null = New-Item -Path "$ComponentPath" -Name "$ComponentName" -ItemType 'directory' -Force;
 
         Write-Host "Installing x64 component in foobar2000 64-bit profile...";
 
-        Copy-Item "$PackagePath\x64\*.dll"  -Destination "$ComponentPath\$TargetName" -Force -Verbose;
+        Copy-Item "$PackagePath\x64\*.dll"  -Destination "$ComponentPath\$ComponentName" -Force -Verbose;
     }
     else
     {
@@ -72,11 +73,11 @@ if ($Platform -eq 'x64')
 }
 elseif ($Platform -eq 'Win32')
 {
-    if (Test-Path -Path "$OutputPath\$TargetFileName")
+    if (Test-Path -Path "$SourcePath\$SourceFileName")
     {
-        Write-Host "Copying $TargetFileName to `"$PackagePath`"...";
+        Write-Host "Copying $SourceFileName to `"$PackagePath`"...";
 
-        Copy-Item "$OutputPath\$TargetFileName" -Destination "$PackagePath" -Force -Verbose;
+        Copy-Item "$SourcePath\$SourceFileName" -Destination "$PackagePath" -Force -Verbose;
     }
 
     # Install the component in the foobar2000 x86 components directory.
@@ -86,13 +87,26 @@ elseif ($Platform -eq 'Win32')
     {
         $ComponentPath = "$foobar2000Path\profile\user-components";
 
-        Write-Host "Creating directory `"$ComponentPath\$TargetName`"...";
+        Write-Host "Creating directory `"$ComponentPath\$ComponentName`"...";
 
-        $null = New-Item -Path "$ComponentPath" -Name "$TargetName" -ItemType 'directory' -Force;
+        $null = New-Item -Path "$ComponentPath" -Name "$ComponentName" -ItemType 'directory' -Force;
 
         Write-Host "Installing x86 component in foobar2000 32-bit profile...";
 
-        Copy-Item "$PackagePath\*.dll"  -Destination "$ComponentPath\$TargetName" -Force -Verbose;
+        Copy-Item "$PackagePath\*.dll"  -Destination "$ComponentPath\$ComponentName" -Force -Verbose;
+    }
+    else
+    {
+        Write-Host "Skipped component installation: foobar2000 32-bit directory not found.";
+    }
+}
+elseif ($Platform -eq 'ARM64EC')
+{
+    if (Test-Path -Path "$SourcePath\$SourceFileName")
+    {
+        Write-Host "Copying $SourceFileName to `"$PackagePath\$Platform`"...";
+
+        Copy-Item "$SourcePath\$SourceFileName" -Destination "$PackagePath\$Platform" -Force -Verbose;
     }
     else
     {
@@ -105,10 +119,10 @@ else
     exit;
 }
 
-$ArchivePath = "..\out\$TargetName.fb2k-component";
+$ArchivePath = "$OutPath\$ComponentName.fb2k-component";
 
 Write-Host "Creating component archive `"$ArchivePath`"...";
 
-Compress-Archive -Force -Path ..\out\$TargetName\* -DestinationPath $ArchivePath;
+Compress-Archive -Force -Path $OutPath\$ComponentName\* -DestinationPath $ArchivePath;
 
 Write-Host "Done.";

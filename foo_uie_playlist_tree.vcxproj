@@ -143,7 +143,7 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
-      <AdditionalDependencies>$(SolutionDir)..\sdk\foobar2000\shared\shared-$(Platform).lib;$(SolutionDir)..\out\$(PlatformTarget)-$(Configuration)-columns_ui_sdk\columns_ui_sdk.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)..\sdk\foobar2000\shared\shared-$(Platform).lib;$(SolutionDir)..\out\$(PlatformTarget)-$(Configuration)\columns_ui_sdk.lib</AdditionalDependencies>
       <EnableUAC>false</EnableUAC>
     </Link>
     <PostBuildEvent>
@@ -175,7 +175,7 @@
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>$(SolutionDir)..\sdk\foobar2000\shared\shared-$(Platform).lib;$(SolutionDir)..\out\$(PlatformTarget)-$(Configuration)-columns_ui_sdk\columns_ui_sdk.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)..\sdk\foobar2000\shared\shared-$(Platform).lib;$(SolutionDir)..\out\$(PlatformTarget)-$(Configuration)\columns_ui_sdk.lib</AdditionalDependencies>
       <EnableUAC>false</EnableUAC>
     </Link>
     <PostBuildEvent>
@@ -267,7 +267,7 @@
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>$(SolutionDir)..\sdk\foobar2000\shared\shared-$(Platform).lib;$(SolutionDir)..\out\$(PlatformTarget)-$(Configuration)-columns_ui_sdk\columns_ui_sdk.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)..\sdk\foobar2000\shared\shared-$(Platform).lib;$(SolutionDir)..\out\$(PlatformTarget)-$(Configuration)\columns_ui_sdk.lib</AdditionalDependencies>
       <EnableUAC>false</EnableUAC>
     </Link>
     <PostBuildEvent>
@@ -299,7 +299,7 @@
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>$(SolutionDir)..\sdk\foobar2000\shared\shared-$(Platform).lib;$(SolutionDir)..\out\$(PlatformTarget)-$(Configuration)-columns_ui_sdk\columns_ui_sdk.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(SolutionDir)..\sdk\foobar2000\shared\shared-$(Platform).lib;$(SolutionDir)..\out\$(PlatformTarget)-$(Configuration)\columns_ui_sdk.lib</AdditionalDependencies>
       <EnableUAC>false</EnableUAC>
     </Link>
     <PostBuildEvent>
