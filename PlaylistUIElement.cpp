@@ -469,10 +469,19 @@ void playlist_uielement_t::FromJSON(json object, const GUID & parentId) noexcept
 
     for (auto Node : Nodes)
     {
-        std::string IdText = Node.value("id", IdText);
-        std::string Name   = Node.value("name", Name);
-        bool IsFolder      = Node.value("isFolder", IsFolder);
-        bool IsExpanded    = Node.value("isExpanded", IsExpanded);
+        std::string IdText        = Node.value("id", IdText);
+        std::string Name          = Node.value("name", Name);
+
+        const auto & Image = Node["image"];
+
+        if (!Image.is_null())
+        {
+            std::string ImageFilePath = Image.value("filePath", ImageFilePath);
+            int32_t ImageIndex        = Node.value("index", ImageIndex);
+        }
+
+        bool IsFolder             = Node.value("isFolder", IsFolder);
+        bool IsExpanded           = Node.value("isExpanded", IsExpanded);
 
         GUID Id = msc::GUIDFromUTF8(IdText);
 
@@ -482,9 +491,9 @@ void playlist_uielement_t::FromJSON(json object, const GUID & parentId) noexcept
         {
             _FolderManager->CreateFolder(Id, Name);
 
-            const auto Children = Node["nodes"];
+            const auto & Children = Node["nodes"];
 
-            if (Children.size() != 0)
+            if (!Children.is_null())
                 FromJSON(Node, Id);
         }
     }

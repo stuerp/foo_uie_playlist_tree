@@ -105,6 +105,13 @@ ui_element_config::ptr duielement_t::get_configuration()
 
         (*node)["id"]       = msc::GUIDToUTF8(Node->Id);
         (*node)["name"]     = Node->Name;
+
+        (*node)["image"]    =
+        {
+            { "filePath", "test" },
+            { "index", 42 }
+        };
+
         (*node)["isFolder"] = Node->IsFolder;
 
         if (Node->IsFolder)
