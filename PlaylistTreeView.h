@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsTreeView.h (2026.07.07) P. Stuer **/
+/** $VER: PlaylistsTreeView.h (2026.07.08) P. Stuer **/
 
 #pragma once
 
@@ -24,48 +24,46 @@ public:
 
     virtual ~playlist_tree_view_t() noexcept { };
 
-    std::string GetText(_In_ const GUID id) const noexcept;
-    void SetText(_In_ const GUID id, _In_ const std::string & text) const noexcept;
+    std::string GetText(const GUID id) const noexcept;
+    void SetName(const GUID id, const std::string & name) const noexcept;
 
-    void AddItem(_In_ const GUID id, _In_ const std::string & name, _In_ const std::string & text, _In_ bool isFolder) const noexcept;
-    void RemoveItem(_In_ const GUID id) const noexcept;
+    void AddItem(const GUID & id, const std::string & name, bool isFolder, bool isExpanded, const GUID & parentId) const noexcept;
+    void RemoveItem(const GUID id) const noexcept;
 
     void Clear() const noexcept override;
 
-    HTREEITEM FindItem(_In_ const GUID id) const noexcept;
+    HTREEITEM FindItem(const GUID & id) const noexcept;
 
     /// <summary>
-    /// Serializes this intance to JSON.
+    /// Serializes this instance to JSON.
     /// </summary>
-    template<typename Visitor> bool ToJSON(_In_ Visitor && visitor, json::array_t * nodes) const noexcept
+    template<typename Visitor> bool ToJSON(Visitor && visitor, json::array_t * nodes) const noexcept
     {
-        return ToJSON_(NULL, visitor, nodes);
+        return ToJSON_(TreeView_GetRoot(Get()), visitor, nodes);
     }
 
 private:
     /// <summary>
-    /// Serializes this intance to JSON.
+    /// Serializes this instance to JSON.
     /// </summary>
-    template<typename Visitor> bool ToJSON_(HTREEITEM hParent, _In_ Visitor && visitor, json::array_t * nodes) const noexcept
+    template<typename Visitor> bool ToJSON_(HTREEITEM hItem, Visitor && visitor, json::array_t * nodes) const noexcept
     {
-        HTREEITEM hItem = (hParent == NULL) ? TreeView_GetRoot(Get()) : TreeView_GetChild(Get(), hParent);
-
         while (hItem != NULL)
         {
-            json::object_t * Object = new json::object_t;
+            json::object_t Node;
 
-            if (!visitor(hItem, Object))
+            if (!visitor(hItem, &Node))
                 return false;
 
             json::array_t Nodes;
 
-            if (!ToJSON_(hItem, visitor, &Nodes))
+            if (!ToJSON_(TreeView_GetChild(Get(), hItem), visitor, &Nodes))
                 return false;
 
             if (Nodes.size() != 0)
-                (*Object)["nodes"] = Nodes;
+                Node["nodes"] = Nodes;
 
-            (*nodes).push_back(*Object);
+            (*nodes).push_back(Node);
 
             hItem = TreeView_GetNextSibling(Get(), hItem);
         }

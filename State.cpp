@@ -1,5 +1,5 @@
 
-/** $VER: State.cpp (2026.07.05) P. Stuer **/
+/** $VER: State.cpp (2026.07.07) P. Stuer **/
 
 #include "pch.h"
 
@@ -22,6 +22,8 @@ void state_t::Reset() noexcept
 {
     _NameFormat = "%node_name%$if(%is_folder%,,' ('%count%')')";
 //  _NameFormat = "%node_name%$if(%is_folder%,,' ('%count%') '%playlist_duration% %playlist_size%)";
+
+    _Object.clear();
 }
 
 /// <summary>
@@ -40,9 +42,11 @@ void state_t::FromJSON(const char * data, size_t size) noexcept
     if ((data == nullptr) || (size == 0))
         return;
 
-    json Object = json::parse(data, data + size, nullptr, true);
+    const json Object = json::parse(data, data + size, nullptr, true);
 
     _NameFormat = Object.value("nameFormat", _NameFormat);
+
+    _Object = Object;
 }
 
 /// <summary>

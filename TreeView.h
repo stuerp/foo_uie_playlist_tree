@@ -1,12 +1,11 @@
 
-/** $VER: TreeView.h (2026.07.07) P. Stuer **/
+/** $VER: TreeView.h (2026.07.08) P. Stuer **/
 
 #pragma once
 
-#include <SDKDDKVer.h>
-
 #define NOMINMAX
 
+#include <SDKDDKVer.h>
 #include <Windows.h>
 
 class tree_view_t
@@ -21,7 +20,7 @@ public:
 
     virtual ~tree_view_t() noexcept { };
 
-    bool Create(_In_ HWND hWndParent, _In_ size_t id) noexcept;
+    bool Create(HWND hWndParent, size_t id) noexcept;
     void Destroy() noexcept;
 
     HWND Get() const noexcept
@@ -29,13 +28,13 @@ public:
         return _hTreeView;
     }
 
-    void SetImageList(_In_ HIMAGELIST hImageList) const noexcept
+    void SetImageList(HIMAGELIST hImageList) const noexcept
     {
         TreeView_SetImageList(_hTreeView, hImageList, TVSIL_NORMAL);
         TreeView_SetImageList(_hTreeView, hImageList, TVSIL_STATE);
     }
 
-    void SelectItem(_In_ HTREEITEM hTreeItem) const noexcept
+    void SelectItem(HTREEITEM hTreeItem) const noexcept
     {
         if (TreeView_SelectItem(_hTreeView, hTreeItem) != TRUE)
             return;
@@ -48,17 +47,28 @@ public:
         return TreeView_GetSelection(_hTreeView);
     }
 
-    HTREEITEM GetItem(_In_ const POINT & point) noexcept;
+    HTREEITEM GetItem(const POINT & point) noexcept;
 
-    std::string GetText(_In_ HTREEITEM hItem) const noexcept;
-    void * GetData(_In_ HTREEITEM hItem) const noexcept;
+    std::string GetText(HTREEITEM hItem) const noexcept;
+    void * GetData(HTREEITEM hItem) const noexcept;
 
-    void SetText(_In_ HTREEITEM hItem, _In_ const std::string & text) const noexcept;
+    void SetText(HTREEITEM hItem, const std::string & text) const noexcept;
 
-    HTREEITEM AddItem(_In_ HTREEITEM hParent, _In_ HTREEITEM hInsertAfter, _In_ const std::string & text, _In_ int iconIndex, _In_ const void * data) const noexcept;
-    bool RemoveItem(_In_ HTREEITEM hItem) const noexcept;
+    HTREEITEM AddItem(HTREEITEM hParent, HTREEITEM hInsertAfter, UINT state, const void * data) const noexcept;
+    bool RemoveItem(HTREEITEM hItem) const noexcept;
 
     virtual void Clear() const noexcept;
+
+    // Forces an update of the item.
+    void RefreshItem(HTREEITEM hItem) const noexcept
+    {
+        RECT r;
+
+        if (!TreeView_GetItemRect(_hTreeView, hItem, &r, FALSE))
+            return;
+
+        ::InvalidateRect(Get(), &r, TRUE);
+    }
 
     enum DropZone
     {
@@ -69,11 +79,11 @@ public:
         Bottom
     };
 
-    void MoveItem(_In_ HTREEITEM hParentItem, _In_ HTREEITEM hChildItem, _In_ DropZone dropZone) const noexcept;
+    void MoveItem(HTREEITEM hParentItem, HTREEITEM hChildItem, DropZone dropZone) const noexcept;
 
-    void BeginDrag(_In_ const NMTREEVIEW * nmtv) noexcept;
-    void DragMove(_In_ const CPoint & point) noexcept;
-    void EndDrag(_In_ bool cancel) noexcept;
+    void BeginDrag(const NMTREEVIEW * nmtv) noexcept;
+    void DragMove(const CPoint & point) noexcept;
+    void EndDrag(bool cancel) noexcept;
 
     /// <summary>
     /// Removes the insert marker.
@@ -86,7 +96,7 @@ public:
     /// <summary>
     /// Recursively walks the tree starting from the root item.
     /// </summary>
-    template<typename Visitor> bool Walk(_In_ Visitor && visitor, void * context = nullptr) const noexcept
+    template<typename Visitor> bool Walk(Visitor && visitor, void * context = nullptr) const noexcept
     {
         // Visit the root and its siblings.
         HTREEITEM hItem = TreeView_GetRoot(_hTreeView);
@@ -108,7 +118,7 @@ public:
     /// <summary>
     /// Recursively walks the branch starting with the specified item.
     /// </summary>
-    template<typename Visitor> bool Walk(HTREEITEM hParent, _In_ Visitor && visitor, void * context = nullptr) const noexcept
+    template<typename Visitor> bool Walk(HTREEITEM hParent, Visitor && visitor, void * context = nullptr) const noexcept
     {
         HTREEITEM hItem = TreeView_GetChild(_hTreeView, hParent);
 
@@ -130,7 +140,7 @@ private:
     /// <summary>
     /// Gets the item zone that contains the specified point.
     /// </summary>
-    DropZone GetItemZone(_In_ const RECT & r, _In_ const POINT & pt) const noexcept
+    DropZone GetItemZone(const RECT & r, const POINT & pt) const noexcept
     {
         // Divide the item into 3 zones.
         const LONG ZoneHeight = (r.bottom - r.top) / 3;

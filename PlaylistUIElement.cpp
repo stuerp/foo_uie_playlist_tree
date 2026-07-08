@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.cpp (2026.07.07) P. Stuer **/
+/** $VER: PlaylistsUIElement.cpp (2026.07.08) P. Stuer **/
 
 #include "pch.h"
 
@@ -35,8 +35,6 @@ playlist_uielement_t::~playlist_uielement_t()
 /// </summary>
 LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
 {
-_State.Reset(); // TODO: Remove me
-
     auto Result = uielement_t::OnCreate(cs);
 
     if (Result != 0)
@@ -58,7 +56,10 @@ _State.Reset(); // TODO: Remove me
         _TreeView.SetImageList(hImageList);
     }
 
-    GetPlaylists();
+//_State._Object.clear(); // FIXME
+
+    FromJSON(_State._Object, { });
+//GetPlaylists(); // FIXME
 
     // Select the active playlist.
     {
@@ -110,16 +111,11 @@ void playlist_uielement_t::OnCommand(_In_ UINT notifyCode, _In_ int id, _In_ CWi
             if (!SUCCEEDED(hResult))
                 return;
 
-            _FolderManager->CreateFolder(Name, Id);
+            _FolderManager->CreateFolder(Id, Name);
 
-            pfc::string Text;
+            GUID ParentId;
 
-            hResult = title_formatter_t::Evaluate(_State._NameFormat, Id, Text);
-
-            if (!SUCCEEDED(hResult))
-                return;
-
-            _TreeView.AddItem(Id, Name, Text.c_str(), true);
+            _TreeView.AddItem(Id, Name, true, false, ParentId);
             break;
         }
 
@@ -198,6 +194,36 @@ LRESULT playlist_uielement_t::OnNotify(_In_ int id, _In_ NMHDR * nmhd) noexcept
             if (nmtv->nVKey == VK_ESCAPE)
                 _TreeView.EndDrag(true);
 
+            break;
+        }
+
+        // Handles a need for display or sort info.
+        case TVN_GETDISPINFO:
+        {
+            auto & tvi = ((NMTVDISPINFOW *) nmhd)->item;
+
+            auto Node = (const node_t *) tvi.lParam;
+
+            if (Node == nullptr)
+                break;
+
+            if (tvi.mask & TVIF_TEXT)
+            {
+                pfc::string Text;
+
+                HRESULT hResult = title_formatter_t::Evaluate(_State._NameFormat, Node->Id, Text);
+
+                if (!SUCCEEDED(hResult))
+                    break;
+
+                ::wcscpy_s(tvi.pszText, (size_t) tvi.cchTextMax, msc::UTF8ToWide(Text.c_str()).c_str());
+            }
+
+            if (tvi.mask & (TVIF_IMAGE | TVIF_SELECTEDIMAGE))
+            {
+                tvi.iImage =
+                tvi.iSelectedImage = Node->IsFolder ? Icon::Folder : Icon::File;
+            }
             break;
         }
 
@@ -366,14 +392,7 @@ void playlist_uielement_t::on_playlist_created(size_t index, const char * name, 
 
     const auto Id = _PlaylistManager->playlist_get_guid(index);
 
-    pfc::string Text;
-
-    HRESULT hResult = title_formatter_t::Evaluate(_State._NameFormat, Id, Text);
-
-    if (!SUCCEEDED(hResult))
-        return;
-
-    _TreeView.AddItem(Id, Name.c_str(), Text.c_str(), false);
+    _TreeView.AddItem(Id, Name.c_str(), false, false, { });
 }
 
 /// <summary>
@@ -415,12 +434,9 @@ void playlist_uielement_t::on_playlist_renamed(size_t index, const char * newNam
 
     pfc::string Name;
 
-    HRESULT hResult = title_formatter_t::Evaluate(_State._NameFormat, Id, Name);
+    _PlaylistManager->playlist_get_name(index, Name);
 
-    if (!SUCCEEDED(hResult))
-        return;
-
-    _TreeView.SetText(Id, Name.c_str());
+    _TreeView.SetName(Id, Name.c_str());
 }
 
 /// <summary>
@@ -445,6 +461,36 @@ void playlist_uielement_t::on_playlist_locked(size_t index, bool isLocked) noexc
 }
 
 /// <summary>
+/// 
+/// </summary>
+void playlist_uielement_t::FromJSON(json object, const GUID & parentId) noexcept
+{
+    const auto & Nodes = object["nodes"];
+
+    for (auto Node : Nodes)
+    {
+        std::string IdText = Node.value("id", IdText);
+        std::string Name   = Node.value("name", Name);
+        bool IsFolder      = Node.value("isFolder", IsFolder);
+        bool IsExpanded    = Node.value("isExpanded", IsExpanded);
+
+        GUID Id = msc::GUIDFromUTF8(IdText);
+
+        _TreeView.AddItem(Id, Name, IsFolder, IsExpanded, parentId);
+
+        if (IsFolder)
+        {
+            _FolderManager->CreateFolder(Id, Name);
+
+            const auto Children = Node["nodes"];
+
+            if (Children.size() != 0)
+                FromJSON(Node, Id);
+        }
+    }
+}
+
+/// <summary>
 /// Gets all the playlists and adds them to the treeview.
 /// </summary>
 void playlist_uielement_t::GetPlaylists() noexcept
@@ -453,20 +499,13 @@ void playlist_uielement_t::GetPlaylists() noexcept
 
     for (size_t PlaylistIndex = 0; PlaylistIndex < PlaylistCount; ++PlaylistIndex)
     {
+        const auto Id = _PlaylistManager->playlist_get_guid(PlaylistIndex);
+
         pfc::string Name;
 
         _PlaylistManager->playlist_get_name(PlaylistIndex, Name);
 
-        const auto Id = _PlaylistManager->playlist_get_guid(PlaylistIndex);
-
-        pfc::string Text;
-
-        HRESULT hResult = title_formatter_t::Evaluate(_State._NameFormat, Id, Text);
-
-        if (!SUCCEEDED(hResult))
-            break;
-
-        _TreeView.AddItem(Id, Name.c_str(), Text.c_str(), false);
+        _TreeView.AddItem(Id, Name.c_str(), false, false, { });
     }
 }
 

@@ -1,5 +1,5 @@
 
-/** $VER: TreeView.cpp (2026.07.07) P. Stuer **/
+/** $VER: TreeView.cpp (2026.07.08) P. Stuer **/
 
 #include "pch.h"
 
@@ -11,7 +11,7 @@
 /// <summary>
 /// Creates the control.
 /// </summary>
-bool tree_view_t::Create(_In_ HWND hWndParent, _In_ size_t id) noexcept
+bool tree_view_t::Create(HWND hWndParent, size_t id) noexcept
 {
     const DWORD Styles = WS_CHILD | WS_BORDER | WS_VISIBLE | WS_VSCROLL | TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | TVS_EDITLABELS | TVS_SHOWSELALWAYS;// | TVS_TRACKSELECT | TVS_SINGLEEXPAND | TVS_INFOTIP | TVS_FULLROWSELECT;
 
@@ -35,10 +35,8 @@ void tree_view_t::Destroy() noexcept
 /// <summary>
 /// Adds the specified item to the treeview.
 /// </summary>
-HTREEITEM tree_view_t::AddItem(_In_ HTREEITEM hParent, _In_ HTREEITEM hInsertAfter, _In_ const std::string & text, _In_ int iconIndex, _In_ const void * data) const noexcept
+HTREEITEM tree_view_t::AddItem(HTREEITEM hParent, HTREEITEM hInsertAfter, UINT state, const void * data) const noexcept
 {
-    std::wstring Text = msc::UTF8ToWide(text).c_str();
-
     const TVINSERTSTRUCTW tvis
     {
         .hParent      = hParent,
@@ -46,9 +44,10 @@ HTREEITEM tree_view_t::AddItem(_In_ HTREEITEM hParent, _In_ HTREEITEM hInsertAft
         .item         =
         {
             .mask           = Mask,
-            .pszText        = (LPWSTR) Text.c_str(),
-            .iImage         = iconIndex,
-            .iSelectedImage = iconIndex,
+            .state          = state,
+            .pszText        = LPSTR_TEXTCALLBACKW,
+            .iImage         = I_IMAGECALLBACK,
+            .iSelectedImage = I_IMAGECALLBACK,
             .lParam         = (LPARAM) data,
         },
     };
@@ -58,10 +57,10 @@ HTREEITEM tree_view_t::AddItem(_In_ HTREEITEM hParent, _In_ HTREEITEM hInsertAft
     return hTreeItem;
 }
 
-/// <summary>
+// <summary>
 /// Removes the specified item from the tree.
 /// </summary>
-bool tree_view_t::RemoveItem(_In_ HTREEITEM hItem) const noexcept
+bool tree_view_t::RemoveItem(HTREEITEM hItem) const noexcept
 {
     return (TreeView_DeleteItem(_hTreeView, hItem) == TRUE);
 }
@@ -77,7 +76,7 @@ void tree_view_t::Clear() const noexcept
 /// <summary>
 /// Moves an item.
 /// </summary>
-void tree_view_t::MoveItem(_In_ HTREEITEM hPivotItem, _In_ HTREEITEM hChildItem, _In_ DropZone dropZone) const noexcept
+void tree_view_t::MoveItem(HTREEITEM hPivotItem, HTREEITEM hChildItem, DropZone dropZone) const noexcept
 {
     wchar_t Text[512] = { };
 
@@ -149,7 +148,7 @@ void tree_view_t::MoveItem(_In_ HTREEITEM hPivotItem, _In_ HTREEITEM hChildItem,
 /// <summary>
 /// Gets the item at the specified point.
 /// </summary>
-HTREEITEM tree_view_t::GetItem(_In_ const POINT & point) noexcept
+HTREEITEM tree_view_t::GetItem(const POINT & point) noexcept
 {
     TVHITTESTINFO ht = { .pt = point };
 
@@ -163,7 +162,7 @@ HTREEITEM tree_view_t::GetItem(_In_ const POINT & point) noexcept
 /// <summary>
 /// Gets the text of the specified item.
 /// </summary>
-std::string tree_view_t::GetText(_In_ HTREEITEM hItem) const noexcept
+std::string tree_view_t::GetText(HTREEITEM hItem) const noexcept
 {
     std::wstring Text;
 
@@ -186,7 +185,7 @@ std::string tree_view_t::GetText(_In_ HTREEITEM hItem) const noexcept
 /// <summary>
 /// Sets the text of the specified item.
 /// </summary>
-void tree_view_t::SetText(_In_ HTREEITEM hItem, _In_ const std::string & text) const noexcept
+void tree_view_t::SetText(HTREEITEM hItem, const std::string & text) const noexcept
 {
     std::wstring Text = msc::UTF8ToWide(text.c_str());
 
@@ -194,7 +193,7 @@ void tree_view_t::SetText(_In_ HTREEITEM hItem, _In_ const std::string & text) c
     {
         .mask    = TVIF_TEXT,
         .hItem   = hItem,
-        .pszText = (LPWSTR) text.c_str(),
+        .pszText = (LPWSTR) Text.c_str(),
     };
 
     TreeView_SetItem(_hTreeView, &tvix);
@@ -203,7 +202,7 @@ void tree_view_t::SetText(_In_ HTREEITEM hItem, _In_ const std::string & text) c
 /// <summary>
 /// Gets the data associated with the item.
 /// </summary>
-void * tree_view_t::GetData(_In_ HTREEITEM hItem) const noexcept
+void * tree_view_t::GetData(HTREEITEM hItem) const noexcept
 {
     TVITEMEXW tvi
     {
@@ -220,7 +219,7 @@ void * tree_view_t::GetData(_In_ HTREEITEM hItem) const noexcept
 /// <summary>
 /// Begins a drag operation.
 /// </summary>
-void tree_view_t::BeginDrag(_In_ const NMTREEVIEW * nmtv) noexcept
+void tree_view_t::BeginDrag(const NMTREEVIEW * nmtv) noexcept
 {
     _hDragImageList = TreeView_CreateDragImage(_hTreeView, nmtv->itemNew.hItem);
 
@@ -247,7 +246,7 @@ void tree_view_t::BeginDrag(_In_ const NMTREEVIEW * nmtv) noexcept
 /// <summary>
 /// Moves the drag item.
 /// </summary>
-void tree_view_t::DragMove(_In_ const CPoint & point) noexcept
+void tree_view_t::DragMove(const CPoint & point) noexcept
 {
     if (_hDragItem == NULL)
         return;
@@ -299,7 +298,7 @@ void tree_view_t::DragMove(_In_ const CPoint & point) noexcept
 /// <summary>
 /// Ends the drag operation.
 /// </summary>
-void tree_view_t::EndDrag(_In_ bool cancel) noexcept
+void tree_view_t::EndDrag(bool cancel) noexcept
 {
     if (_hDragItem == NULL)
         return;

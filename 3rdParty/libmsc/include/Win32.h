@@ -1,5 +1,5 @@
 
-/** $VER: Win32.h (2026.07.07) P. Stuer **/
+/** $VER: Win32.h (2026.07.08) P. Stuer **/
 
 #pragma once
 
@@ -92,6 +92,20 @@ namespace msc
             return (::PtInRect(&Value, pt) != 0);
         }
     };
+
+    std::wstring GUIDToWide(const GUID & id) noexcept;
+
+    inline std::string GUIDToUTF8(const GUID & id) noexcept
+    {
+        return WideToUTF8(GUIDToWide(id));
+    }
+
+    GUID GUIDFromWide(const std::wstring & text) noexcept;
+
+    inline GUID GUIDFromUTF8(const std::string & text) noexcept
+    {
+        return GUIDFromWide(UTF8ToWide(text));
+    }
 }
 
 // std::hash specialization

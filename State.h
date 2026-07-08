@@ -1,5 +1,5 @@
 
-/** $VER: State.h (2026.07.05) P. Stuer **/
+/** $VER: State.h (2026.07.07) P. Stuer **/
 
 #pragma once
 
@@ -33,4 +33,7 @@ public:
     std::string _NameFormat;
 
     const uint32_t _SchemaVersion = 1; // v0.1.0.0
+
+    /* Not serialized */
+    json _Object;
 };

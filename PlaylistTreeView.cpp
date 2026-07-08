@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsTreeView.cpp (2026.07.07) P. Stuer **/
+/** $VER: PlaylistsTreeView.cpp (2026.07.08) P. Stuer **/
 
 #include "pch.h"
 
@@ -11,7 +11,7 @@
 /// <summary>
 /// Gets the text of the specified item.
 /// </summary>
-std::string playlist_tree_view_t::GetText(_In_ const GUID id) const noexcept
+std::string playlist_tree_view_t::GetText(const GUID id) const noexcept
 {
     HTREEITEM hItem = FindItem(id);
 
@@ -24,30 +24,39 @@ std::string playlist_tree_view_t::GetText(_In_ const GUID id) const noexcept
 /// <summary>
 /// Sets the text of the specified item.
 /// </summary>
-void playlist_tree_view_t::SetText(_In_ const GUID id, _In_ const std::string & text) const noexcept
+void playlist_tree_view_t::SetName(const GUID id, const std::string & name) const noexcept
 {
     HTREEITEM hItem = FindItem(id);
 
     if (hItem == NULL)
         return;
 
-    tree_view_t::SetText(hItem, text);
+    auto Node = (node_t *) GetData(hItem);
+
+    if (Node == nullptr)
+        return;
+
+    Node->Name = name;
+
+    RefreshItem(hItem);
 }
 
 /// <summary>
 /// Adds an item.
 /// </summary>
-void playlist_tree_view_t::AddItem(_In_ const GUID id, _In_ const std::string & name, _In_ const std::string & text, _In_ bool isFolder) const noexcept
+void playlist_tree_view_t::AddItem(const GUID & id, const std::string & name, bool isFolder, bool isExpanded, const GUID & parentId) const noexcept
 {
-    auto Node = new node_t(name, id, false);
+    auto Node = new node_t(id, name, isFolder, isExpanded);
 
-    tree_view_t::AddItem(TVI_ROOT, TVI_LAST, text, isFolder ? Icon::Folder :  Icon::File, Node);
+    HTREEITEM hParent = FindItem(parentId);
+
+    tree_view_t::AddItem((hParent == NULL) ? TVI_ROOT : hParent, TVI_LAST, TVIS_EXPANDED, Node);
 }
 
 /// <summary>
 /// Removes the specified item.
 /// </summary>
-void playlist_tree_view_t::RemoveItem(_In_ const GUID id) const noexcept
+void playlist_tree_view_t::RemoveItem(const GUID id) const noexcept
 {
     HTREEITEM hItem = FindItem(id);
 
@@ -83,7 +92,7 @@ void playlist_tree_view_t::Clear() const noexcept
 /// <summary>
 /// Find the specified node.
 /// </summary>
-HTREEITEM playlist_tree_view_t::FindItem(_In_ const GUID id) const noexcept
+HTREEITEM playlist_tree_view_t::FindItem(const GUID & id) const noexcept
 {
     HTREEITEM hFoundItem = NULL;
 

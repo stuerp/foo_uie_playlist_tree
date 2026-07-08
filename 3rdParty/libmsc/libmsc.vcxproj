@@ -38,6 +38,7 @@
     </ClCompile>
     <ClCompile Include="src\Stream.cpp" />
     <ClCompile Include="src\Support.cpp" />
+    <ClCompile Include="src\Win32.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="3rdParty\ghc\filesystem.hpp" />

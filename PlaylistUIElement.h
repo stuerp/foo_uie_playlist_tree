@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.h (2026.07.06) P. Stuer **/
+/** $VER: PlaylistsUIElement.h (2026.07.08) P. Stuer **/
 
 #pragma once
 
@@ -88,6 +88,7 @@ private:
     #pragma endregion
 
 private:
+    void FromJSON(json object, const GUID & parentId) noexcept;
     void GetPlaylists() noexcept;
     void SelectPlaylist(size_t playlistIndex) const noexcept;
 
@@ -100,4 +101,19 @@ private:
     static_api_ptr_t<folder_manager_t> _FolderManager;
 
     HTREEITEM _hDropTarget = NULL;
+/*
+
+    // shell32.dll icons
+    enum Icon : int
+    {
+        File    = 0,
+        Folder  = 3
+    };
+*/
+    // imageres.dll icons
+    enum Icon : int
+    {
+        File    = 126,
+        Folder  = 4
+    };
 };

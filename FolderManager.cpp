@@ -37,15 +37,15 @@ public:
     /// <summary>
     /// Creates a new folder.
     /// </summary>
-    virtual void CreateFolder(_In_ const std::string & text, _In_ GUID id)
+    virtual void CreateFolder(const GUID & id, const std::string & name)
     {
-        _Items.emplace(id, folder_t(text));
+        _Items.emplace(id, folder_t(name));
     }
 
     /// <summary>
     /// Gets the name of the specified folder.
     /// </summary>
-    virtual void GetFolderName(_In_ GUID id, _Out_ std::string & text) const
+    virtual void GetFolderName(const GUID & id, std::string & text) const
     {
         auto Iter = _Items.find(id);
 

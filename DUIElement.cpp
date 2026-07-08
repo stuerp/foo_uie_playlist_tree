@@ -6,7 +6,7 @@
 #include "DUIElement.h"
 #include "Node.h"
 
-#include <helpers/BumpableElem.h>
+#include <helpers\BumpableElem.h>
 
 #pragma hdrstop
 
@@ -94,7 +94,7 @@ ui_element_config::ptr duielement_t::get_configuration()
 {
     auto Object = _State.ToJSON();
 
-    auto Nodes = new json::array_t();
+    json::array_t Nodes;
 
     _TreeView.ToJSON([&](HTREEITEM hItem, json::object_t * node) -> bool
     {
@@ -103,18 +103,23 @@ ui_element_config::ptr duielement_t::get_configuration()
         if (Node == nullptr)
             return true; // Continue enumerating. Should not occur.
 
-        (*node)["name"] = Node->Name;
+        (*node)["id"]       = msc::GUIDToUTF8(Node->Id);
+        (*node)["name"]     = Node->Name;
+        (*node)["isFolder"] = Node->IsFolder;
+
+        if (Node->IsFolder)
+            (*node)["isExpanded"] = Node->IsExpanded;
 
         return true; // Continue enumerating.
-    }, Nodes);
+    }, &Nodes);
 
     _TreeView.Clear();
 
-    Object["nodes"] = *Nodes;
+    Object["nodes"] = Nodes;
 
     std::string Config = Object.dump(-1);
 
-    ::OutputDebugStringA(Object.dump(4).c_str());
+::OutputDebugStringA(Object.dump(4).c_str()); // FIXME
 
     return ui_element_config::g_create(g_get_guid(), Config.c_str(), Config.size());
 }
