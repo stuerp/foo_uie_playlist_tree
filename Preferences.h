@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.h (2026.07.08) **/
+/** $VER: Preferences.h (2026.07.09) **/
 
 #pragma once
 
@@ -75,5 +75,5 @@
 // IconList
 #define X_A17   X_A16
 #define Y_A17   Y_A16 + H_A16 + IY
-#define W_A17   128
-#define H_A17   128
+#define W_A17   W_A16
+#define H_A17   64

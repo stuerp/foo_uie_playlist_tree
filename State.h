@@ -12,6 +12,12 @@ using json = nlohmann::ordered_json;
 
 #pragma warning(pop)
 
+struct image_t
+{
+    std::string _FilePath;
+    uint32_t _IconIndex;
+};
+
 /// <summary>
 /// Represents the state of the component.
 /// </summary>
@@ -32,11 +38,7 @@ public:
 public:
     std::string _NameFormat;
 
-    std::string _FolderImageFilePath;
-    int32_t _FolderImageIconIndex;
-
-    std::string _PlaylistImageFilePath;
-    int32_t _PlaylistImageIconIndex;
+    std::vector<image_t> _Images;
 
     const uint32_t _SchemaVersion = 1; // v0.1.0.0
 

@@ -70,7 +70,7 @@ public:
         {
             GetDlgItemTextW(IDC_TEXT_FORMAT, Text.data(), (int) Text.size());
 
-            _State._NameFormat= msc::WideToUTF8(Text);
+            _State._NameFormat = msc::WideToUTF8(Text).c_str();
         }
 
         {
@@ -82,7 +82,7 @@ public:
         {
             GetDlgItemTextW(IDC_FILE_PATH, Text.data(), (int) Text.size());
 
-            _State._FolderImageFilePath = msc::WideToUTF8(Text);
+//          _State._FolderImageFilePath = msc::WideToUTF8(Text);
         }
 
         OnChanged();
@@ -107,9 +107,9 @@ public:
         MSG_WM_INITDIALOG(OnInitDialog)
 
         COMMAND_HANDLER_EX(IDC_TEXT_FORMAT, EN_CHANGE,      OnEditChange)
-
         COMMAND_HANDLER_EX(IDC_FILE_PATH,   EN_CHANGE,      OnEditChange)
-        COMMAND_HANDLER_EX(IDC_IMAGE,       EN_SELCHANGE,   OnSelectionChange)
+
+        COMMAND_HANDLER_EX(IDC_IMAGE,       CBN_SELCHANGE,  OnSelectionChange)
     END_MSG_MAP()
 
 private:
@@ -139,20 +139,20 @@ private:
 
             const WCHAR * Labels[] = { L"Folder", L"Playlist", };
 
-//          assert(((size_t) RetentionUnit::Count == _countof(Labels)));
-
             for (auto Label : Labels)
                 w.AddString(Label);
 
             w.SetCurSel(0);
         }
 
-        SetDlgItemTextW(IDC_FILE_PATH,   msc::UTF8ToWide(_State._FolderImageFilePath).c_str());
+        auto & Image = _State._Images[0];
 
         {
+            SetDlgItemTextW(IDC_FILE_PATH, msc::UTF8ToWide(Image._FilePath).c_str());
+
             const auto IconSize = (uint32_t) ::GetSystemMetrics(SM_CXSMICON);
 
-            HIMAGELIST hImageList = image_list_factory_t::Create(_State._FolderImageFilePath, IconSize);
+            HIMAGELIST hImageList = image_list_factory_t::Create(Image._FilePath, IconSize);
 
             if (hImageList == NULL)
                 return;
@@ -161,10 +161,7 @@ private:
 
             ::SendMessageW(hIconList, ILM_SETIMAGELIST, 0, (LPARAM) hImageList);
 
-            for (size_t i = 0; i < 256; ++i)
-                ::SendMessageW(hIconList, ILM_ADDITEM, 0, (LPARAM) i);
-
-            ::SendMessageW(hIconList, ILM_SELECTITEM, (WPARAM) _State._FolderImageIconIndex, 0);
+            ::SendMessageW(hIconList, ILM_SELECTITEM, (WPARAM) Image._IconIndex, 0);
         }
 
 //      ((CCheckBox) GetDlgItem(IDC_WRITE_TO_TAGS)).SetCheck((_Configuration._WriteToTags == WriteToTags::Always) ? BST_CHECKED : BST_UNCHECKED);
@@ -173,8 +170,34 @@ private:
     /// <summary>
     /// Handles an update of the selected item of a combo box.
     /// </summary>
-    void OnSelectionChange(UINT, int, CWindow) noexcept
+    void OnSelectionChange(UINT, int id, CWindow w) noexcept
     {
+        if (id != IDC_IMAGE)
+            return;
+
+        auto cb = (CComboBox) w;
+
+        const size_t SelectedIndex = (size_t) cb.GetCurSel();
+
+        auto & Image = _State._Images[SelectedIndex];
+
+        {
+            SetDlgItemTextW(IDC_FILE_PATH, msc::UTF8ToWide(Image._FilePath).c_str());
+
+            const auto IconSize = (uint32_t) ::GetSystemMetrics(SM_CXSMICON);
+
+            HIMAGELIST hImageList = image_list_factory_t::Create(Image._FilePath, IconSize);
+
+            if (hImageList == NULL)
+                return;
+
+            HWND hIconList = GetDlgItem(IDC_ICONLIST);
+
+            ::SendMessageW(hIconList, ILM_SETIMAGELIST, 0, (LPARAM) hImageList);
+
+            ::SendMessageW(hIconList, ILM_SELECTITEM, (WPARAM) Image._IconIndex, 0);
+        }
+
         OnChanged();
     }
 
@@ -211,18 +234,25 @@ private:
 
         Text.resize(4096);
 
-        GetDlgItemTextW(IDC_TEXT_FORMAT, Text.data(), (int) Text.size());
+        {
+            GetDlgItemTextW(IDC_TEXT_FORMAT, Text.data(), (int) Text.size());
 
-        if (_State._NameFormat != msc::WideToUTF8(Text))
-            return true;
+            if (_State._NameFormat != msc::WideToUTF8(Text).c_str())
+                return true;
+        }
 
-        GetDlgItemTextW(IDC_FILE_PATH, Text.data(), (int) Text.size());
-
-        if (_State._FolderImageFilePath != msc::WideToUTF8(Text))
-            return true;
+        {
+            GetDlgItemTextW(IDC_FILE_PATH, Text.data(), (int) Text.size());
 /*
-        if (_Configuration._RetentionUnit != (RetentionUnit) ((CComboBox) GetDlgItem(IDC_RETENTION_UNIT)).GetCurSel())
-            return true;
+            if (_State._FolderImageFilePath != msc::WideToUTF8(Text))
+                return true;
+*/
+        }
+/*
+        {
+            if (_State._FolderImageIconIndex != ((CComboBox) GetDlgItem(IDC_IMAGE)).GetCurSel())
+                return true;
+        }
 */
         return false;
     }

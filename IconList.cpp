@@ -38,6 +38,8 @@ bool Register(HINSTANCE hInstance) noexcept
 
 struct instance_t
 {
+    instance_t() : hListView(NULL), hImageList(NULL) { }
+
     HWND hListView;
     HIMAGELIST hImageList;
 };
@@ -187,7 +189,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             if (Instance == nullptr)
                 return FALSE;
 
+            int Index = ListView_GetNextItem(Instance->hListView, -1, (LPARAM) LVNI_SELECTED);
+
+            if (Index != -1)
+                ListView_SetItemState(Instance->hListView, Index, 0, LVIS_FOCUSED | LVIS_SELECTED);
+
             ListView_SetItemState(Instance->hListView, wParam, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
+            ListView_EnsureVisible(Instance->hListView, wParam, FALSE);
 
             return TRUE;
         }
@@ -198,6 +206,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
             if (Instance == nullptr)
                 return FALSE;
+
+            ListView_DeleteAllItems(Instance->hListView);
+
+            ::ImageList_Destroy(Instance->hImageList);
 
             Instance->hImageList = (HIMAGELIST) lParam;
 
@@ -210,6 +222,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 return FALSE;
 
             ListView_SetIconSpacing(Instance->hListView, cx + (xPadding * 2), (cy + yPadding * 2));
+
+            const int ImageCount = ::ImageList_GetImageCount(Instance->hImageList);
+
+            for (int i = 0; i < ImageCount; ++i)
+            {
+                const LVITEM lvi =
+                {
+                    .mask   = LVIF_IMAGE,
+                    .iItem  = i,
+                    .iImage = i,
+                };
+
+                ListView_InsertItem(Instance->hListView, &lvi);
+            }
 
             return TRUE;
         }

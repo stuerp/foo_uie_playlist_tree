@@ -1,5 +1,5 @@
 
-/** $VER: State.cpp (2026.07.08) P. Stuer **/
+/** $VER: State.cpp (2026.07.09) P. Stuer **/
 
 #include "pch.h"
 
@@ -38,8 +38,8 @@ void state_t::Reset() noexcept
     _NameFormat = "%node_name%$if(%is_folder%,,' ('%count%')')";
 //  _NameFormat = "%node_name%$if(%is_folder%,,' ('%count%') '%playlist_duration% %playlist_size%)";
 
-    _FolderImageFilePath = "imageres.dll";
-    _FolderImageIconIndex = Icon::Folder;
+    _Images.push_back({ "imageres.dll", Icon::Folder });
+    _Images.push_back({ "imageres.dll", Icon::File });
 
     _Object.clear();
 }
@@ -62,7 +62,7 @@ void state_t::FromJSON(const char * data, size_t size) noexcept
 
     const json Object = json::parse(data, data + size, nullptr, true);
 
-    _NameFormat = Object.value("nameFormat", _NameFormat);
+    _NameFormat = Object.value("nameFormat", _NameFormat).c_str();
 
     _Object = Object;
 }
@@ -77,19 +77,20 @@ json state_t::ToJSON() const noexcept
         { "schemaVersion", _SchemaVersion },
 
         { "nameFormat", _NameFormat },
-        { "folder", json::object_t
-            ({
-                { "filePath", _FolderImageFilePath },
-                { "iconIndex", _FolderImageIconIndex },
-            })
-        },
-        { "playlist", json::object_t
-            ({
-                { "filePath", _PlaylistImageFilePath },
-                { "iconIndex", _PlaylistImageIconIndex },
-            })
-        },
     };
+
+    json::array_t Images;
+
+    for (auto & Image : _Images)
+    {
+        Images.push_back(json::object_t
+        ({
+            { "filePath",  Image._FilePath },
+            { "iconIndex", Image._IconIndex }
+        }));
+    };
+
+    Object["images"] = Images;
 
     return Object;
 }

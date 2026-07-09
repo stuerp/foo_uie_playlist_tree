@@ -57,10 +57,13 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
         _TreeView.SetImageList(hImageList);
     }
 
-//_State._Object.clear(); // FIXME
+#ifndef Test
+_State._Object.clear(); // FIXME
 
+GetPlaylists(); // FIXME
+#else
     FromJSON(_State._Object, { });
-//GetPlaylists(); // FIXME
+#endif
 
     // Select the active playlist.
     {
