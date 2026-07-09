@@ -1,10 +1,11 @@
 
-/** $VER: DUIElement.cpp (2026.07.07) P. Stuer - Implements Default User Interface support **/
+/** $VER: DUIElement.cpp (2026.07.08) P. Stuer - Implements Default User Interface support **/
 
 #include "pch.h"
 
 #include "DUIElement.h"
 #include "Node.h"
+#include "State.h"
 
 #include <helpers\BumpableElem.h>
 

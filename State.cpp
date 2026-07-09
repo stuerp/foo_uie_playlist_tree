@@ -1,5 +1,5 @@
 
-/** $VER: State.cpp (2026.07.07) P. Stuer **/
+/** $VER: State.cpp (2026.07.08) P. Stuer **/
 
 #include "pch.h"
 
@@ -22,6 +22,9 @@ void state_t::Reset() noexcept
 {
     _NameFormat = "%node_name%$if(%is_folder%,,' ('%count%')')";
 //  _NameFormat = "%node_name%$if(%is_folder%,,' ('%count%') '%playlist_duration% %playlist_size%)";
+
+    _FolderImageFilePath = "imageres.dll";
+    _FolderImageIconIndex = 116;
 
     _Object.clear();
 }
@@ -59,7 +62,21 @@ json state_t::ToJSON() const noexcept
         { "schemaVersion", _SchemaVersion },
 
         { "nameFormat", _NameFormat },
+        { "folder", json::object_t
+            ({
+                { "filePath", _FolderImageFilePath },
+                { "iconIndex", _FolderImageIconIndex },
+            })
+        },
+        { "playlist", json::object_t
+            ({
+                { "filePath", _PlaylistImageFilePath },
+                { "iconIndex", _PlaylistImageIconIndex },
+            })
+        },
     };
 
     return Object;
 }
+
+state_t _State;

@@ -64,8 +64,8 @@ private:
     void ShowPreferences() noexcept;
 
 protected:
-    fb2k::CCoreDarkModeHooks _DarkMode;
-
     COLORREF _ForegroundColor;
     COLORREF _BackgroundColor;
+
+    fb2k::CCoreDarkModeHooks _DarkMode;
 };

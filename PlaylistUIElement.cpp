@@ -7,6 +7,7 @@
 #include "ImageList.h"
 #include "TitleFormat.h"
 #include "Node.h"
+#include "State.h"
 
 #include <SDK\playlist.h>
 

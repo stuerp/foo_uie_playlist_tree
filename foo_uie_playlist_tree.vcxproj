@@ -325,6 +325,7 @@
     </ClCompile>
     <ClCompile Include="PlaylistTreeView.cpp" />
     <ClCompile Include="PlaylistUIElement.cpp" />
+    <ClCompile Include="Preferences.cpp" />
     <ClCompile Include="State.cpp" />
     <ClCompile Include="TitleFormat.cpp" />
     <ClCompile Include="TreeView.cpp" />
@@ -337,6 +338,7 @@
     <ClInclude Include="Log.h" />
     <ClInclude Include="Node.h" />
     <ClInclude Include="PlaylistTreeView.h" />
+    <ClInclude Include="Preferences.h" />
     <ClInclude Include="TitleFormat.h" />
     <ClInclude Include="DUIElement.h" />
     <ClInclude Include="pch.h" />
@@ -348,6 +350,7 @@
     <ClInclude Include="UIElementTracker.h" />
   </ItemGroup>
   <ItemGroup>
+    <ResourceCompile Include="Preferences.rc" />
     <ResourceCompile Include="Resources.rc" />
   </ItemGroup>
   <ItemGroup>

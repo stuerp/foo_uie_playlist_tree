@@ -59,6 +59,5 @@ IDM_CONTEXT_MENU menu
         menuitem "Contents",        IDM_CONTENTS, grayed
         menuitem separator
         menuitem "Sort",            IDM_SORT, grayed
-        menuitem separator
     }
 }

@@ -1,5 +1,5 @@
 
-/** $VER: State.h (2026.07.07) P. Stuer **/
+/** $VER: State.h (2026.07.08) P. Stuer **/
 
 #pragma once
 
@@ -32,8 +32,16 @@ public:
 public:
     std::string _NameFormat;
 
+    std::string _FolderImageFilePath;
+    int32_t _FolderImageIconIndex;
+
+    std::string _PlaylistImageFilePath;
+    int32_t _PlaylistImageIconIndex;
+
     const uint32_t _SchemaVersion = 1; // v0.1.0.0
 
     /* Not serialized */
     json _Object;
 };
+
+extern state_t _State;

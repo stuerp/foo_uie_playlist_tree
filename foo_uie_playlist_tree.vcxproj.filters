@@ -14,6 +14,7 @@
     <ClCompile Include="UIElementTracker.cpp" />
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="FolderManager.cpp" />
+    <ClCompile Include="Preferences.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DUIElement.h" />
@@ -30,6 +31,7 @@
     <ClInclude Include="UIElementTracker.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="FolderManager.h" />
+    <ClInclude Include="Preferences.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />
@@ -44,5 +46,6 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resources.rc" />
+    <ResourceCompile Include="Preferences.rc" />
   </ItemGroup>
 </Project>

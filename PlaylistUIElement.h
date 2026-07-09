@@ -6,7 +6,6 @@
 #include "pch.h"
 
 #include "UIElement.h"
-#include "State.h"
 #include "PlaylistTreeView.h"
 #include "FolderManager.h"
 
@@ -93,7 +92,6 @@ private:
     void SelectPlaylist(size_t playlistIndex) const noexcept;
 
 protected:
-    state_t _State;
     playlist_tree_view_t _TreeView;
 
 private:
