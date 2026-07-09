@@ -1,5 +1,5 @@
 
-/** $VER: Resources.h (2026.07.06) P. Stuer **/
+/** $VER: Resources.h (2026.07.09) P. Stuer **/
 
 #pragma once
 
@@ -63,33 +63,6 @@
 /** Configuration **/
 
 #define IDD_PREFERENCES                      101
-
-#define IDC_NAME                            1000
-
-#define IDC_USER_DATA_FOLDER_PATH           1002
-#define IDC_USER_DATA_FOLDER_PATH_SELECT    1004
-
-#define IDC_FILE_PATH                       1006
-#define IDC_FILE_PATH_SELECT                1008
-#define IDC_FILE_PATH_EDIT                  1010
-
-#define IDC_BROWSER_FLAGS                   1012
-
-#define IDC_WINDOW_SIZE                     1020
-#define IDC_WINDOW_SIZE_UNIT                1022
-
-#define IDC_REACTION_ALIGNMENT              1030
-#define IDC_WINDOW_OFFSET                   1032
-
-#define IDC_CLEAR_BROWSING_DATA             1040
-#define IDC_IN_PRIVATE_MODE                 1042
-#define IDC_SCROLLBAR_STYLE                 1044
-
-#define IDC_READ_FILES                      2000
-#define IDC_READ_DIRECTORIES                2002
-#define IDC_EXECUTE_SHELL_OPERATIONS        2004
-
-#define IDC_WARNING                         9999
 
 /** Resources **/
 

@@ -7,6 +7,21 @@
 
 #pragma hdrstop
 
+/*
+// shell32.dll icons
+enum Icon : int
+{
+    File    = 0,
+    Folder  = 3
+};
+*/
+// imageres.dll icons
+enum Icon : int
+{
+    File    = 126,
+    Folder  = 4
+};
+
 /// <summary>
 /// Initializes a new instance.
 /// </summary>
@@ -24,7 +39,7 @@ void state_t::Reset() noexcept
 //  _NameFormat = "%node_name%$if(%is_folder%,,' ('%count%') '%playlist_duration% %playlist_size%)";
 
     _FolderImageFilePath = "imageres.dll";
-    _FolderImageIconIndex = 116;
+    _FolderImageIconIndex = Icon::Folder;
 
     _Object.clear();
 }

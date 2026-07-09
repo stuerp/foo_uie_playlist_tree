@@ -72,19 +72,4 @@ private:
     }
 
 public:
-/*
-
-    // shell32.dll icons
-    enum Icon : int
-    {
-        File    = 0,
-        Folder  = 3
-    };
-*/
-    // imageres.dll icons
-    enum Icon : int
-    {
-        File    = 126,
-        Folder  = 4
-    };
 };

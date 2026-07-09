@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.cpp (2026.07.08) P. Stuer **/
+/** $VER: Preferences.cpp (2026.07.09) P. Stuer **/
 
 #include "pch.h"
 
@@ -15,6 +15,8 @@
 #include "Resources.h"
 #include "Preferences.h"
 #include "State.h"
+#include "IconList.h"
+#include "ImageList.h"
 
 #pragma hdrstop
 
@@ -26,6 +28,7 @@ class Preferences : public CDialogImpl<Preferences>, public preferences_page_ins
 public:
     Preferences(preferences_page_callback::ptr callback) : m_bMsgHandled(FALSE), _Callback(callback)
     {
+        icon_list_t::Register(THIS_HINSTANCE);
     }
 
     virtual ~Preferences()
@@ -68,32 +71,15 @@ public:
         }
 
         {
-            GetDlgItemTextW(IDC_FOLDER_IMAGE_PATH, Text.data(), (int) Text.size());
-
-            _State._FolderImageFilePath = msc::WideToUTF8(Text);
-        }
-
-        {
-            GetDlgItemTextW(IDC_FOLDER_IMAGE_INDEX, Text.data(), (int) Text.size());
-
-            _State._FolderImageIconIndex = ::_wtoi(Text.c_str());
-        }
-
-        {
-            auto w = (CComboBox) GetDlgItem(IDC_RETENTION_UNIT);
+            auto w = (CComboBox) GetDlgItem(IDC_IMAGE);
 
 //            _Configuration._RetentionUnit = (RetentionUnit) w.GetCurSel();
         }
 
-//        _Configuration._WriteToTags = (SendDlgItemMessageW(IDC_WRITE_TO_TAGS, BM_GETCHECK) == BST_CHECKED) ? WriteToTags::Always : WriteToTags::Never;
-
-//        _Configuration._WriteLegacyTags = (SendDlgItemMessageW(IDC_WRITE_LEGACY_TAGS, BM_GETCHECK) == BST_CHECKED);
-//        _Configuration._RemoveTags = (SendDlgItemMessageW(IDC_REMOVE_TAGS, BM_GETCHECK) == BST_CHECKED);
-
         {
-//          GetDlgItemTextW(IDC_TAGS_TO_REMOVE, Text, _countof(Text));
+            GetDlgItemTextW(IDC_FILE_PATH, Text.data(), (int) Text.size());
 
-//            _Configuration._TagsToRemove = pfc::utf8FromWide(Text);
+            _State._FolderImageFilePath = msc::WideToUTF8(Text);
         }
 
         OnChanged();
@@ -117,16 +103,10 @@ public:
     BEGIN_MSG_MAP_EX(Preferences)
         MSG_WM_INITDIALOG(OnInitDialog)
 
-        COMMAND_HANDLER_EX(IDC_TEXT_FORMAT,         EN_CHANGE, OnEditChange)
+        COMMAND_HANDLER_EX(IDC_TEXT_FORMAT, EN_CHANGE,      OnEditChange)
 
-        COMMAND_HANDLER_EX(IDC_FOLDER_IMAGE_PATH,   EN_CHANGE, OnEditChange)
-        COMMAND_HANDLER_EX(IDC_FOLDER_IMAGE_INDEX,  EN_CHANGE, OnEditChange)
-
-        COMMAND_HANDLER_EX(IDC_WRITE_TO_TAGS, BN_CLICKED, OnButtonClicked)
-        COMMAND_HANDLER_EX(IDC_WRITE_LEGACY_TAGS, BN_CLICKED, OnButtonClicked)
-        COMMAND_HANDLER_EX(IDC_REMOVE_TAGS, BN_CLICKED, OnButtonClicked)
-
-        COMMAND_HANDLER_EX(IDC_TAGS_TO_REMOVE, EN_CHANGE, OnEditChange)
+        COMMAND_HANDLER_EX(IDC_FILE_PATH,   EN_CHANGE,      OnEditChange)
+        COMMAND_HANDLER_EX(IDC_IMAGE,       EN_SELCHANGE,   OnSelectionChange)
     END_MSG_MAP()
 
 private:
@@ -147,11 +127,42 @@ private:
     /// </summary>
     void InitializeControls()
     {
-        SetDlgItemTextW(IDC_TEXT_FORMAT,        msc::UTF8ToWide(_State._NameFormat).c_str());
+        SetDlgItemTextW(IDC_TEXT_FORMAT, msc::UTF8ToWide(_State._NameFormat).c_str());
 
-        SetDlgItemTextW(IDC_FOLDER_IMAGE_PATH,  msc::UTF8ToWide(_State._FolderImageFilePath).c_str());
-        SetDlgItemTextW(IDC_FOLDER_IMAGE_INDEX, msc::UTF8ToWide(pfc::format_int(_State._FolderImageIconIndex).c_str()).c_str());
+        {
+            auto w = (CComboBox) GetDlgItem(IDC_IMAGE);
 
+            w.ResetContent();
+
+            const WCHAR * Labels[] = { L"Folder", L"Playlist", };
+
+//          assert(((size_t) RetentionUnit::Count == _countof(Labels)));
+
+            for (auto Label : Labels)
+                w.AddString(Label);
+
+            w.SetCurSel(0);
+        }
+
+        SetDlgItemTextW(IDC_FILE_PATH,   msc::UTF8ToWide(_State._FolderImageFilePath).c_str());
+
+        {
+            const auto IconSize = (uint32_t) ::GetSystemMetrics(SM_CXSMICON);
+
+            HIMAGELIST hImageList = image_list_factory_t::Create(_State._FolderImageFilePath, IconSize);
+
+            if (hImageList == NULL)
+                return;
+
+            HWND hIconList = GetDlgItem(IDC_ICONLIST);
+
+            ::SendMessageW(hIconList, ILM_SETIMAGELIST, 0, (LPARAM) hImageList);
+
+            for (size_t i = 0; i < 256; ++i)
+                ::SendMessageW(hIconList, ILM_ADDITEM, 0, (LPARAM) i);
+
+            ::SendMessageW(hIconList, ILM_SELECTITEM, (WPARAM) _State._FolderImageIconIndex, 0);
+        }
 
 //      ((CCheckBox) GetDlgItem(IDC_WRITE_TO_TAGS)).SetCheck((_Configuration._WriteToTags == WriteToTags::Always) ? BST_CHECKED : BST_UNCHECKED);
     }
@@ -159,7 +170,7 @@ private:
     /// <summary>
     /// Handles an update of the selected item of a combo box.
     /// </summary>
-    void OnSelectionChanged(UINT, int, CWindow) noexcept
+    void OnSelectionChange(UINT, int, CWindow) noexcept
     {
         OnChanged();
     }
@@ -175,11 +186,8 @@ private:
     /// <summary>
     /// Handles a click on a button.
     /// </summary>
-    void OnButtonClicked(UINT, int id, CWindow w) noexcept
+    void OnButtonClick(UINT, int id, CWindow w) noexcept
     {
-        if (id == IDC_REMOVE_TAGS)
-            GetDlgItem(IDC_TAGS_TO_REMOVE).EnableWindow(((CCheckBox) w).IsChecked());
-
         OnChanged();
     }
 
@@ -205,34 +213,12 @@ private:
         if (_State._NameFormat != msc::WideToUTF8(Text))
             return true;
 
-        GetDlgItemTextW(IDC_FOLDER_IMAGE_PATH, Text.data(), (int) Text.size());
-
-        if (_State._NameFormat != msc::WideToUTF8(Text))
-            return true;
-
-        GetDlgItemTextW(IDC_FOLDER_IMAGE_INDEX, Text.data(), (int) Text.size());
+        GetDlgItemTextW(IDC_FILE_PATH, Text.data(), (int) Text.size());
 
         if (_State._FolderImageFilePath != msc::WideToUTF8(Text))
             return true;
-
-        if (_State._FolderImageIconIndex != (int32_t) ::_wtoi(Text.c_str()))
-            return true;
 /*
         if (_Configuration._RetentionUnit != (RetentionUnit) ((CComboBox) GetDlgItem(IDC_RETENTION_UNIT)).GetCurSel())
-            return true;
-
-        if (SendDlgItemMessageW(IDC_WRITE_TO_TAGS, BM_GETCHECK) != ((_Configuration._WriteToTags == WriteToTags::Always) ? BST_CHECKED : BST_UNCHECKED))
-            return true;
-
-        if (SendDlgItemMessageW(IDC_WRITE_LEGACY_TAGS, BM_GETCHECK) != (_Configuration._WriteLegacyTags ? BST_CHECKED : BST_UNCHECKED))
-            return true;
-
-        if (SendDlgItemMessageW(IDC_REMOVE_TAGS, BM_GETCHECK) != (_Configuration._RemoveTags ? BST_CHECKED : BST_UNCHECKED))
-            return true;
-
-        GetDlgItemTextW(IDC_TAGS_TO_REMOVE, Text, _countof(Text));
-
-        if (_Configuration._TagsToRemove != pfc::utf8FromWide(Text))
             return true;
 */
         return false;

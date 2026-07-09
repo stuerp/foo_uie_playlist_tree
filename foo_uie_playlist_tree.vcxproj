@@ -311,6 +311,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="FolderManager.cpp" />
+    <ClCompile Include="IconList.cpp" />
     <ClCompile Include="ImageList.cpp" />
     <ClCompile Include="Component.cpp" />
     <ClCompile Include="DUIElement.cpp" />
@@ -334,6 +335,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FolderManager.h" />
+    <ClInclude Include="IconList.h" />
     <ClInclude Include="ImageList.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="Node.h" />

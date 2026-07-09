@@ -1,11 +1,12 @@
 
-/** $VER: Preferences.rc (2026.07.08) P. Stuer **/
+/** $VER: Preferences.rc (2026.07.09) P. Stuer **/
 
 #include "Resources.h"
 
 #include <winres.h>
 
 #include "Preferences.h"
+#include "IconList.h"
 
 language LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
@@ -14,19 +15,14 @@ IDD_PREFERENCES dialogex 0, 0, 0, 0
 style DS_SHELLFONT | WS_CHILD
 font 8, "MS Shell Dlg", 400, 0, 1
 {
-    rtext       "Text Format:"                      IDC_STATIC,             X_A11, Y_A11 + 2, W_A11, H_A11
-    edittext                                        IDC_TEXT_FORMAT,        X_A12, Y_A12,     W_A12, H_A12, ES_AUTOHSCROLL | WS_TABSTOP
+    rtext       "Text Format:"  IDC_STATIC,             X_A11, Y_A11 + 2, W_A11, H_A11
+    edittext                    IDC_TEXT_FORMAT,        X_A12, Y_A12,     W_A12, H_A12, ES_AUTOHSCROLL | WS_TABSTOP
 
-    rtext       "Folder Image:",                    IDC_STATIC,             X_A13, Y_A13 + 2, W_A13, H_A13
-    edittext                                        IDC_FOLDER_IMAGE_PATH,   X_A14, Y_A14,     W_A14, H_A14, ES_AUTOHSCROLL | WS_TABSTOP
+    rtext       "Image:",       IDC_STATIC,             X_A13, Y_A13 + 2, W_A13, H_A13
+    combobox                    IDC_IMAGE,              X_A14, Y_A14,     W_A14, H_A14, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
-    rtext       "Playlist Image:",                  IDC_STATIC,             X_A20, Y_A20 + 2, W_A20, H_A20
-    edittext                                        IDC_FOLDER_IMAGE_INDEX,    X_A21, Y_A21,     W_A21, H_A21, ES_RIGHT | ES_AUTOHSCROLL | WS_TABSTOP
+    rtext       "File Path:",   IDC_STATIC,             X_A15, Y_A15 + 2, W_A15, H_A15
+    edittext                    IDC_FILE_PATH,          X_A16, Y_A16,     W_A16, H_A16, ES_AUTOHSCROLL | WS_TABSTOP
 
-    control     "Write statistics to tags",         IDC_WRITE_TO_TAGS,      "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A50, Y_A50, W_A50, H_A50
-    control     "Write legacy tags",                IDC_WRITE_LEGACY_TAGS,  "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A51, Y_A51, W_A51, H_A51
-    control     "Remove tags",                      IDC_REMOVE_TAGS,        "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A52, Y_A52, W_A52, H_A52
-
-    rtext       "Tags to remove:",                  IDC_STATIC,             X_A30, Y_A30 + 2, W_A30, H_A30
-    edittext                                        IDC_TAGS_TO_REMOVE,     X_A31, Y_A31,     W_A31, H_A31, ES_AUTOHSCROLL | WS_TABSTOP
+    control     "",             IDC_ICONLIST,           WC_ICON_LIST, WS_CHILD | WS_VISIBLE | WS_TABSTOP, X_A17, Y_A17, W_A17, H_A17
 }
