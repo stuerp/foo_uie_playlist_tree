@@ -5,13 +5,9 @@
 
 #include "IconList.h"
 
-#include <dwmapi.h>
-#include <uxtheme.h>
+#include "Theme.h"
 
 #pragma hdrstop
-
-#pragma comment(lib, "dwmapi.lib")
-#pragma comment(lib, "uxtheme.lib")
 
 #define IDC_LISTVIEW  100
 
@@ -69,6 +65,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             if (Instance->hListView == NULL)
                 return -1;
 
+            ::SetWindowTheme(Instance->hListView, _Theme.IsDark() ? L"DarkMode_Explorer" : nullptr, nullptr);
+
             return 0;
         }
 
@@ -113,32 +111,48 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             if (Instance == nullptr)
                 return FALSE;
 
-            auto pcd = (NMLVCUSTOMDRAW *) lParam;
+            auto lvcd = (NMLVCUSTOMDRAW *) lParam;
 
-            switch (pcd->nmcd.dwDrawStage)
+            HDC & hDC = lvcd->nmcd.hdc;
+
+            switch (lvcd->nmcd.dwDrawStage)
             {
                 case CDDS_PREPAINT:
+                {
+                    RECT rc;
+
+                    ::GetClientRect(lvcd->nmcd.hdr.hwndFrom, &rc);
+
+                    // Draw the control background.
+                    HBRUSH hBrush = ::CreateSolidBrush(_Theme.GetSysColor(COLOR_WINDOW));
+
+                    ::FillRect(hDC, &rc, hBrush);
+
+                    ::DeleteObject(hBrush);
+
                     return CDRF_NOTIFYITEMDRAW; // Request item-specific notifications.
+                }
 
                 case CDDS_ITEMPREPAINT:
-                    return CDRF_DODEFAULT | CDRF_NOTIFYPOSTPAINT; // Do default processing and request Post-Paint notifications.
+                    return CDRF_NOTIFYPOSTPAINT; // Request Post-Paint notifications.
 
                 case CDDS_ITEMPOSTPAINT:
                 {
-                    HDC & hDC = pcd->nmcd.hdc;
-                    RECT & rc = pcd->nmcd.rc;
+                    RECT & rc = lvcd->nmcd.rc;
 
                     // Don't use CDIS_SELECTED (see https://learn.microsoft.com/en-us/windows/win32/api/commctrl/ns-commctrl-nmcustomdraw)
-                    if (ListView_GetItemState(Instance->hListView, (int) pcd->nmcd.dwItemSpec, LVIS_SELECTED))
+                    if (ListView_GetItemState(Instance->hListView, (int) lvcd->nmcd.dwItemSpec, LVIS_SELECTED))
                     {
-                        HBRUSH hBrush = ::GetSysColorBrush(COLOR_HIGHLIGHT);
+                        HBRUSH hBrush = ::CreateSolidBrush(_Theme.GetSysColor(COLOR_HIGHLIGHT));
 
                         ::FillRect(hDC, &rc, hBrush);
+
+                        ::DeleteObject(hBrush);
                     }
 
-                    ::ImageList_Draw(Instance->hImageList, (int) pcd->nmcd.dwItemSpec, hDC, rc.left + 1, rc.top + 1, ILD_NORMAL);
+                    ::ImageList_Draw(Instance->hImageList, (int) lvcd->nmcd.dwItemSpec, hDC, rc.left + xPadding, rc.top + yPadding, ILD_NORMAL);
 
-                    if (pcd->nmcd.uItemState & CDIS_FOCUS)
+                    if (lvcd->nmcd.uItemState & CDIS_FOCUS)
                         ::DrawFocusRect(hDC, &rc);
 
                     return CDRF_DODEFAULT;

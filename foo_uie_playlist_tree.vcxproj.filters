@@ -16,6 +16,7 @@
     <ClCompile Include="FolderManager.cpp" />
     <ClCompile Include="Preferences.cpp" />
     <ClCompile Include="IconList.cpp" />
+    <ClCompile Include="Theme.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DUIElement.h" />
@@ -34,6 +35,7 @@
     <ClInclude Include="FolderManager.h" />
     <ClInclude Include="Preferences.h" />
     <ClInclude Include="IconList.h" />
+    <ClInclude Include="Theme.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />

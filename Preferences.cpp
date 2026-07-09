@@ -17,6 +17,7 @@
 #include "State.h"
 #include "IconList.h"
 #include "ImageList.h"
+#include "Theme.h"
 
 #pragma hdrstop
 
@@ -28,6 +29,8 @@ class Preferences : public CDialogImpl<Preferences>, public preferences_page_ins
 public:
     Preferences(preferences_page_callback::ptr callback) : m_bMsgHandled(FALSE), _Callback(callback)
     {
+        _Theme.Initialize(_DarkMode);
+
         icon_list_t::Register(THIS_HINSTANCE);
     }
 
@@ -115,7 +118,7 @@ private:
     /// </summary>
     BOOL OnInitDialog(CWindow, LPARAM) noexcept
     {
-        _DarkModeHooks.AddDialogWithControls(*this);
+        _DarkMode.AddDialogWithControls(*this);
 
         InitializeControls();
 
@@ -227,7 +230,7 @@ private:
 private:
     const preferences_page_callback::ptr _Callback;
 
-    fb2k::CDarkModeHooks _DarkModeHooks;
+    fb2k::CDarkModeHooks _DarkMode;
 };
 
 #pragma region PreferencesPage
