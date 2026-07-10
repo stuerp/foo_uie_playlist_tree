@@ -140,10 +140,10 @@ private:
     /// <summary>
     /// Gets the item zone that contains the specified point.
     /// </summary>
-    DropZone GetItemZone(const RECT & r, const POINT & pt) const noexcept
+    DropZone GetDropZone(const RECT & r, const POINT & pt) const noexcept
     {
-        // Divide the item into 3 zones.
-        const LONG ZoneHeight = (r.bottom - r.top) / 3;
+        // Divide the item into 3 zones, the middle zone being twice as high.
+        const float ZoneHeight = (float) (r.bottom - r.top) / 4.f;
 
         if (pt.y < r.top + ZoneHeight)
             return DropZone::Top;

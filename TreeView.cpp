@@ -278,7 +278,7 @@ void tree_view_t::DragMove(const CPoint & point) noexcept
 
             if (TreeView_GetItemRect(_hTreeView, hTreeItem, &rc, TRUE))
             {
-                _DropZone = GetItemZone(rc, pt);
+                _DropZone = GetDropZone(rc, pt);
 
                 if (_DropZone != DropZone::Middle)
                 {
