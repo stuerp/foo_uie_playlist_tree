@@ -4,7 +4,6 @@
 #include "pch.h"
 
 #include "UIElement.h"
-#include "UIElementTracker.h"
 
 #include "Theme.h"
 
@@ -31,8 +30,6 @@ uielement_t::~uielement_t()
 /// </summary>
 LRESULT uielement_t::OnCreate(LPCREATESTRUCT cs) noexcept
 {
-    _UIElementTracker.Add(this);
-
     return 0;
 }
 
@@ -41,7 +38,6 @@ LRESULT uielement_t::OnCreate(LPCREATESTRUCT cs) noexcept
 /// </summary>
 void uielement_t::OnDestroy() noexcept
 {
-    _UIElementTracker.Remove(this);
 }
 
 /// <summary>
@@ -63,8 +59,6 @@ void uielement_t::OnColorsChanged()
 /// </summary>
 void uielement_t::ShowPreferences() noexcept
 {
-    _UIElementTracker.SetCurrentElement(this);
-
     static constexpr GUID _GUID = GUID_PREFERENCES;
 
     static_api_ptr_t<ui_control> uc;

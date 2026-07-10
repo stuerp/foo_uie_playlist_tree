@@ -332,7 +332,6 @@
     <ClCompile Include="TitleFormat.cpp" />
     <ClCompile Include="TreeView.cpp" />
     <ClCompile Include="UIElement.cpp" />
-    <ClCompile Include="UIElementTracker.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FolderManager.h" />
@@ -351,7 +350,6 @@
     <ClInclude Include="State.h" />
     <ClInclude Include="TreeView.h" />
     <ClInclude Include="UIElement.h" />
-    <ClInclude Include="UIElementTracker.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Preferences.rc" />

@@ -11,7 +11,6 @@
     <ClCompile Include="TitleFormat.cpp" />
     <ClCompile Include="TreeView.cpp" />
     <ClCompile Include="UIElement.cpp" />
-    <ClCompile Include="UIElementTracker.cpp" />
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="FolderManager.cpp" />
     <ClCompile Include="Preferences.cpp" />
@@ -30,7 +29,6 @@
     <ClInclude Include="TitleFormat.h" />
     <ClInclude Include="TreeView.h" />
     <ClInclude Include="UIElement.h" />
-    <ClInclude Include="UIElementTracker.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="FolderManager.h" />
     <ClInclude Include="Preferences.h" />
