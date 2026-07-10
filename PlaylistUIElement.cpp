@@ -9,6 +9,7 @@
 #include "Node.h"
 #include "State.h"
 #include "Theme.h"
+#include "Log.h"
 
 #include <SDK\playlist.h>
 
@@ -214,58 +215,152 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
             break;
         }
 
-#ifdef later
+#ifndef later
         case NM_CUSTOMDRAW:
         {
-            auto tvcd = (NMTVCUSTOMDRAW *) nmhd;
+            auto tvcd = (const NMTVCUSTOMDRAW *) nmhd;
 
-            HDC & hDC = tvcd->nmcd.hdc;
+            const HWND hTreeView = tvcd->nmcd.hdr.hwndFrom;
+            const HDC hDC        = tvcd->nmcd.hdc;
 
             switch (tvcd->nmcd.dwDrawStage)
             {
                 case CDDS_PREPAINT:
                 {
-                    RECT rc;
-
-                    ::GetClientRect(tvcd->nmcd.hdr.hwndFrom, &rc);
-
-                    // Draw the control background.
-                    HBRUSH hBrush = ::CreateSolidBrush(_Theme.GetColor(COLOR_WINDOW));
-
-                    ::FillRect(hDC, &rc, hBrush);
-
-                    ::DeleteObject(hBrush);
-
                     return CDRF_NOTIFYITEMDRAW; // Request item-specific notifications.
                 }
 
                 case CDDS_ITEMPREPAINT:
-                    tvcd->clrText = 0xF0000000 | tvcd->clrText;
-
-                    return CDRF_NOTIFYPOSTPAINT; // Request Post-Paint notifications.
-
-                case CDDS_ITEMPOSTPAINT:
                 {
-                    RECT & rc = tvcd->nmcd.rc;
-/*
-                    // Don't use CDIS_SELECTED (see https://learn.microsoft.com/en-us/windows/win32/api/commctrl/ns-commctrl-nmcustomdraw)
-                    if (ListView_GetItemState(Instance->hListView, (int) lvcd->nmcd.dwItemSpec, LVIS_SELECTED))
+                    const auto hItem = (HTREEITEM) tvcd->nmcd.dwItemSpec;
+
+                    wchar_t Text[512];
+
+                    const TVITEMEX tvi
+                    {
+                        .mask       = TVIF_TEXT | TVIF_IMAGE | TVIF_STATE,
+                        .hItem      = hItem,
+                        .pszText    = Text,
+                        .cchTextMax = _countof(Text),
+                    };
+
+                    TreeView_GetItem(hTreeView, &tvi);
+
+                    const RECT & rcItem = tvcd->nmcd.rc;
+
+                    // Draw the background.
+                    if (tvi.state & TVIS_SELECTED)
                     {
                         HBRUSH hBrush = ::CreateSolidBrush(_Theme.GetColor(COLOR_HIGHLIGHT));
 
-                        ::FillRect(hDC, &rc, hBrush);
+                        ::FillRect(hDC, &rcItem, hBrush);
 
                         ::DeleteObject(hBrush);
                     }
-*/
-//                  ::ImageList_Draw(Instance->hImageList, (int) lvcd->nmcd.dwItemSpec, hDC, rc.left + xPadding, rc.top + yPadding, ILD_NORMAL);
-/*
+                    else
+                    if (tvi.state & TVIS_DROPHILITED)
+                    {
+                        auto c1 = (int32_t) _Theme.GetColor(COLOR_WINDOW);
+                        auto c2 = (int32_t) _Theme.GetColor(COLOR_HIGHLIGHT);
+
+                        auto v1 = c1 & 0xFF;
+                        auto v2 = c2 & 0xFF;
+
+                        auto r = v1 + ::MulDiv(v2 - v1, 50, 100); c1 >>= 8; c2 >>= 8;
+
+                        v1 = c1 & 0xFF;
+                        v2 = c2 & 0xFF;
+
+                        auto g = v1 + ::MulDiv(v2 - v1, 50, 100); c1 >>= 8; c2 >>= 8;
+
+                        v1 = c1 & 0xFF;
+                        v2 = c2 & 0xFF;
+
+                        auto b = v1 + ::MulDiv(v2 - v1, 50, 100);
+
+                        HBRUSH hBrush = ::CreateSolidBrush(RGB(r, g, b));
+
+                        ::FillRect(hDC, &rcItem, hBrush);
+
+                        ::DeleteObject(hBrush);
+                    }
+
+                    {
+                        RECT rc = rcItem;
+
+                        rc.left += 16 * tvcd->iLevel;
+
+                        if (tvi.iImage == NodeType::Folder)
+                        {
+                            RECT rcChev = rc;
+
+                            rcChev.right = rcChev.left + 16;
+
+                            // Get the font height.
+                            NONCLIENTMETRICSW ncm { sizeof(ncm) };
+
+                            ::SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(ncm), &ncm, 0);
+
+                            const LOGFONTW & lf = ncm.lfMessageFont;
+
+                            // Create the font.
+                            const HFONT hFont = ::CreateFontW(lf.lfHeight, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH, L"Segoe Fluent Icons");
+
+                            const auto hOldFont = (HFONT) ::SelectObject(hDC, hFont);
+
+                        //  const wchar_t * ChevronLeft  = L"\uE76B";
+                            const wchar_t * ChevronRight = L"\uE76C";
+                            const wchar_t * ChevronDown  = L"\uE70D";
+                        //  const wchar_t * ChevronUp    = L"\uE70E";
+
+                            const HTHEME hTheme = ::OpenThemeData(nullptr, L"TEXTSTYLE");
+
+                            const DTTOPTS Options =
+                            {
+                                .dwSize = sizeof(Options),
+                                .dwFlags = DTT_TEXTCOLOR,
+                                .crText = _Theme.GetColor(COLOR_WINDOWTEXT)
+                            };
+
+                            ::DrawThemeTextEx(hTheme, hDC, 0, 0, (tvi.state & TVIS_EXPANDED) ? ChevronDown : ChevronRight, -1, DT_CENTER | DT_VCENTER | DT_SINGLELINE, &rcChev, &Options);
+
+                            ::CloseThemeData(hTheme);
+
+                            ::SelectObject(hDC, hOldFont);
+
+                            ::DeleteObject(hFont);
+                        }
+
+                        rc.left += 16;          // Skip past the chevron.
+
+                        // Draw the image.
+                        ::ImageList_Draw(_hImageList, tvi.iImage, hDC, rc.left, rcItem.top, ILD_NORMAL);
+
+                        rc.left += 1 + 16 + 1;  // Skip past the icon.
+
+                        // Draw the text.
+                        const HTHEME hTheme = ::OpenThemeData(nullptr, L"TEXTSTYLE");
+
+                        const DTTOPTS Options =
+                        {
+                            .dwSize = sizeof(Options),
+                            .dwFlags = DTT_TEXTCOLOR,
+                            .crText = (tvi.state & TVIS_SELECTED) ? _Theme.GetColor(COLOR_HIGHLIGHTTEXT) : _Theme.GetColor(COLOR_WINDOWTEXT)
+                        };
+
+                        ::DrawThemeTextEx(hTheme, hDC, 0, 0, Text, -1, DT_LEFT | DT_SINGLELINE, &rc, &Options);
+
+                        ::CloseThemeData(hTheme);
+                    }
+
+                    // Draw the focus rectangle.
                     if (tvcd->nmcd.uItemState & CDIS_FOCUS)
-                        ::DrawFocusRect(hDC, &rc);
-*/
-                    return CDRF_DODEFAULT;
+                        ::DrawFocusRect(hDC, &rcItem);
+
+                    return CDRF_SKIPDEFAULT; // Skip all other stages because we've drawn the complete item.
                 }
             }
+
             break;
         }
 #endif
