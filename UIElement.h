@@ -1,5 +1,5 @@
 
-/** $VER: UIElement.h (2026.07.06) P. Stuer **/
+/** $VER: UIElement.h (2026.07.10) P. Stuer **/
 
 #pragma once
 
@@ -64,8 +64,5 @@ private:
     void ShowPreferences() noexcept;
 
 protected:
-    COLORREF _ForegroundColor;
-    COLORREF _BackgroundColor;
-
     fb2k::CCoreDarkModeHooks _DarkMode;
 };

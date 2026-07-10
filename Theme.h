@@ -1,5 +1,5 @@
 
-/** $VER: Theme.h (2026.07.09) P. Stuer **/
+/** $VER: Theme.h (2026.07.10) P. Stuer **/
 
 #pragma once
 
@@ -9,6 +9,8 @@
 
 #include <SDKDDKVer.h>
 #include <Windows.h>
+
+#include <map>
 
 class theme_t
 {
@@ -23,10 +25,16 @@ public:
         return _DarkMode;
     }
 
-    COLORREF GetSysColor(int index) const noexcept;
+    void SetColor(int index, COLORREF color) noexcept;
+    COLORREF GetColor(int index) const noexcept;
 
 private:
     bool _DarkMode;
+
+    COLORREF _ColorWindow       = 0x202020;
+    COLORREF _ColorWindowText   = 0xC0C0C0;
+    COLORREF _ColorHighLight    = ::GetSysColor(COLOR_HOTLIGHT); //0x777777;
+    COLORREF _ColorHotLight     = 0xD69C56;
 };
 
 extern theme_t _Theme;

@@ -6,6 +6,8 @@
 #include "UIElement.h"
 #include "UIElementTracker.h"
 
+#include "Theme.h"
+
 #pragma hdrstop
 
 /// <summary>
@@ -13,6 +15,7 @@
 /// </summary>
 uielement_t::uielement_t() : m_bMsgHandled(FALSE)
 {
+    _Theme.Initialize(_DarkMode);
 }
 
 /// <summary>

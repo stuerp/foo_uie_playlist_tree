@@ -1,5 +1,5 @@
 
-/** $VER: State.h (2026.07.08) P. Stuer **/
+/** $VER: State.h (2026.07.10) P. Stuer **/
 
 #pragma once
 
@@ -11,6 +11,12 @@
 using json = nlohmann::ordered_json;
 
 #pragma warning(pop)
+
+enum NodeType : int
+{
+    Folder  = 0,
+    File    = 1,
+};
 
 struct image_t
 {

@@ -103,9 +103,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
         case WM_NOTIFY:
         {
-            LPNMHDR pnmh = (LPNMHDR)lParam;
+            auto nmhr = (NMHDR *) lParam;
 
-            if (!(pnmh->idFrom == IDC_LISTVIEW) && (pnmh->code == NM_CUSTOMDRAW))
+            if (!(nmhr->idFrom == IDC_LISTVIEW) && (nmhr->code == NM_CUSTOMDRAW))
                 return FALSE;
 
             auto Instance = (instance_t *) ::GetWindowLongPtrW(hWnd, GWLP_USERDATA);
@@ -126,7 +126,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     ::GetClientRect(lvcd->nmcd.hdr.hwndFrom, &rc);
 
                     // Draw the control background.
-                    HBRUSH hBrush = ::CreateSolidBrush(_Theme.GetSysColor(COLOR_WINDOW));
+                    HBRUSH hBrush = ::CreateSolidBrush(_Theme.GetColor(COLOR_WINDOW));
 
                     ::FillRect(hDC, &rc, hBrush);
 
@@ -145,7 +145,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     // Don't use CDIS_SELECTED (see https://learn.microsoft.com/en-us/windows/win32/api/commctrl/ns-commctrl-nmcustomdraw)
                     if (ListView_GetItemState(Instance->hListView, (int) lvcd->nmcd.dwItemSpec, LVIS_SELECTED))
                     {
-                        HBRUSH hBrush = ::CreateSolidBrush(_Theme.GetSysColor(COLOR_HIGHLIGHT));
+                        HBRUSH hBrush = ::CreateSolidBrush(_Theme.GetColor(COLOR_HIGHLIGHT));
 
                         ::FillRect(hDC, &rc, hBrush);
 

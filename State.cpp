@@ -1,26 +1,11 @@
 
-/** $VER: State.cpp (2026.07.09) P. Stuer **/
+/** $VER: State.cpp (2026.07.10) P. Stuer **/
 
 #include "pch.h"
 
 #include "State.h"
 
 #pragma hdrstop
-
-/*
-// shell32.dll icons
-enum Icon : int
-{
-    File    = 0,
-    Folder  = 3
-};
-*/
-// imageres.dll icons
-enum Icon : int
-{
-    File    = 126,
-    Folder  = 4
-};
 
 /// <summary>
 /// Initializes a new instance.
@@ -38,8 +23,8 @@ void state_t::Reset() noexcept
     _NameFormat = "%node_name%$if(%is_folder%,,' ('%count%')')";
 //  _NameFormat = "%node_name%$if(%is_folder%,,' ('%count%') '%playlist_duration% %playlist_size%)";
 
-    _Images.push_back({ "imageres.dll", Icon::Folder });
-    _Images.push_back({ "imageres.dll", Icon::File });
+    _Images.push_back({ "imageres.dll",   4 }); // Folder
+    _Images.push_back({ "imageres.dll", 126 }); // Playlist
 
     _Object.clear();
 }

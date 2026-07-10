@@ -1,5 +1,5 @@
 
-/** $VER: ImageList.cpp (2026.07.07) P. Stuer **/
+/** $VER: ImageList.cpp (2026.07.10) P. Stuer **/
 
 #include "pch.h"
 
@@ -17,7 +17,7 @@ HIMAGELIST image_list_factory_t::Create(const std::string & filePath, uint32_t i
 
     std::wstring FilePath = msc::UTF8ToWide(filePath);
 
-    msc::module_handle_t hModule(FilePath);
+    msc::hmodule_t hModule(FilePath);
 
     if (!hModule)
         return NULL;
@@ -27,25 +27,25 @@ HIMAGELIST image_list_factory_t::Create(const std::string & filePath, uint32_t i
 
     HIMAGELIST hImageList = ::ImageList_Create((int) iconSize, (int) iconSize, ILC_COLOR32 | ILC_MASK, (int) maxIcons, 0);
 
-    if (hImageList != NULL)
+    if (hImageList == NULL)
+        return NULL;
+
+    for (uint32_t i = 0; i < maxIcons; ++i)
     {
-        for (uint32_t i = 0; i < maxIcons; ++i)
+        HICON hIcon = ::ExtractIconW(THIS_HINSTANCE, FilePath.c_str(), (UINT) i);
+
+        if (hIcon != NULL)
         {
-            HICON hIcon = ::ExtractIconW(THIS_HINSTANCE, FilePath.c_str(), (UINT) i);
 
-            if (hIcon != NULL)
-            {
+            const int Index = ::ImageList_ReplaceIcon(hImageList, -1, hIcon);
 
-                const int Index = ::ImageList_ReplaceIcon(hImageList, -1, hIcon);
+            if (Index == -1)
+                break;
 
-                if (Index == -1)
-                    break;
-
-                ::DestroyIcon(hIcon);
-            }
-            else
-                break; // No more icons available
+            ::DestroyIcon(hIcon);
         }
+        else
+            break; // No more icons available
     }
 
     return hImageList;

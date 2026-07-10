@@ -29,7 +29,7 @@ private:
     title_formatter_t();
 
 public:
-    static HRESULT Evaluate(_In_ const std::string & script, _In_ const GUID id, pfc::string & result) noexcept;
+    static HRESULT Evaluate(const std::string & script, const GUID id, pfc::string & result) noexcept;
 };
 
 /// <summary>
@@ -38,7 +38,7 @@ public:
 class custom_titleformat_hook_t : public titleformat_hook
 {
 public:
-    custom_titleformat_hook_t(_In_ const GUID & id) : _Id(id) { }
+    custom_titleformat_hook_t(const GUID & id) : _Id(id) { }
 
     virtual ~custom_titleformat_hook_t() noexcept { }
 
@@ -50,7 +50,7 @@ public:
     }
 
 private:
-    static const std::string ExpandEnvironmentStrings(_In_ const std::string & src) noexcept;
+    static const std::string ExpandEnvironmentStrings(const std::string & src) noexcept;
 
 private:
     static_api_ptr_t<playlist_manager_v5> _PlaylistManager;

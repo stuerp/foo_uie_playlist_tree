@@ -1,11 +1,12 @@
 
-/** $VER: DUIElement.cpp (2026.07.08) P. Stuer - Implements Default User Interface support **/
+/** $VER: DUIElement.cpp (2026.07.10) P. Stuer - Implements Default User Interface support **/
 
 #include "pch.h"
 
 #include "DUIElement.h"
 #include "Node.h"
 #include "State.h"
+#include "Theme.h"
 
 #include <helpers\BumpableElem.h>
 
@@ -106,13 +107,13 @@ ui_element_config::ptr duielement_t::get_configuration()
 
         (*node)["id"]       = msc::GUIDToUTF8(Node->Id);
         (*node)["name"]     = Node->Name;
-
+/*
         (*node)["image"]    =
         {
             { "filePath", "test" },
             { "index", 42 }
         };
-
+*/
         (*node)["isFolder"] = Node->IsFolder;
 
         if (Node->IsFolder)
@@ -139,24 +140,8 @@ ui_element_config::ptr duielement_t::get_configuration()
 /// </summary>
 void duielement_t::notify(const GUID & what, t_size param1, const void * param2, t_size param2Size)
 {
-    if (what == ui_element_notify_edit_mode_changed)
-    {
-    }
-    else
     if (what == ui_element_notify_colors_changed)
-    {
-        OnColorsChanged();
-    }
-/*
-    else
-    if (what == ui_element_notify_font_changed)
-    {
-    }
-    else
-    if (what == ui_element_notify_visibility_changed)
-    {
-    }
-*/
+        GetColors();
 }
 
 /// <summary>
@@ -164,8 +149,10 @@ void duielement_t::notify(const GUID & what, t_size param1, const void * param2,
 /// </summary>
 void duielement_t::GetColors() noexcept
 {
-    _ForegroundColor = (COLORREF) m_callback->query_std_color(ui_color_text);
-    _BackgroundColor = (COLORREF) m_callback->query_std_color(ui_color_background);
+    _Theme.SetColor(COLOR_WINDOW,    (COLORREF) m_callback->query_std_color(ui_color_background));
+    _Theme.SetColor(COLOR_WINDOWTEXT,(COLORREF) m_callback->query_std_color(ui_color_text));
+    _Theme.SetColor(COLOR_HIGHLIGHT, (COLORREF) m_callback->query_std_color(ui_color_selection));
+    _Theme.SetColor(COLOR_HOTLIGHT,  (COLORREF) m_callback->query_std_color(ui_color_highlight));
 }
 
 static service_factory_single_t<ui_element_impl_withpopup<duielement_t>> _Factory;

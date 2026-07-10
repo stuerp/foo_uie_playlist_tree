@@ -5,9 +5,14 @@
 
 #include "TreeView.h"
 
+#pragma warning(push)
+#pragma warning(disable: 4868) // compiler may not enforce left-to-right evaluation order in braced initializer list
+
 #include <nlohmann\json.hpp>
 
 using json = nlohmann::ordered_json;
+
+#pragma warning(pop)
 
 /// <summary>
 /// Implements a tree view that understands nodes.

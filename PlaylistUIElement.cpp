@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.cpp (2026.07.08) P. Stuer **/
+/** $VER: PlaylistsUIElement.cpp (2026.07.10) P. Stuer **/
 
 #include "pch.h"
 
@@ -8,6 +8,7 @@
 #include "TitleFormat.h"
 #include "Node.h"
 #include "State.h"
+#include "Theme.h"
 
 #include <SDK\playlist.h>
 
@@ -49,12 +50,24 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
     {
         const auto IconSize = (uint32_t) ::GetSystemMetrics(SM_CXSMICON);
 
-        HIMAGELIST hImageList = image_list_factory_t::Create("imageres.dll", IconSize);
+        _hImageList = ::ImageList_Create((int) IconSize, (int) IconSize, ILC_COLOR32 | ILC_MASK, (int) _State._Images.size(), 0);
 
-        if (hImageList == NULL)
-            return false;
+        if (!_hImageList)
+            return -1;
 
-        _TreeView.SetImageList(hImageList);
+        for (const auto & Image : _State._Images)
+        {
+            himagelist_t hSrcImageList = image_list_factory_t::Create("imageres.dll", IconSize);
+
+            hicon_t hIcon = ::ImageList_GetIcon(hSrcImageList, (int) Image._IconIndex, ILD_TRANSPARENT);
+
+            if (!hIcon)
+                return -1;
+
+            ::ImageList_ReplaceIcon(_hImageList, -1, hIcon);
+        }
+
+        _TreeView.SetImageList(_hImageList);
     }
 
 #ifndef Test
@@ -201,6 +214,61 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
             break;
         }
 
+#ifdef later
+        case NM_CUSTOMDRAW:
+        {
+            auto tvcd = (NMTVCUSTOMDRAW *) nmhd;
+
+            HDC & hDC = tvcd->nmcd.hdc;
+
+            switch (tvcd->nmcd.dwDrawStage)
+            {
+                case CDDS_PREPAINT:
+                {
+                    RECT rc;
+
+                    ::GetClientRect(tvcd->nmcd.hdr.hwndFrom, &rc);
+
+                    // Draw the control background.
+                    HBRUSH hBrush = ::CreateSolidBrush(_Theme.GetColor(COLOR_WINDOW));
+
+                    ::FillRect(hDC, &rc, hBrush);
+
+                    ::DeleteObject(hBrush);
+
+                    return CDRF_NOTIFYITEMDRAW; // Request item-specific notifications.
+                }
+
+                case CDDS_ITEMPREPAINT:
+                    tvcd->clrText = 0xF0000000 | tvcd->clrText;
+
+                    return CDRF_NOTIFYPOSTPAINT; // Request Post-Paint notifications.
+
+                case CDDS_ITEMPOSTPAINT:
+                {
+                    RECT & rc = tvcd->nmcd.rc;
+/*
+                    // Don't use CDIS_SELECTED (see https://learn.microsoft.com/en-us/windows/win32/api/commctrl/ns-commctrl-nmcustomdraw)
+                    if (ListView_GetItemState(Instance->hListView, (int) lvcd->nmcd.dwItemSpec, LVIS_SELECTED))
+                    {
+                        HBRUSH hBrush = ::CreateSolidBrush(_Theme.GetColor(COLOR_HIGHLIGHT));
+
+                        ::FillRect(hDC, &rc, hBrush);
+
+                        ::DeleteObject(hBrush);
+                    }
+*/
+//                  ::ImageList_Draw(Instance->hImageList, (int) lvcd->nmcd.dwItemSpec, hDC, rc.left + xPadding, rc.top + yPadding, ILD_NORMAL);
+/*
+                    if (tvcd->nmcd.uItemState & CDIS_FOCUS)
+                        ::DrawFocusRect(hDC, &rc);
+*/
+                    return CDRF_DODEFAULT;
+                }
+            }
+            break;
+        }
+#endif
         // Handles a need for display or sort info.
         case TVN_GETDISPINFO:
         {
@@ -226,7 +294,7 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
             if (tvi.mask & (TVIF_IMAGE | TVIF_SELECTEDIMAGE))
             {
                 tvi.iImage =
-                tvi.iSelectedImage = Node->IsFolder ? Icon::Folder : Icon::File;
+                tvi.iSelectedImage = Node->IsFolder ? NodeType::Folder : NodeType::File;
             }
             break;
         }

@@ -60,9 +60,7 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
     {
         const size_t ItemCount = _PlaylistManager->playlist_get_item_count(Index);
 
-        pfc::string Text = pfc::format_uint((t_uint64) ItemCount).c_str();
-
-        out->write(titleformat_inputtypes::unknown, Text);
+        out->write(titleformat_inputtypes::unknown, std::format("{}", ItemCount).c_str());
 
         isFound = true;
 
@@ -112,7 +110,7 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
 
         pm->playlist_enum_items(Index, Callback, bit_array_true());
 
-        out->write(titleformat_inputtypes::unknown, pfc::format_float(Callback.Duration));
+        out->write(titleformat_inputtypes::unknown, std::format("{}", Callback.Duration).c_str());
 
 //      auto NaturalDuration = pfc::format_time(Callback.Duration);
 
@@ -146,7 +144,7 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
 
         pm->playlist_enum_items(Index, Callback, bit_array_true());
 
-        out->write(titleformat_inputtypes::unknown, pfc::format_uint((t_uint64) Callback.Size));
+        out->write(titleformat_inputtypes::unknown, std::format("{}", Callback.Size).c_str());
 
 //      auto NaturalSize = pfc::format_file_size_short(Callback.Size);
 

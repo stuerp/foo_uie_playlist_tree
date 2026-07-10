@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.h (2026.07.08) P. Stuer **/
+/** $VER: PlaylistsUIElement.h (2026.07.10) P. Stuer **/
 
 #pragma once
 
@@ -95,23 +95,10 @@ protected:
     playlist_tree_view_t _TreeView;
 
 private:
+    himagelist_t _hImageList;
+
     static_api_ptr_t<playlist_manager_v5> _PlaylistManager;
     static_api_ptr_t<folder_manager_t> _FolderManager;
 
     HTREEITEM _hDropTarget = NULL;
-/*
-
-    // shell32.dll icons
-    enum Icon : int
-    {
-        File    = 0,
-        Folder  = 3
-    };
-*/
-    // imageres.dll icons
-    enum Icon : int
-    {
-        File    = 126,
-        Folder  = 4
-    };
 };

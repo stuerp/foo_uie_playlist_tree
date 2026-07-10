@@ -70,7 +70,7 @@ public:
         {
             GetDlgItemTextW(IDC_TEXT_FORMAT, Text.data(), (int) Text.size());
 
-            _State._NameFormat = msc::WideToUTF8(Text).c_str();
+            _State._NameFormat = msc::WideToUTF8(Text.c_str());
         }
 
         {
@@ -237,7 +237,7 @@ private:
         {
             GetDlgItemTextW(IDC_TEXT_FORMAT, Text.data(), (int) Text.size());
 
-            if (_State._NameFormat != msc::WideToUTF8(Text).c_str())
+            if (_State._NameFormat != msc::WideToUTF8(Text.c_str()))
                 return true;
         }
 
