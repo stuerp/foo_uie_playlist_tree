@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.h (2026.07.10) P. Stuer **/
+/** $VER: PlaylistsUIElement.h (2026.07.11) P. Stuer **/
 
 #pragma once
 
@@ -101,4 +101,5 @@ private:
     static_api_ptr_t<folder_manager_t> _FolderManager;
 
     HTREEITEM _hDropTarget = NULL;
+    HTREEITEM _hItemPopup = NULL;
 };

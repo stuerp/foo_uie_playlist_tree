@@ -1,10 +1,10 @@
 
-/** $VER: TreeView.cpp (2026.07.08) P. Stuer **/
+/** $VER: TreeView.cpp (2026.07.11) P. Stuer **/
 
 #include "pch.h"
 
 #include "TreeView.h"
-#include "Log.h"
+#include "Theme.h"
 
 #pragma hdrstop
 
@@ -148,15 +148,15 @@ void tree_view_t::MoveItem(HTREEITEM hPivotItem, HTREEITEM hChildItem, DropZone 
 /// <summary>
 /// Gets the item at the specified point.
 /// </summary>
-HTREEITEM tree_view_t::GetItem(const POINT & point) noexcept
+HTREEITEM tree_view_t::GetItem(const POINT & pt) const noexcept
 {
-    TVHITTESTINFO ht = { .pt = point };
+    TVHITTESTINFO ht = { .pt = pt };
 
     ::ScreenToClient(_hTreeView, &ht.pt);
 
-    auto hTreeItem = TreeView_HitTest(_hTreeView, &ht);
+    auto hItem = TreeView_HitTest(_hTreeView, &ht);
 
-    return hTreeItem;
+    return hItem;
 }
 
 /// <summary>
@@ -221,19 +221,19 @@ void * tree_view_t::GetData(HTREEITEM hItem) const noexcept
 /// </summary>
 void tree_view_t::BeginDrag(const NMTREEVIEW * nmtv) noexcept
 {
+    TreeView_SetInsertMarkColor(_hTreeView, _Theme.GetColor(COLOR_WINDOWTEXT));
+
+    // Create the drag image.
     _hDragImageList = TreeView_CreateDragImage(_hTreeView, nmtv->itemNew.hItem);
 
     if (_hDragImageList == NULL)
         return;
 
-    RECT rcItem;
-
-    if (!TreeView_GetItemRect(_hTreeView, nmtv->itemNew.hItem, &rcItem, TRUE))
-        return;
-
+    // Begin the drag operation.
     if (!::ImageList_BeginDrag(_hDragImageList, 0, 0, 0))
         return;
 
+    // Loch the tree view.
     if (!::ImageList_DragEnter(_hTreeView, nmtv->ptDrag.x, nmtv->ptDrag.y))
         return;
 
@@ -303,14 +303,28 @@ void tree_view_t::EndDrag(bool cancel) noexcept
     if (_hDragItem == NULL)
         return;
 
+    // Unlock the tree view.
+    ::ImageList_DragLeave(_hTreeView);
+
+    // Stop the drag operation.
     ::ImageList_EndDrag();
 
-    TreeView_SetInsertMark(_hTreeView, NULL, FALSE); // Remove the insertion marker.
+    // Remove the insertion marker.
+    TreeView_SetInsertMark(_hTreeView, NULL, FALSE);
 
+    // Move the item and its children.
     if ((_hDropTarget != NULL) && (_hDropTarget != _hDragItem) && !cancel)
         MoveItem(_hDropTarget, _hDragItem, _DropZone);
 
-    TreeView_SelectDropTarget(_hTreeView, NULL); // Remove the drop target highlight.
+    // Remove the drop target highlight.
+    TreeView_SelectDropTarget(_hTreeView, NULL);
+
+    // Destroy the drag image.
+    if (_hDragImageList != NULL)
+    {
+        ::ImageList_Destroy(_hDragImageList);
+        _hDragImageList = NULL;
+    }
 
     ::ReleaseCapture();
     ::ShowCursor(TRUE);
@@ -319,10 +333,4 @@ void tree_view_t::EndDrag(bool cancel) noexcept
 
     _hDropTarget = NULL;
     _DropZone = DropZone::Unknown;
-
-    if (_hDragImageList != NULL)
-    {
-        ::ImageList_Destroy(_hDragImageList);
-        _hDragImageList = NULL;
-    }
 }

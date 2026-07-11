@@ -1,9 +1,10 @@
 
-/** $VER: PlaylistsTreeView.h (2026.07.08) P. Stuer **/
+/** $VER: PlaylistsTreeView.h (2026.07.11) P. Stuer **/
 
 #pragma once
 
 #include "TreeView.h"
+#include "Node.h"
 
 #pragma warning(push)
 #pragma warning(disable: 4868) // compiler may not enforce left-to-right evaluation order in braced initializer list
@@ -32,12 +33,14 @@ public:
     std::string GetText(const GUID id) const noexcept;
     void SetName(const GUID id, const std::string & name) const noexcept;
 
-    void AddItem(const GUID & id, const std::string & name, bool isFolder, bool isExpanded, const GUID & parentId) const noexcept;
+    void AddItem(const GUID & parentId, const GUID & insertAfterId, const GUID & id, const std::string & name, bool isFolder, bool isExpanded) const noexcept;
     void RemoveItem(const GUID id) const noexcept;
 
     void Clear() const noexcept override;
 
     HTREEITEM FindItem(const GUID & id) const noexcept;
+
+    HTREEITEM GetItem(const POINT & pt) const noexcept;
 
     /// <summary>
     /// Serializes this instance to JSON.

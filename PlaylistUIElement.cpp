@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.cpp (2026.07.10) P. Stuer **/
+/** $VER: PlaylistsUIElement.cpp (2026.07.11) P. Stuer **/
 
 #include "pch.h"
 
@@ -120,6 +120,7 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
         // Handles the "New Folder" command.
         case IDM_NEW_FOLDER:
         {
+            // Create the new Folder item.
             std::string Name("New Folder");
 
             GUID Id;
@@ -131,9 +132,24 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
 
             _FolderManager->CreateFolder(Id, Name);
 
-            GUID ParentId;
+            // Get the data of the item we were hovering over, if any.
+            auto Parent = (const node_t *) _TreeView.GetData(_hItemPopup);
 
-            _TreeView.AddItem(Id, Name, true, false, ParentId);
+            // Add the item.
+            auto ParentId = GUID();
+            auto InsertAfterId = GUID();
+
+            if (Parent != nullptr)
+            {
+                if (Parent->IsFolder)
+                    ParentId = Parent->Id;
+                else
+                    InsertAfterId = Parent->Id;
+            }
+
+            _TreeView.AddItem(ParentId, InsertAfterId, Id, Name, true, false);
+
+            _hItemPopup = NULL;
             break;
         }
 
@@ -146,7 +162,6 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
 
             if (NewIndex == ~0llu)
                 break;
-
             break;
         }
 
@@ -175,15 +190,16 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
             const DWORD Position = ::GetMessagePos();
 
             const POINT pt = { GET_X_LPARAM(Position), GET_Y_LPARAM(Position) };
-/*
+
             {
-                auto hTreeItem = _TreeView.GetItem(pt);
+                // Remember the item we're hovering over, if any.
+                _hItemPopup = _TreeView.GetItem(pt);
 
                 // Uncomment if the item pointed to should become the selected item.
                 //if (hTreeItem != NULL)
                 //    _TreeView.SelectItem(hTreeItem);
             }
-*/
+
             {
                 const HMENU hMenu = ::LoadMenuW(THIS_HINSTANCE, MAKEINTRESOURCE(IDM_CONTEXT_MENU));
 
@@ -215,7 +231,7 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
             break;
         }
 
-#ifndef later
+#ifdef CustomDraw
         case NM_CUSTOMDRAW:
         {
             auto tvcd = (const NMTVCUSTOMDRAW *) nmhd;
@@ -559,7 +575,24 @@ void playlist_uielement_t::on_playlist_created(size_t index, const char * name, 
 
     const auto Id = _PlaylistManager->playlist_get_guid(index);
 
-    _TreeView.AddItem(Id, Name.c_str(), false, false, { });
+    // Get the data of the item we were hovering over, if any.
+    auto Parent = (const node_t *) _TreeView.GetData(_hItemPopup);
+
+    // Add the item.
+    auto ParentId = GUID();
+    auto InsertAfterId = GUID();
+
+    if (Parent != nullptr)
+    {
+        if (Parent->IsFolder)
+            ParentId = Parent->Id;
+        else
+            InsertAfterId = Parent->Id;
+    }
+
+    _TreeView.AddItem(ParentId, InsertAfterId, Id, Name.c_str(), false, false);
+
+    _hItemPopup = NULL;
 }
 
 /// <summary>
@@ -652,7 +685,7 @@ void playlist_uielement_t::FromJSON(json object, const GUID & parentId) noexcept
 
         GUID Id = msc::GUIDFromUTF8(IdText);
 
-        _TreeView.AddItem(Id, Name, IsFolder, IsExpanded, parentId);
+        _TreeView.AddItem(parentId, { }, Id, Name, IsFolder, IsExpanded);
 
         if (IsFolder)
         {
@@ -681,7 +714,7 @@ void playlist_uielement_t::GetPlaylists() noexcept
 
         _PlaylistManager->playlist_get_name(PlaylistIndex, Name);
 
-        _TreeView.AddItem(Id, Name.c_str(), false, false, { });
+        _TreeView.AddItem({ }, { }, Id, Name.c_str(), false, false);
     }
 }
 

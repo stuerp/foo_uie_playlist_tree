@@ -1,5 +1,5 @@
 
-/** $VER: TreeView.h (2026.07.08) P. Stuer **/
+/** $VER: TreeView.h (2026.07.11) P. Stuer **/
 
 #pragma once
 
@@ -47,7 +47,7 @@ public:
         return TreeView_GetSelection(_hTreeView);
     }
 
-    HTREEITEM GetItem(const POINT & point) noexcept;
+    HTREEITEM GetItem(const POINT & point) const noexcept;
 
     std::string GetText(HTREEITEM hItem) const noexcept;
     void * GetData(HTREEITEM hItem) const noexcept;
@@ -138,17 +138,17 @@ public:
 
 private:
     /// <summary>
-    /// Gets the item zone that contains the specified point.
+    /// Gets the drop zone that contains the specified point.
     /// </summary>
     DropZone GetDropZone(const RECT & r, const POINT & pt) const noexcept
     {
         // Divide the item into 3 zones, the middle zone being twice as high.
         const float ZoneHeight = (float) (r.bottom - r.top) / 4.f;
 
-        if (pt.y < r.top + ZoneHeight)
+        if ((float) pt.y < (float) r.top + ZoneHeight)
             return DropZone::Top;
 
-        if (pt.y >= r.bottom - ZoneHeight)
+        if ((float) pt.y >= (float) r.bottom - ZoneHeight)
             return DropZone::Bottom;
 
         return DropZone::Middle;
