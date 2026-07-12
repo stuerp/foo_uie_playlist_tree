@@ -1,5 +1,5 @@
 
-/** $VER: TreeView.cpp (2026.07.11) P. Stuer **/
+/** $VER: TreeView.cpp (2026.07.12) P. Stuer **/
 
 #include "pch.h"
 
@@ -13,7 +13,7 @@
 /// </summary>
 bool tree_view_t::Create(HWND hWndParent, size_t id) noexcept
 {
-    const DWORD Styles = WS_CHILD | WS_VISIBLE | WS_VSCROLL | TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | TVS_EDITLABELS | TVS_SHOWSELALWAYS;// | TVS_TRACKSELECT | TVS_SINGLEEXPAND | TVS_INFOTIP | TVS_FULLROWSELECT;
+    const DWORD Styles = WS_CHILD | WS_VISIBLE | WS_VSCROLL | TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | TVS_EDITLABELS | TVS_SHOWSELALWAYS | TVS_TRACKSELECT; // | TVS_SINGLEEXPAND | TVS_INFOTIP | TVS_FULLROWSELECT;
 
     _hTreeView = ::CreateWindowExW(0, WC_TREEVIEW, L"", Styles, 0, 0, 0, 0, hWndParent, (HMENU) id, THIS_HINSTANCE, nullptr);
 
@@ -55,22 +55,6 @@ HTREEITEM tree_view_t::AddItem(HTREEITEM hParent, HTREEITEM hInsertAfter, UINT s
     auto hTreeItem = TreeView_InsertItem(_hTreeView, &tvis);
 
     return hTreeItem;
-}
-
-// <summary>
-/// Removes the specified item from the tree.
-/// </summary>
-bool tree_view_t::RemoveItem(HTREEITEM hItem) const noexcept
-{
-    return (TreeView_DeleteItem(_hTreeView, hItem) == TRUE);
-}
-
-/// <summary>
-/// Removes all items.
-/// </summary>
-void tree_view_t::Clear() const noexcept
-{
-    TreeView_DeleteAllItems(_hTreeView);
 }
 
 /// <summary>
@@ -240,7 +224,7 @@ void tree_view_t::BeginDrag(const NMTREEVIEW * nmtv) noexcept
     ::ShowCursor(FALSE);
     ::SetCapture(::GetParent(_hTreeView));
 
-    _hDragItem = nmtv->itemNew.hItem;
+    _hDragSource = nmtv->itemNew.hItem;
 }
 
 /// <summary>
@@ -248,7 +232,7 @@ void tree_view_t::BeginDrag(const NMTREEVIEW * nmtv) noexcept
 /// </summary>
 void tree_view_t::DragMove(const CPoint & point) noexcept
 {
-    if (_hDragItem == NULL)
+    if (_hDragSource == NULL)
         return;
 
     POINT pt = point;
@@ -268,15 +252,15 @@ void tree_view_t::DragMove(const CPoint & point) noexcept
 
         const TVHITTESTINFO tvht = { .pt = pt };
 
-        const HTREEITEM hTreeItem = TreeView_HitTest(_hTreeView, &tvht);
+        _hDropTarget = TreeView_HitTest(_hTreeView, &tvht);
 
-        if ((hTreeItem != NULL) && (hTreeItem != _hDragItem))
+        if ((_hDropTarget != NULL) && (_hDropTarget != _hDragSource))
         {
-            TreeView_SelectDropTarget(_hTreeView, hTreeItem);
+            TreeView_SelectDropTarget(_hTreeView, _hDropTarget);
 
             RECT rc = { };
 
-            if (TreeView_GetItemRect(_hTreeView, hTreeItem, &rc, TRUE))
+            if (TreeView_GetItemRect(_hTreeView, _hDropTarget, &rc, TRUE))
             {
                 _DropZone = GetDropZone(rc, pt);
 
@@ -284,11 +268,10 @@ void tree_view_t::DragMove(const CPoint & point) noexcept
                 {
                     const BOOL PlaceAfter = (_DropZone == DropZone::Bottom) ? TRUE : FALSE;
 
-                    TreeView_SetInsertMark(_hTreeView, hTreeItem, PlaceAfter); // Add the insertion marker:
+                    TreeView_SetInsertMark(_hTreeView, _hDropTarget, PlaceAfter); // Add the insertion marker.
                 }
             }
 
-            _hDropTarget = hTreeItem;
         }
 
         ::ImageList_DragShowNolock(TRUE);
@@ -300,7 +283,7 @@ void tree_view_t::DragMove(const CPoint & point) noexcept
 /// </summary>
 void tree_view_t::EndDrag(bool cancel) noexcept
 {
-    if (_hDragItem == NULL)
+    if (_hDragSource == NULL)
         return;
 
     // Unlock the tree view.
@@ -313,8 +296,8 @@ void tree_view_t::EndDrag(bool cancel) noexcept
     TreeView_SetInsertMark(_hTreeView, NULL, FALSE);
 
     // Move the item and its children.
-    if ((_hDropTarget != NULL) && (_hDropTarget != _hDragItem) && !cancel)
-        MoveItem(_hDropTarget, _hDragItem, _DropZone);
+    if ((_hDropTarget != NULL) && (_hDropTarget != _hDragSource) && AllowDrop(_DropZone) && !cancel)
+        MoveItem(_hDropTarget, _hDragSource, _DropZone);
 
     // Remove the drop target highlight.
     TreeView_SelectDropTarget(_hTreeView, NULL);
@@ -329,7 +312,7 @@ void tree_view_t::EndDrag(bool cancel) noexcept
     ::ReleaseCapture();
     ::ShowCursor(TRUE);
 
-    _hDragItem = NULL;
+    _hDragSource = NULL;
 
     _hDropTarget = NULL;
     _DropZone = DropZone::Unknown;

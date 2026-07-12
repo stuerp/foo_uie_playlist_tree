@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.h (2026.07.11) P. Stuer **/
+/** $VER: PlaylistsUIElement.h (2026.07.12) P. Stuer **/
 
 #pragma once
 
@@ -8,6 +8,7 @@
 #include "UIElement.h"
 #include "PlaylistTreeView.h"
 #include "FolderManager.h"
+#include "EditSubclass.h"
 
 #include <SDK\playlist.h>
 
@@ -90,6 +91,17 @@ private:
     void FromJSON(json object, const GUID & parentId) noexcept;
     void GetPlaylists() noexcept;
     void SelectPlaylist(size_t playlistIndex) const noexcept;
+/*
+    WNDPROC g_OldEditProc = nullptr;
+
+    static LRESULT CALLBACK EditSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+    {
+        if (uMsg == WM_GETDLGCODE)
+            return (DLGC_WANTALLKEYS | ::CallWindowProcW(g_OldEditProc, hWnd, uMsg, wParam, lParam));
+
+        return ::CallWindowProcW(g_OldEditProc, hWnd, uMsg, wParam, lParam);
+    }
+*/
 
 protected:
     playlist_tree_view_t _TreeView;
@@ -102,4 +114,9 @@ private:
 
     HTREEITEM _hDropTarget = NULL;
     HTREEITEM _hItemPopup = NULL;
+
+    edit_subclass_t _EditSubclass;
+
+    bool _IsNotification = false;
+    bool _IsUser = false;
 };

@@ -36,8 +36,6 @@ public:
     void AddItem(const GUID & parentId, const GUID & insertAfterId, const GUID & id, const std::string & name, bool isFolder, bool isExpanded) const noexcept;
     void RemoveItem(const GUID id) const noexcept;
 
-    void Clear() const noexcept override;
-
     HTREEITEM FindItem(const GUID & id) const noexcept;
 
     HTREEITEM GetItem(const POINT & pt) const noexcept;
@@ -48,6 +46,23 @@ public:
     template<typename Visitor> bool ToJSON(Visitor && visitor, json::array_t * nodes) const noexcept
     {
         return ToJSON_(TreeView_GetRoot(Get()), visitor, nodes);
+    }
+
+protected:
+    /// <summary>
+    /// Returns true if a drop is allowed on the target.
+    /// </summary>
+    virtual bool AllowDrop(DropZone dropZone) noexcept
+    {
+        if (_hDropTarget == NULL)
+            return false;
+
+        auto Node = (const node_t *) GetData(_hDropTarget);
+
+        if (Node == nullptr)
+            return false;
+
+        return Node->IsFolder || (!Node->IsFolder && (dropZone != DropZone::Middle));
     }
 
 private:

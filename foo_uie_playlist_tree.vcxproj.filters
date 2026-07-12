@@ -34,6 +34,7 @@
     <ClInclude Include="Preferences.h" />
     <ClInclude Include="IconList.h" />
     <ClInclude Include="Theme.h" />
+    <ClInclude Include="EditSubclass.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />

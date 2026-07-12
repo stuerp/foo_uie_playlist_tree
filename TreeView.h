@@ -1,5 +1,5 @@
 
-/** $VER: TreeView.h (2026.07.11) P. Stuer **/
+/** $VER: TreeView.h (2026.07.12) P. Stuer **/
 
 #pragma once
 
@@ -47,6 +47,11 @@ public:
         return TreeView_GetSelection(_hTreeView);
     }
 
+    HWND GetEditControl() const noexcept
+    {
+        return TreeView_GetEditControl(_hTreeView);
+    }
+
     HTREEITEM GetItem(const POINT & point) const noexcept;
 
     std::string GetText(HTREEITEM hItem) const noexcept;
@@ -55,9 +60,26 @@ public:
     void SetText(HTREEITEM hItem, const std::string & text) const noexcept;
 
     HTREEITEM AddItem(HTREEITEM hParent, HTREEITEM hInsertAfter, UINT state, const void * data) const noexcept;
-    bool RemoveItem(HTREEITEM hItem) const noexcept;
 
-    virtual void Clear() const noexcept;
+    bool RemoveItem(HTREEITEM hItem) const noexcept
+    {
+        return (TreeView_DeleteItem(_hTreeView, hItem) == TRUE);
+    }
+
+    bool RemoveSelectedItem() const noexcept
+    {
+        return RemoveItem(GetSelectedItem());
+    }
+
+    void EditSelectedItem() const noexcept
+    {
+        TreeView_EditLabel(_hTreeView, TreeView_GetSelection(_hTreeView));
+    }
+
+    void DeleteAllItems() const noexcept
+    {
+        TreeView_DeleteAllItems(_hTreeView);
+    }
 
     // Forces an update of the item.
     void RefreshItem(HTREEITEM hItem) const noexcept
@@ -91,6 +113,14 @@ public:
     void RemoveInsertMarker() const noexcept
     {
         TreeView_SetInsertMark(_hTreeView, NULL, FALSE);
+    }
+
+    /// <summary>
+    /// Returns true if a drag & drop operation is ongoing.
+    /// </summary>
+    bool IsDragging() const noexcept
+    {
+        return (_hDragSource != NULL);
     }
 
     /// <summary>
@@ -136,6 +166,9 @@ public:
         return true;
     }
 
+protected:
+    virtual bool AllowDrop(DropZone dropZone) noexcept = 0;
+
 private:
     /// <summary>
     /// Gets the drop zone that contains the specified point.
@@ -154,13 +187,14 @@ private:
         return DropZone::Middle;
     }
 
+protected:
+    HTREEITEM _hDragSource = NULL;
+    HTREEITEM _hDropTarget = NULL;
+
 private:
     HWND _hTreeView;
 
     HIMAGELIST _hDragImageList = NULL;
-    HTREEITEM _hDragItem = NULL;
-
-    HTREEITEM _hDropTarget = NULL;
     DropZone _DropZone = DropZone::Unknown;
 
     const UINT Mask =  TVIF_STATE | TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_PARAM;

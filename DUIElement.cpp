@@ -122,8 +122,6 @@ ui_element_config::ptr duielement_t::get_configuration()
         return true; // Continue enumerating.
     }, &Nodes);
 
-    _TreeView.Clear();
-
     Object["nodes"] = Nodes;
 
     std::string Config = Object.dump(-1);

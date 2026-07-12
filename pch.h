@@ -5,7 +5,7 @@
 
 #include <CppCoreCheck/Warnings.h>
 
-#pragma warning(disable: 4100 4625 4626 4710 4711 4738 5045 ALL_CPPCORECHECK_WARNINGS)
+#pragma warning(disable: 4100 4625 4626 4710 4711 4738 5039 5045 ALL_CPPCORECHECK_WARNINGS)
 
 #include <SDKDDKVer.h>
 

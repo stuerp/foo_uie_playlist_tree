@@ -1,5 +1,5 @@
 
-/** $VER: FolderManager.cpp (2026.07.07) P. Stuer **/
+/** $VER: FolderManager.cpp (2026.07.12) P. Stuer **/
 
 #include "pch.h"
 
@@ -37,7 +37,7 @@ public:
     /// <summary>
     /// Creates a new folder.
     /// </summary>
-    virtual void CreateFolder(const GUID & id, const std::string & name)
+    virtual void CreateFolder(const GUID & id, const std::string & name) noexcept
     {
         _Items.emplace(id, folder_t(name));
     }
@@ -45,7 +45,7 @@ public:
     /// <summary>
     /// Gets the name of the specified folder.
     /// </summary>
-    virtual void GetFolderName(const GUID & id, std::string & text) const
+    virtual void GetFolderName(const GUID & id, std::string & text) const noexcept
     {
         auto Iter = _Items.find(id);
 
@@ -57,6 +57,27 @@ public:
         }
 
         text = Iter->second.Name;
+    }
+
+    /// <summary>
+    /// Sets the name of the specified folder.
+    /// </summary>
+    virtual void SetFolderName(const GUID & id, const std::string & text) noexcept
+    {
+        auto Iter = _Items.find(id);
+
+        if (Iter == _Items.end())
+            return;
+
+        Iter->second.Name = text;
+    }
+
+    /// <summary>
+    /// Removes the specified folder.
+    /// </summary>
+    virtual void RemoveFolder(const GUID & id) noexcept
+    {
+        _Items.erase(id);
     }
 
 private:

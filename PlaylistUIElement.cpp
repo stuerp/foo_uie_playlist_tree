@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.cpp (2026.07.11) P. Stuer **/
+/** $VER: PlaylistsUIElement.cpp (2026.07.12) P. Stuer **/
 
 #include "pch.h"
 
@@ -168,7 +168,14 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
         // Handles the "Rename" command.
         case IDM_RENAME:
         {
-            TreeView_EditLabel(_TreeView.Get(), TreeView_GetSelection(_TreeView.Get()));
+            _TreeView.EditSelectedItem();
+            break;
+        }
+
+        // Handles the "Remove" command.
+        case IDM_REMOVE:
+        {
+            _TreeView.RemoveSelectedItem();
             break;
         }
     }
@@ -217,17 +224,6 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
 
                 ::DestroyMenu(hMenu);
             }
-            break;
-        }
-
-        // Handles a key press within the control.
-        case NM_KEYDOWN:
-        {
-            const auto nmtv = (NMKEY *) nmhd;
-
-            if (nmtv->nVKey == VK_ESCAPE)
-                _TreeView.EndDrag(true);
-
             break;
         }
 
@@ -420,7 +416,7 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
             if (Node == nullptr)
                 break;
 
-            size_t Index = _PlaylistManager->find_playlist_by_guid(Node->Id);
+            const size_t Index = _PlaylistManager->find_playlist_by_guid(Node->Id);
 
             if (Index == ~0llu)
                 break;
@@ -432,25 +428,120 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
         // Handles a deletion of an item.
         case TVN_DELETEITEM:
         {
+            // Don't respond to Delete notifications caused by moving items after a drop.
+            if (_TreeView.IsDragging())
+                break;
+
+            const auto nmtv = (NMTREEVIEWW *) nmhd;
+
+            auto Node = (node_t *) nmtv->itemOld.lParam;
+
+            if (Node == nullptr)
+                break;
+
+            if (Node->IsFolder)
+            {
+                _FolderManager->RemoveFolder(Node->Id);
+            }
+            else
+            {
+                // Remove ths playlist only by a user action.
+                if (_IsUser)
+                {
+                    const size_t Index = _PlaylistManager->find_playlist_by_guid(Node->Id);
+
+                    if (Index == ~0llu)
+                        break;
+
+                    _IsNotification = true;
+
+                    _PlaylistManager->remove_playlist(Index);
+
+                    _IsNotification = false;
+                }
+            }
+
+            delete Node;
             break;
         }
 
         // Handles the beginning of label editing.
         case TVN_BEGINLABELEDIT:
         {
-            auto hEdit = TreeView_GetEditControl(_TreeView.Get());
+            const auto nmdi = (NMTVDISPINFOW *) nmhd;
+
+            auto Node = (const node_t *) nmdi->item.lParam;
+
+            if (Node == nullptr)
+                return TRUE;
+
+            auto hEdit = _TreeView.GetEditControl();
+
+            if (hEdit == NULL)
+                return TRUE;
+
+            _EditSubclass.Attach(hEdit);
+
+            ::SetWindowTextW(hEdit, (LPCWSTR) msc::UTF8ToWide(Node->Name).c_str());
 
             ::SetFocus(hEdit);
-            break;
+
+            return FALSE;
         }
 
-        // Handles the completion or cancellation label editing.
+        // Handles the completion or cancellation of label editing.
         case TVN_ENDLABELEDIT:
         {
             const auto nmdi = (NMTVDISPINFOW *) nmhd;
 
-            if (nmdi->item.pszText != nullptr)
-                return TRUE; // Keep the text.
+            if (nmdi->item.pszText == nullptr)
+                return FALSE;
+
+            auto Node = (node_t *) nmdi->item.lParam;
+
+            if (Node == nullptr)
+                return FALSE;
+
+            Node->Name = msc::WideToUTF8(nmdi->item.pszText);
+
+            if (Node->IsFolder)
+                _FolderManager->SetFolderName(Node->Id, Node->Name);
+            else
+            {
+                size_t Index = _PlaylistManager->find_playlist_by_guid(Node->Id);
+
+                if (Index == ~0llu)
+                    return FALSE;
+
+                _PlaylistManager->playlist_rename(Index, Node->Name.c_str(), Node->Name.size());
+            }
+
+            return TRUE; // Keep the text.
+        }
+
+        // Handles the notification that the user pressed a key and the tree-view control has the input focus. 
+        case TVN_KEYDOWN:
+        {
+            const auto nmkd = (NMTVKEYDOWN *) nmhd;
+
+            switch (nmkd->wVKey)
+            {
+                case VK_F2:
+                {
+                    _TreeView.EditSelectedItem();
+                    break;
+                }
+
+                case VK_DELETE:
+                {
+                    _IsUser = true;
+
+                    _TreeView.RemoveSelectedItem();
+
+                    _IsUser = false;
+                    break;
+                }
+            }
 
             break;
         }
@@ -465,7 +556,7 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
         }
     }
 
-    return 0;
+    return FALSE;
 }
 
 /// <summary>
@@ -611,7 +702,8 @@ void playlist_uielement_t::on_playlists_removing(const bit_array & mask, size_t 
     {
         const auto Id = _PlaylistManager->playlist_get_guid(index);
 
-        _TreeView.RemoveItem(Id);
+        if (!_IsNotification)
+            _TreeView.RemoveItem(Id);
     }
 }
 
@@ -669,8 +761,8 @@ void playlist_uielement_t::FromJSON(json object, const GUID & parentId) noexcept
 
     for (auto Node : Nodes)
     {
-        std::string IdText        = Node.value("id", IdText);
-        std::string Name          = Node.value("name", Name);
+        std::string IdText = Node.value("id", IdText);
+        std::string Name   = Node.value("name", Name);
 
         const auto & Image = Node["image"];
 
@@ -680,8 +772,8 @@ void playlist_uielement_t::FromJSON(json object, const GUID & parentId) noexcept
             int32_t ImageIndex        = Node.value("index", ImageIndex);
         }
 
-        bool IsFolder             = Node.value("isFolder", IsFolder);
-        bool IsExpanded           = Node.value("isExpanded", IsExpanded);
+        bool IsFolder   = Node.value("isFolder", IsFolder);
+        bool IsExpanded = Node.value("isExpanded", IsExpanded);
 
         GUID Id = msc::GUIDFromUTF8(IdText);
 

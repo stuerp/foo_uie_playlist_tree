@@ -64,30 +64,7 @@ void playlist_tree_view_t::RemoveItem(const GUID id) const noexcept
     if (hItem == NULL)
         return;
 
-    auto Node = (const node_t *) tree_view_t::GetData(hItem);
-
-    if (Node != nullptr)
-        delete Node;
-
     tree_view_t::RemoveItem(hItem);
-}
-
-/// <summary>
-/// Removes all items.
-/// </summary>
-void playlist_tree_view_t::Clear() const noexcept
-{
-    tree_view_t::Walk([&](HTREEITEM hItem, void * context) -> bool
-    {
-        auto Node = (const node_t *) GetData(hItem);
-
-        if (Node != nullptr)
-            delete Node;
-
-        return true; // Continue enumerating
-    });
-
-    tree_view_t::Clear();
 }
 
 /// <summary>

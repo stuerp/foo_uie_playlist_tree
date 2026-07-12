@@ -1,5 +1,5 @@
 
-/** $VER: FolderManager.h (2026.07.06) P. Stuer **/
+/** $VER: FolderManager.h (2026.07.12) P. Stuer **/
 
 #pragma once
 
@@ -13,8 +13,10 @@ using namespace msc;
 class NOVTABLE folder_manager_t : public service_base
 {
 public:
-    virtual void CreateFolder(const GUID & id, const std::string & name) = 0;
-    virtual void GetFolderName(const GUID & id, std::string & name) const = 0;
+    virtual void CreateFolder(const GUID & id, const std::string & name) noexcept = 0;
+    virtual void GetFolderName(const GUID & id, std::string & name) const noexcept = 0;
+    virtual void SetFolderName(const GUID & id, const std::string & text) noexcept = 0;
+    virtual void RemoveFolder(const GUID & id) noexcept = 0;
 
     FB2K_MAKE_SERVICE_INTERFACE_ENTRYPOINT(folder_manager_t);
 };

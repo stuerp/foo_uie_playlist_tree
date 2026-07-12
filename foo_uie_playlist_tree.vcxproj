@@ -334,6 +334,7 @@
     <ClCompile Include="UIElement.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="EditSubclass.h" />
     <ClInclude Include="FolderManager.h" />
     <ClInclude Include="IconList.h" />
     <ClInclude Include="ImageList.h" />
