@@ -60,7 +60,7 @@ HTREEITEM tree_view_t::AddItem(HTREEITEM hParent, HTREEITEM hInsertAfter, UINT s
 /// <summary>
 /// Forces an item to redraw.
 /// </summary>
-void tree_view_t::RefreshItem(HTREEITEM hItem) const noexcept
+void tree_view_t::RedrawItem(HTREEITEM hItem) const noexcept
 {
     RECT r;
 
@@ -68,6 +68,24 @@ void tree_view_t::RefreshItem(HTREEITEM hItem) const noexcept
         return;
 
     ::InvalidateRect(Get(), &r, TRUE);
+}
+
+/// <summary>
+/// Refreshes the specified item.
+/// </summary>
+void tree_view_t::RefreshItem(HTREEITEM hItem) const noexcept
+{
+    const TVITEMW tvi =
+    {
+        .mask           = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_CHILDREN,
+        .hItem          = hItem,
+        .pszText        = LPSTR_TEXTCALLBACK,
+        .iImage         = I_IMAGECALLBACK,
+        .iSelectedImage = I_IMAGECALLBACK,
+//      .cChildren      = I_CHILDRENCALLBACK
+    };
+
+    TreeView_SetItem(_hTreeView, &tvi);
 }
 
 /// <summary>
@@ -79,17 +97,7 @@ void tree_view_t::RefreshAllItems() const noexcept
 
     while (hItem != NULL)
     {
-        const TVITEMW tvi =
-        {
-            .mask           = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_CHILDREN,
-            .hItem          = hItem,
-            .pszText        = LPSTR_TEXTCALLBACK,
-            .iImage         = I_IMAGECALLBACK,
-            .iSelectedImage = I_IMAGECALLBACK,
-//          .cChildren      = I_CHILDRENCALLBACK
-        };
-
-        TreeView_SetItem(_hTreeView, &tvi);
+        RefreshItem(hItem);
 
         auto hChild = TreeView_GetChild(_hTreeView, hItem);
 

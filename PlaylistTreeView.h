@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsTreeView.h (2026.07.11) P. Stuer **/
+/** $VER: PlaylistsTreeView.h (2026.07.12) P. Stuer **/
 
 #pragma once
 
@@ -39,6 +39,8 @@ public:
     HTREEITEM FindItem(const GUID & id) const noexcept;
 
     HTREEITEM GetItem(const POINT & pt) const noexcept;
+
+    bool RefreshItem(const GUID & id) const noexcept;
 
     /// <summary>
     /// Serializes this instance to JSON.

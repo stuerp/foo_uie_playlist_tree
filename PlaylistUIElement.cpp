@@ -590,6 +590,9 @@ void playlist_uielement_t::OnLButtonUp(UINT flags, CPoint point) noexcept
 /// </summary>
 void playlist_uielement_t::on_items_added(size_t playlistIndex, size_t start, const pfc::list_base_const_t<metadb_handle_ptr> & data, const bit_array & selection) noexcept
 {
+    auto Id = _PlaylistManager->playlist_get_guid(playlistIndex);
+
+    _TreeView.RefreshItem(Id);
 }
 
 /// <summary>
@@ -602,13 +605,18 @@ void playlist_uielement_t::on_items_reordered(size_t playlistIndex, const size_t
 /// 
 /// </summary>
 void playlist_uielement_t::on_items_removing(size_t playlistIndex, const bit_array & mask, size_t oldCount, size_t newCount) noexcept
-{}
+{
+}
 
 /// <summary>
 /// 
 /// </summary>
 void playlist_uielement_t::on_items_removed(size_t playlistIndex, const bit_array & mask, size_t oldCount, size_t newCount) noexcept
-{}
+{
+    auto Id = _PlaylistManager->playlist_get_guid(playlistIndex);
+
+    _TreeView.RefreshItem(Id);
+}
 
 /// <summary>
 /// 

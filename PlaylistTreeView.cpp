@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsTreeView.cpp (2026.07.11) P. Stuer **/
+/** $VER: PlaylistsTreeView.cpp (2026.07.12) P. Stuer **/
 
 #include "pch.h"
 
@@ -38,7 +38,7 @@ void playlist_tree_view_t::SetName(const GUID id, const std::string & name) cons
 
     Node->Name = name;
 
-    RefreshItem(hItem);
+    RedrawItem(hItem);
 }
 
 /// <summary>
@@ -102,4 +102,19 @@ HTREEITEM playlist_tree_view_t::GetItem(const POINT & pt) const noexcept
     auto hItem = tree_view_t::GetItem(pt);
 
     return hItem;
+}
+
+/// <summary>
+/// Refreshes the specified item.
+/// </summary>
+bool playlist_tree_view_t::RefreshItem(const GUID & id) const noexcept
+{
+    HTREEITEM hItem = FindItem(id);
+
+    if (hItem == NULL)
+        return false;
+
+    tree_view_t::RefreshItem(hItem);
+
+    return true;
 }

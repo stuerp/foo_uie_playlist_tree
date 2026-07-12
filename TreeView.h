@@ -81,6 +81,8 @@ public:
         TreeView_DeleteAllItems(_hTreeView);
     }
 
+    void RedrawItem(HTREEITEM hItem) const noexcept;
+
     void RefreshItem(HTREEITEM hItem) const noexcept;
     void RefreshAllItems() const noexcept;
 
