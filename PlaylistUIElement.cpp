@@ -48,28 +48,8 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
 
     _DarkMode.AddCtrlAuto(_TreeView.Get());
 
-    {
-        const auto IconSize = (uint32_t) ::GetSystemMetrics(SM_CXSMICON);
-
-        _hImageList = ::ImageList_Create((int) IconSize, (int) IconSize, ILC_COLOR32 | ILC_MASK, (int) _State._Images.size(), 0);
-
-        if (!_hImageList)
-            return -1;
-
-        for (const auto & Image : _State._Images)
-        {
-            himagelist_t hSrcImageList = image_list_factory_t::Create("imageres.dll", IconSize);
-
-            hicon_t hIcon = ::ImageList_GetIcon(hSrcImageList, (int) Image._IconIndex, ILD_TRANSPARENT);
-
-            if (!hIcon)
-                return -1;
-
-            ::ImageList_ReplaceIcon(_hImageList, -1, hIcon);
-        }
-
-        _TreeView.SetImageList(_hImageList);
-    }
+    if (!InitImageList())
+        return -1;
 
 #ifdef Test
     _State._Object.clear(); // FIXME
@@ -891,4 +871,35 @@ void playlist_uielement_t::SelectPlaylist(size_t index) const noexcept
 
         return true; // Continue enumerating
     });
+}
+
+/// <summary>
+/// Initializes the image list.
+/// </summary>
+bool playlist_uielement_t::InitImageList() noexcept
+{
+    _hImageList.Reset();
+
+    const auto IconSize = (uint32_t) ::GetSystemMetrics(SM_CXSMICON);
+
+    _hImageList = ::ImageList_Create((int) IconSize, (int) IconSize, ILC_COLOR32 | ILC_MASK, (int) _State._Images.size(), 0);
+
+    if (!_hImageList)
+        return false;
+
+    for (const auto & Image : _State._Images)
+    {
+        himagelist_t hSrcImageList = image_list_factory_t::Create(Image._FilePath, IconSize);
+
+        hicon_t hIcon = ::ImageList_GetIcon(hSrcImageList, (int) Image._IconIndex, ILD_TRANSPARENT);
+
+        if (!hIcon)
+            return false;
+
+        ::ImageList_ReplaceIcon(_hImageList, -1, hIcon);
+    }
+
+    _TreeView.SetImageList(_hImageList);
+
+    return true;
 }

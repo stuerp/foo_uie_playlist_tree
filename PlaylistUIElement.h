@@ -102,21 +102,13 @@ private:
 
     #pragma endregion
 
+protected:
+    bool InitImageList() noexcept;
+
 private:
     void FromJSON(json object, const GUID & parentId) noexcept;
     void GetPlaylists() noexcept;
     void SelectPlaylist(size_t playlistIndex) const noexcept;
-/*
-    WNDPROC g_OldEditProc = nullptr;
-
-    static LRESULT CALLBACK EditSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-    {
-        if (uMsg == WM_GETDLGCODE)
-            return (DLGC_WANTALLKEYS | ::CallWindowProcW(g_OldEditProc, hWnd, uMsg, wParam, lParam));
-
-        return ::CallWindowProcW(g_OldEditProc, hWnd, uMsg, wParam, lParam);
-    }
-*/
 
 protected:
     playlist_tree_view_t _TreeView;

@@ -94,43 +94,53 @@ void duielement_t::set_configuration(ui_element_config::ptr data)
 /// </summary>
 ui_element_config::ptr duielement_t::get_configuration()
 {
-    auto Object = _State.ToJSON();
-
-    json::array_t Nodes;
-
-    _TreeView.ToJSON([&](HTREEITEM hItem, json::object_t * node) -> bool
+    // Apply the state to this instance.
     {
-        auto Node = (const node_t *) _TreeView.GetData(hItem);
+        InitImageList();
 
-        if (Node == nullptr)
-            return true; // Continue enumerating. Should not occur.
+        _TreeView.RefreshAllItems();
+    }
 
-        (*node)["id"]       = msc::GUIDToUTF8(Node->Id);
-        (*node)["name"]     = Node->Name;
-/*
-        (*node)["image"]    =
+    // Save the state to a JSON object.
+    {
+        auto Object = _State.ToJSON();
+
+        json::array_t Nodes;
+
+        _TreeView.ToJSON([&](HTREEITEM hItem, json::object_t * node) -> bool
         {
-            { "filePath", "test" },
-            { "index", 42 }
-        };
-*/
-        (*node)["isFolder"] = Node->IsFolder;
+            auto Node = (const node_t *) _TreeView.GetData(hItem);
 
-        if (Node->IsFolder)
-            (*node)["isExpanded"] = Node->IsExpanded;
+            if (Node == nullptr)
+                return true; // Continue enumerating. Should not occur.
 
-        return true; // Continue enumerating.
-    }, &Nodes);
+            (*node)["id"]       = msc::GUIDToUTF8(Node->Id);
+            (*node)["name"]     = Node->Name;
+    /*
+            (*node)["image"]    =
+            {
+                { "filePath", "test" },
+                { "index", 42 }
+            };
+    */
+            (*node)["isFolder"] = Node->IsFolder;
 
-    Object["nodes"] = Nodes;
+            if (Node->IsFolder)
+                (*node)["isExpanded"] = Node->IsExpanded;
 
-    std::string Config = Object.dump(-1);
+            return true; // Continue enumerating.
+        }, &Nodes);
 
-    #ifdef _DEBUG
-    ::OutputDebugStringA(Object.dump(4).c_str());
-    #endif
+        Object["nodes"] = Nodes;
 
-    return ui_element_config::g_create(g_get_guid(), Config.c_str(), Config.size());
+        std::string Config = Object.dump(-1);
+
+        #ifdef _DEBUG
+        ::OutputDebugStringA(Object.dump(4).c_str());
+        #endif
+
+        return ui_element_config::g_create(g_get_guid(), Config.c_str(), Config.size());
+    }
 }
 
 /// <summary>

@@ -49,6 +49,16 @@ void state_t::FromJSON(const char * data, size_t size) noexcept
 
     _NameFormat = Object.value("nameFormat", _NameFormat).c_str();
 
+    if (_Images.size() == Object["images"].size())
+    {
+        _Images.clear();
+
+        for (const auto & Image : Object["images"])
+        {
+            _Images.push_back({ Image["filePath"], Image["iconIndex"] });
+        }
+    }
+
     _Object = Object;
 }
 

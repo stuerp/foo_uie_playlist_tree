@@ -1,12 +1,12 @@
 
-/** $VER: Preferences.h (2026.07.09) **/
+/** $VER: Preferences.h (2026.07.12) **/
 
 #pragma once
 
 #define IDC_TEXT_FORMAT     1000
-#define IDC_IMAGE           1001
+#define IDC_IMAGE_TYPE      1001
 #define IDC_FILE_PATH       1002
-#define IDC_ICONLIST        1003
+#define IDC_IMAGE_LIST      1003
 
 #define W_A00   332 // Dialog width as set by foobar2000, in dialog units
 #define H_A00   288 // Dialog height as set by foobar2000, in dialog units
@@ -53,7 +53,7 @@
 // ComboBox
 #define X_A14   X_A13 + W_A13 + IX
 #define Y_A14   Y_A13
-#define W_A14   50
+#define W_A14   70
 #define H_A14   H_CBX
 
 /** File Path **/

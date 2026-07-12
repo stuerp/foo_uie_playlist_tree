@@ -1,11 +1,12 @@
 
-/** $VER: IconList.cpp (2026.07.09) P. Stuer **/
+/** $VER: IconList.cpp (2026.07.12) P. Stuer **/
 
 #include "pch.h"
 
 #include "IconList.h"
 
 #include "Theme.h"
+#include "Log.h"
 
 #pragma hdrstop
 
@@ -60,14 +61,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
             ::SetWindowLongPtrW(hWnd, GWLP_USERDATA, (LONG_PTR) Instance);
 
-            const DWORD Styles = WS_CHILD | WS_VISIBLE | LVS_ICON | LVS_SHAREIMAGELISTS | LVS_SHOWSELALWAYS;
+            {
+                const DWORD Styles = WS_CHILD | WS_VISIBLE | LVS_ICON | LVS_SHAREIMAGELISTS | LVS_SHOWSELALWAYS;
 
-            Instance->hListView = ::CreateWindowExW(WS_EX_CLIENTEDGE, WC_LISTVIEW, L"", Styles, 0, 0, 0, 0, hWnd, (HMENU) IDC_LISTVIEW, ::GetModuleHandleW(NULL), NULL);
+                Instance->hListView = ::CreateWindowExW(WS_EX_CLIENTEDGE, WC_LISTVIEW, L"", Styles, 0, 0, 0, 0, hWnd, (HMENU) IDC_LISTVIEW, ::GetModuleHandleW(NULL), NULL);
 
-            if (Instance->hListView == NULL)
-                return -1;
+                if (Instance->hListView == NULL)
+                    return -1;
 
-            ::SetWindowTheme(Instance->hListView, _Theme.IsDark() ? L"DarkMode_Explorer" : nullptr, nullptr);
+                ::SetWindowTheme(Instance->hListView, _Theme.IsDark() ? L"DarkMode_Explorer" : nullptr, nullptr);
+            }
 
             return 0;
         }
@@ -103,9 +106,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
         case WM_NOTIFY:
         {
-            auto nmhr = (NMHDR *) lParam;
+            auto nmhd = (NMHDR *) lParam;
 
-            if (!(nmhr->idFrom == IDC_LISTVIEW) && (nmhr->code == NM_CUSTOMDRAW))
+            if (nmhd->idFrom != IDC_LISTVIEW)
                 return FALSE;
 
             auto Instance = (instance_t *) ::GetWindowLongPtrW(hWnd, GWLP_USERDATA);
@@ -113,51 +116,80 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             if (Instance == nullptr)
                 return FALSE;
 
-            auto lvcd = (NMLVCUSTOMDRAW *) lParam;
-
-            HDC & hDC = lvcd->nmcd.hdc;
-
-            switch (lvcd->nmcd.dwDrawStage)
+            switch (nmhd->code)
             {
-                case CDDS_PREPAINT:
+                case NM_CUSTOMDRAW:
                 {
-                    RECT rc;
+                    auto lvcd = (NMLVCUSTOMDRAW *) lParam;
 
-                    ::GetClientRect(lvcd->nmcd.hdr.hwndFrom, &rc);
+                    HDC & hDC = lvcd->nmcd.hdc;
 
-                    // Draw the control background.
-                    HBRUSH hBrush = ::CreateSolidBrush(_Theme.GetColor(COLOR_WINDOW));
+                    switch (lvcd->nmcd.dwDrawStage)
+                    {
+                        case CDDS_PREPAINT:
+                        {
+                            RECT rc;
 
-                    ::FillRect(hDC, &rc, hBrush);
+                            ::GetClientRect(lvcd->nmcd.hdr.hwndFrom, &rc);
 
-                    ::DeleteObject(hBrush);
+                            // Draw the control background.
+                            HBRUSH hBrush = ::CreateSolidBrush(_Theme.GetColor(COLOR_WINDOW));
 
-                    return CDRF_NOTIFYITEMDRAW; // Request item-specific notifications.
+                            ::FillRect(hDC, &rc, hBrush);
+
+                            ::DeleteObject(hBrush);
+
+                            return CDRF_NOTIFYITEMDRAW; // Request item-specific notifications.
+                        }
+
+                        case CDDS_ITEMPREPAINT:
+                            return CDRF_NOTIFYPOSTPAINT; // Request Post-Paint notifications.
+
+                        case CDDS_ITEMPOSTPAINT:
+                        {
+                            RECT & rc = lvcd->nmcd.rc;
+
+                            // Don't use CDIS_SELECTED (see https://learn.microsoft.com/en-us/windows/win32/api/commctrl/ns-commctrl-nmcustomdraw)
+                            if (ListView_GetItemState(Instance->hListView, (int) lvcd->nmcd.dwItemSpec, LVIS_SELECTED))
+                            {
+                                HBRUSH hBrush = ::CreateSolidBrush(_Theme.GetColor(COLOR_HIGHLIGHT));
+
+                                ::FillRect(hDC, &rc, hBrush);
+
+                                ::DeleteObject(hBrush);
+                            }
+
+                            ::ImageList_Draw(Instance->hImageList, (int) lvcd->nmcd.dwItemSpec, hDC, rc.left + xPadding, rc.top + yPadding, ILD_NORMAL);
+
+                            if (lvcd->nmcd.uItemState & CDIS_FOCUS)
+                                ::DrawFocusRect(hDC, &rc);
+
+                            return CDRF_DODEFAULT;
+                        }
+                    }
+                    break;
                 }
 
-                case CDDS_ITEMPREPAINT:
-                    return CDRF_NOTIFYPOSTPAINT; // Request Post-Paint notifications.
-
-                case CDDS_ITEMPOSTPAINT:
+                case LVN_ITEMCHANGED:
                 {
-                    RECT & rc = lvcd->nmcd.rc;
+                    const auto nmlv = (NMLISTVIEW *) nmhd;
 
-                    // Don't use CDIS_SELECTED (see https://learn.microsoft.com/en-us/windows/win32/api/commctrl/ns-commctrl-nmcustomdraw)
-                    if (ListView_GetItemState(Instance->hListView, (int) lvcd->nmcd.dwItemSpec, LVIS_SELECTED))
+                    if (nmlv->uNewState & LVIS_SELECTED)
                     {
-                        HBRUSH hBrush = ::CreateSolidBrush(_Theme.GetColor(COLOR_HIGHLIGHT));
+                        Log.Write("Selected %3d", nmlv->iItem);
 
-                        ::FillRect(hDC, &rc, hBrush);
+                        // Notify the parent of the selection change.
+                        const NMHDR nh
+                        {
+                            .hwndFrom = hWnd,
+                            .idFrom   = (UINT_PTR) ::GetWindowLongPtrW(hWnd, GWLP_ID),
+                            .code     = ILN_SELCHANGE
+                        };
 
-                        ::DeleteObject(hBrush);
+                        ::SendMessageW(::GetParent(hWnd), WM_NOTIFY, (WPARAM) nh.idFrom, (LPARAM) &nh);
                     }
 
-                    ::ImageList_Draw(Instance->hImageList, (int) lvcd->nmcd.dwItemSpec, hDC, rc.left + xPadding, rc.top + yPadding, ILD_NORMAL);
-
-                    if (lvcd->nmcd.uItemState & CDIS_FOCUS)
-                        ::DrawFocusRect(hDC, &rc);
-
-                    return CDRF_DODEFAULT;
+                    break;
                 }
             }
             break;
@@ -189,15 +221,29 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             if (Instance == nullptr)
                 return FALSE;
 
-            int Index = ListView_GetNextItem(Instance->hListView, -1, (LPARAM) LVNI_SELECTED);
+            // Deselect the old item.
+            const int Index = ListView_GetNextItem(Instance->hListView, -1, (LPARAM) LVNI_SELECTED);
 
             if (Index != -1)
                 ListView_SetItemState(Instance->hListView, Index, 0, LVIS_FOCUSED | LVIS_SELECTED);
 
+            // Select the new item.
             ListView_SetItemState(Instance->hListView, wParam, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
             ListView_EnsureVisible(Instance->hListView, wParam, FALSE);
 
             return TRUE;
+        }
+
+        case ILM_GETSELECTEDITEM:
+        {
+            auto Instance = (instance_t *) ::GetWindowLongPtrW(hWnd, GWLP_USERDATA);
+
+            if (Instance == nullptr)
+                return FALSE;
+
+            const int Index = ListView_GetNextItem(Instance->hListView, -1, (LPARAM) LVNI_SELECTED);
+
+            return Index;
         }
 
         case ILM_SETIMAGELIST:

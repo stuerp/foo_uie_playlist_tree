@@ -1,5 +1,5 @@
 
-/** $VER: IconList.h (2026.07.09) **/
+/** $VER: IconList.h (2026.07.12) **/
 
 #pragma once
 
@@ -12,4 +12,7 @@ namespace icon_list_t
 
 #define ILM_ADDITEM         WM_USER + 1000
 #define ILM_SELECTITEM      WM_USER + 1001
-#define ILM_SETIMAGELIST    WM_USER + 1002
+#define ILM_GETSELECTEDITEM WM_USER + 1002
+#define ILM_SETIMAGELIST    WM_USER + 1003
+
+#define ILN_SELCHANGE       1

@@ -81,60 +81,8 @@ public:
         TreeView_DeleteAllItems(_hTreeView);
     }
 
-    // Forces an update of the item.
-    void RefreshItem(HTREEITEM hItem) const noexcept
-    {
-        RECT r;
-
-        if (!TreeView_GetItemRect(_hTreeView, hItem, &r, FALSE))
-            return;
-
-        ::InvalidateRect(Get(), &r, TRUE);
-    }
-
-    void RefreshAllItems() const noexcept
-    {
-        auto hItem = TreeView_GetRoot(_hTreeView);
-
-        while (hItem != NULL)
-        {
-            TVITEMW tvi =
-            {
-                .mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_CHILDREN,
-                .hItem = hItem,
-
-                .pszText        = LPSTR_TEXTCALLBACK,
-                .iImage         = I_IMAGECALLBACK,
-                .iSelectedImage = I_IMAGECALLBACK,
-//              .cChildren      = I_CHILDRENCALLBACK
-            };
-
-            TreeView_SetItem(_hTreeView, &tvi);
-
-            auto hChild = TreeView_GetChild(_hTreeView, hItem);
-
-            if (hChild != NULL)
-                hItem = hChild;
-            else
-            {
-                auto hNext = TreeView_GetNextSibling(_hTreeView, hItem);
-
-                while (hNext != NULL)
-                {
-                    hItem = TreeView_GetParent(_hTreeView, hItem);
-
-                    if (hItem != NULL)
-                        return;
-
-                    hNext = TreeView_GetNextSibling(_hTreeView, hItem);
-                }
-
-                hItem = hNext;
-            }
-        }
-
-        ::InvalidateRect(_hTreeView, nullptr, TRUE);
-    }
+    void RefreshItem(HTREEITEM hItem) const noexcept;
+    void RefreshAllItems() const noexcept;
 
     enum DropZone
     {
@@ -214,22 +162,7 @@ protected:
     virtual bool AllowDrop(DropZone dropZone) noexcept = 0;
 
 private:
-    /// <summary>
-    /// Gets the drop zone that contains the specified point.
-    /// </summary>
-    DropZone GetDropZone(const RECT & r, const POINT & pt) const noexcept
-    {
-        // Divide the item into 3 zones, the middle zone being twice as high.
-        const float ZoneHeight = (float) (r.bottom - r.top) / 4.f;
-
-        if ((float) pt.y < (float) r.top + ZoneHeight)
-            return DropZone::Top;
-
-        if ((float) pt.y >= (float) r.bottom - ZoneHeight)
-            return DropZone::Bottom;
-
-        return DropZone::Middle;
-    }
+    DropZone GetDropZone(const RECT & r, const POINT & pt) const noexcept;
 
 protected:
     HTREEITEM _hDragSource = NULL;
