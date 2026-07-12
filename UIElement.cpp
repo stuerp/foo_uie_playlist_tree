@@ -1,5 +1,5 @@
 
-/** $VER: UIElement.cpp (2026.07.04) P. Stuer **/
+/** $VER: UIElement.cpp (2026.07.12) P. Stuer **/
 
 #include "pch.h"
 
@@ -55,19 +55,7 @@ void uielement_t::OnColorsChanged()
     GetColors();
 }
 
-/// <summary>
-/// Shows the preferences page.
-/// </summary>
-void uielement_t::ShowPreferences() noexcept
-{
-    static constexpr GUID _GUID = GUID_PREFERENCES;
-
-    static_api_ptr_t<ui_control> uc;
-
-    uc->show_preferences(_GUID);
-}
-
-#pragma region CWindowImpl<UIElement>
+#pragma region CWindowImpl<uielement_t>
 
 /// <summary>
 /// Gets the window class definition.

@@ -6,6 +6,7 @@
 #include "pch.h"
 
 #include "UIElement.h"
+#include "UIElementTracker.h"
 #include "PlaylistTreeView.h"
 #include "FolderManager.h"
 #include "EditSubclass.h"
@@ -26,6 +27,8 @@ public:
     playlist_uielement_t & operator=(playlist_uielement_t &&) = delete;
 
     virtual ~playlist_uielement_t();
+
+    void ApplyConfiguration() noexcept;
 
 protected:
     void SetConfiguration(const char * data, size_t size) noexcept;
@@ -129,3 +132,5 @@ private:
     bool _IsNotification = false;
     bool _IsUser = false;
 };
+
+extern uielement_tracker_t<playlist_uielement_t> _UIElementTracker;

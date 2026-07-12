@@ -3,15 +3,13 @@
 
 #include "pch.h"
 
-#include <SDK/cfg_var.h>
-#include <SDK/preferences_page.h>
+#include <SDK\preferences_page.h>
 
-#include <pfc/string-conv-lite.h>
-
-#include <helpers/advconfig_impl.h>
 #include <helpers/atl-misc.h>
 #include <helpers/DarkMode.h>
 
+#include "PlaylistUIElement.h"
+#include "UIElementTracker.h"
 #include "Resources.h"
 #include "Preferences.h"
 #include "State.h"
@@ -24,19 +22,17 @@
 /// <summary>
 /// Implements the preferences page for the component.
 /// </summary>
-class Preferences : public CDialogImpl<Preferences>, public preferences_page_instance
+class preferences_t : public CDialogImpl<preferences_t>, public preferences_page_instance
 {
 public:
-    Preferences(preferences_page_callback::ptr callback) : m_bMsgHandled(FALSE), _Callback(callback)
+    preferences_t(preferences_page_callback::ptr callback) : m_bMsgHandled(FALSE), _Callback(callback)
     {
         _Theme.Initialize(_DarkMode);
 
         icon_list_t::Register(THIS_HINSTANCE);
     }
 
-    virtual ~Preferences()
-    {
-    }
+    virtual ~preferences_t() { }
 
     enum
     {
@@ -85,7 +81,12 @@ public:
             }
         }
 
-        OnChanged();
+        auto CurrentElement = _UIElementTracker.GetCurrentElement();
+
+        if (CurrentElement != nullptr)
+            CurrentElement->ApplyConfiguration();
+
+         OnChanged();
     }
 
     /// <summary>
@@ -103,7 +104,7 @@ public:
     #pragma endregion
 
     // WTL message map
-    BEGIN_MSG_MAP_EX(Preferences)
+    BEGIN_MSG_MAP_EX(preferences_t)
         MSG_WM_INITDIALOG(OnInitDialog)
 
         COMMAND_HANDLER_EX(IDC_TEXT_FORMAT, EN_CHANGE,      OnEditChange)
@@ -306,6 +307,8 @@ private:
 private:
     const preferences_page_callback::ptr _Callback;
 
+    uielement_t * _CurrentElement;
+
     int _SelectedIndex;
     bool _IgnoreNotifications;
 
@@ -317,7 +320,7 @@ private:
 /// <summary>
 /// preferences_page_impl<> helper deals with instantiation of our dialog; inherits from preferences_page_v3.
 /// </summary>
-class PreferencesPage : public preferences_page_impl<Preferences>
+class PreferencesPage : public preferences_page_impl<preferences_t>
 {
 public:
     virtual ~PreferencesPage() { }

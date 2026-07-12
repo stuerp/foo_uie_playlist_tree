@@ -1,5 +1,5 @@
 
-/** $VER: UIElement.h (2026.07.10) P. Stuer **/
+/** $VER: UIElement.h (2026.07.12) P. Stuer **/
 
 #pragma once
 
@@ -59,9 +59,6 @@ protected:
     END_MSG_MAP()
 
     #pragma endregion
-
-private:
-    void ShowPreferences() noexcept;
 
 protected:
     fb2k::CCoreDarkModeHooks _DarkMode;

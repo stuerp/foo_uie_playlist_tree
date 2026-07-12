@@ -4,6 +4,7 @@
 #include "pch.h"
 
 #include "PlaylistUIElement.h"
+#include "UIElementTracker.h"
 #include "ImageList.h"
 #include "TitleFormat.h"
 #include "Node.h"
@@ -63,6 +64,8 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
             SelectPlaylist(Index);
     }
 
+   _UIElementTracker.Add(this);
+
     return 0;
 }
 
@@ -71,6 +74,8 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
 /// </summary>
 void playlist_uielement_t::OnDestroy() noexcept
 {
+    _UIElementTracker.Remove(this);
+
     _TreeView.Destroy();
 
     uielement_t::OnDestroy();
@@ -877,6 +882,16 @@ void playlist_uielement_t::SelectPlaylist(size_t index) const noexcept
 }
 
 /// <summary>
+/// Applies the configuration to this instance.
+/// </summary>
+void playlist_uielement_t::ApplyConfiguration() noexcept
+{
+    InitImageList();
+
+    _TreeView.RefreshAllItems();
+}
+
+/// <summary>
 /// Sets the configuration.
 /// </summary>
 void playlist_uielement_t::SetConfiguration(const char * data, size_t size) noexcept
@@ -889,14 +904,6 @@ void playlist_uielement_t::SetConfiguration(const char * data, size_t size) noex
 /// </summary>
 std::string playlist_uielement_t::GetConfiguration() const noexcept
 {
-/*
-    // Apply the state to this instance.
-    {
-        InitImageList();
-
-        _TreeView.RefreshAllItems();
-    }
-*/
     // Save the state to a JSON object.
     auto Object = _State.ToJSON();
 
@@ -979,3 +986,5 @@ bool playlist_uielement_t::InitImageList() noexcept
 
     return true;
 }
+
+uielement_tracker_t<playlist_uielement_t> _UIElementTracker;
