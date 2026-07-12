@@ -15,7 +15,7 @@
 /// <summary>
 /// Implements the user interface element base class.
 /// </summary>
-class playlist_uielement_t : public uielement_t, public playlist_callback
+class playlist_uielement_t : public uielement_t, public playlist_callback, private play_callback_impl_base
 {
 public:
     playlist_uielement_t();
@@ -84,6 +84,21 @@ private:
     void on_default_format_changed() noexcept override;
 
     void on_playback_order_changed(size_t index) noexcept override;
+
+    #pragma endregion
+
+    #pragma region play_callback
+
+    void on_playback_starting(play_control::t_track_command command, bool isPaused) { }
+    void on_playback_new_track(metadb_handle_ptr track);
+    void on_playback_stop(play_control::t_stop_reason reason);
+    void on_playback_seek(double time) { }
+    void on_playback_pause(bool state);
+    void on_playback_edited(metadb_handle_ptr track) { }
+    void on_playback_dynamic_info(const file_info&  info) { }
+    void on_playback_dynamic_info_track(const file_info & info) { }
+    void on_playback_time(double time) { }
+    void on_volume_change(float newValue) { }
 
     #pragma endregion
 

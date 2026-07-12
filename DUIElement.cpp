@@ -126,7 +126,9 @@ ui_element_config::ptr duielement_t::get_configuration()
 
     std::string Config = Object.dump(-1);
 
-::OutputDebugStringA(Object.dump(4).c_str()); // FIXME
+    #ifdef _DEBUG
+    ::OutputDebugStringA(Object.dump(4).c_str());
+    #endif
 
     return ui_element_config::g_create(g_get_guid(), Config.c_str(), Config.size());
 }

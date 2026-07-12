@@ -71,10 +71,10 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
         _TreeView.SetImageList(_hImageList);
     }
 
-#ifndef Test
-_State._Object.clear(); // FIXME
+#ifdef Test
+    _State._Object.clear(); // FIXME
 
-GetPlaylists(); // FIXME
+    GetPlaylists(); // FIXME
 #else
     FromJSON(_State._Object, { });
 #endif
@@ -175,7 +175,11 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
         // Handles the "Remove" command.
         case IDM_REMOVE:
         {
+            _IsUser = true;
+
             _TreeView.RemoveSelectedItem();
+
+            _IsUser = false;
             break;
         }
     }
@@ -400,8 +404,24 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
 
             if (tvi.mask & (TVIF_IMAGE | TVIF_SELECTEDIMAGE))
             {
-                tvi.iImage =
-                tvi.iSelectedImage = Node->IsFolder ? NodeType::Folder : NodeType::File;
+                if (Node->IsFolder)
+                    tvi.iImage = tvi.iSelectedImage = ItemImage::Folder;
+                else
+                {
+                    auto Image = ItemImage::Playlist;
+
+                    size_t Index = _PlaylistManager->get_playing_playlist();
+
+                    if (Index != ~0llu)
+                    {
+                        const auto Id = _PlaylistManager->playlist_get_guid(Index);
+
+                        if (Id == Node->Id)
+                            Image = ItemImage::PlaylistPlaying;
+                    }
+
+                    tvi.iImage = tvi.iSelectedImage = Image;
+                }
             }
             break;
         }
@@ -583,6 +603,8 @@ void playlist_uielement_t::OnLButtonUp(UINT flags, CPoint point) noexcept
     _TreeView.EndDrag(false);
 }
 
+#pragma region playlist_callback
+
 /// <summary>
 /// 
 /// </summary>
@@ -752,8 +774,38 @@ void playlist_uielement_t::on_playlist_locked(size_t index, bool isLocked) noexc
 {
 }
 
+#pragma endregion
+
+#pragma region play_callback
+
 /// <summary>
-/// 
+/// Playback advanced to new track.
+/// </summary>
+void playlist_uielement_t::on_playback_new_track(metadb_handle_ptr track)
+{
+    _TreeView.RefreshAllItems();
+}
+
+/// <summary>
+/// Playback stopped.
+/// </summary>
+void playlist_uielement_t::on_playback_stop(play_control::t_stop_reason reason)
+{
+    _TreeView.RefreshAllItems();
+}
+
+/// <summary>
+/// Playback paused/resumed.
+/// </summary>
+void playlist_uielement_t::on_playback_pause(bool state)
+{
+    _TreeView.RefreshAllItems();
+}
+
+#pragma endregion
+
+/// <summary>
+/// Deserializes this instance from a JSON object.
 /// </summary>
 void playlist_uielement_t::FromJSON(json object, const GUID & parentId) noexcept
 {
@@ -777,16 +829,25 @@ void playlist_uielement_t::FromJSON(json object, const GUID & parentId) noexcept
 
         GUID Id = msc::GUIDFromUTF8(IdText);
 
-        _TreeView.AddItem(parentId, { }, Id, Name, IsFolder, IsExpanded);
-
         if (IsFolder)
         {
             _FolderManager->CreateFolder(Id, Name);
+
+            _TreeView.AddItem(parentId, { }, Id, Name, IsFolder, IsExpanded);
 
             const auto & Children = Node["nodes"];
 
             if (!Children.is_null())
                 FromJSON(Node, Id);
+        }
+        else
+        {
+            const size_t Index = _PlaylistManager->find_playlist_by_guid(Id);
+
+            if (Index == ~0llu)
+                continue; // TODO: Use a grayed out image to indicate this playlist is missing and add a command to restore it.
+
+            _TreeView.AddItem(parentId, { }, Id, Name, IsFolder, IsExpanded);
         }
     }
 }

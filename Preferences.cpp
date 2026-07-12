@@ -137,7 +137,7 @@ private:
 
             w.ResetContent();
 
-            const WCHAR * Labels[] = { L"Folder", L"Playlist", };
+            const WCHAR * Labels[] = { L"Folder", L"Playlist", L"Playlist (Playing)" };
 
             for (auto Label : Labels)
                 w.AddString(Label);

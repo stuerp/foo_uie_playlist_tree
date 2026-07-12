@@ -24,6 +24,7 @@ void state_t::Reset() noexcept
 
     _Images.push_back({ "imageres.dll",   4 }); // Folder
     _Images.push_back({ "imageres.dll", 126 }); // Playlist
+    _Images.push_back({ "imageres.dll", 125 }); // Playlist Playing
 
     _Object.clear();
 }

@@ -92,6 +92,50 @@ public:
         ::InvalidateRect(Get(), &r, TRUE);
     }
 
+    void RefreshAllItems() const noexcept
+    {
+        auto hItem = TreeView_GetRoot(_hTreeView);
+
+        while (hItem != NULL)
+        {
+            TVITEMW tvi =
+            {
+                .mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_CHILDREN,
+                .hItem = hItem,
+
+                .pszText        = LPSTR_TEXTCALLBACK,
+                .iImage         = I_IMAGECALLBACK,
+                .iSelectedImage = I_IMAGECALLBACK,
+//              .cChildren      = I_CHILDRENCALLBACK
+            };
+
+            TreeView_SetItem(_hTreeView, &tvi);
+
+            auto hChild = TreeView_GetChild(_hTreeView, hItem);
+
+            if (hChild != NULL)
+                hItem = hChild;
+            else
+            {
+                auto hNext = TreeView_GetNextSibling(_hTreeView, hItem);
+
+                while (hNext != NULL)
+                {
+                    hItem = TreeView_GetParent(_hTreeView, hItem);
+
+                    if (hItem != NULL)
+                        return;
+
+                    hNext = TreeView_GetNextSibling(_hTreeView, hItem);
+                }
+
+                hItem = hNext;
+            }
+        }
+
+        ::InvalidateRect(_hTreeView, nullptr, TRUE);
+    }
+
     enum DropZone
     {
         Unknown = -1,
