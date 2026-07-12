@@ -56,7 +56,7 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
         return true;
     }
 
-    if (::_stricmp(name, "count") == 0)
+    if (::_stricmp(name, "node_item_count") == 0)
     {
         const size_t ItemCount = _PlaylistManager->playlist_get_item_count(Index);
 
@@ -67,7 +67,7 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
         return true;
     }
 
-    if (::_stricmp(name, "is_folder") == 0)
+    if (::_stricmp(name, "node_is_folder") == 0)
     {
         if (!IsFolder)
             return false;

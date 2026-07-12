@@ -12,8 +12,8 @@ It attempts to recreate the functionality of [foo_plorg](https://wiki.hydrogenau
 * Supports foobar2000 2.0 and later (32-bit and 64-bit version).
 * Title formatting variables
   * %node_name%: the name of the node, either a playlist or a folder.
-  * %is_folder%: boolean value for use in $if( ...) expressions and is true when the node is a folder.
-  * %count%: the number of playlists in a folder or number of items in a playlist.
+  * %node_is_folder%: boolean value for use in $if( ...) expressions and is true when the node is a folder.
+  * %node_item_count%: the number of playlists in a folder or number of items in a playlist.
   * %playlist_duration%: the duration of the playlist (in seconds).
   * %playlist_size%: the size of the playlist (in bytes).
 

@@ -1,5 +1,5 @@
 
-/** $VER: State.cpp (2026.07.10) P. Stuer **/
+/** $VER: State.cpp (2026.07.12) P. Stuer **/
 
 #include "pch.h"
 
@@ -20,8 +20,7 @@ state_t::state_t() noexcept
 /// </summary>
 void state_t::Reset() noexcept
 {
-    _NameFormat = "%node_name%$if(%is_folder%,,' ('%count%')')";
-//  _NameFormat = "%node_name%$if(%is_folder%,,' ('%count%') '%playlist_duration% %playlist_size%)";
+    _NameFormat = "%node_name%$if(%node_is_folder%,,' ('%node_item_count%')')";
 
     _Images.push_back({ "imageres.dll",   4 }); // Folder
     _Images.push_back({ "imageres.dll", 126 }); // Playlist
