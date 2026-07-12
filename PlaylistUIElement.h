@@ -27,6 +27,12 @@ public:
 
     virtual ~playlist_uielement_t();
 
+protected:
+    void SetConfiguration(const char * data, size_t size) noexcept;
+    std::string GetConfiguration() const noexcept;
+
+    static std::string GetDefaultConfiguration() noexcept;
+
 private:
     #pragma region CWindowImpl
 
@@ -102,13 +108,9 @@ private:
 
     #pragma endregion
 
-protected:
-    bool InitImageList() noexcept;
-
-private:
     void FromJSON(json object, const GUID & parentId) noexcept;
-    void GetPlaylists() noexcept;
     void SelectPlaylist(size_t playlistIndex) const noexcept;
+    bool InitImageList() noexcept;
 
 protected:
     playlist_tree_view_t _TreeView;

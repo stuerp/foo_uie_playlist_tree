@@ -13,11 +13,10 @@ using namespace msc;
 /// </summary>
 struct node_t
 {
-    node_t(const GUID id, const std::string & name, bool isFolder, bool isExpanded) : Name(name), Id(id), IsFolder(isFolder), IsExpanded(isExpanded) { }
+    node_t(const GUID id, const std::string & name, bool isFolder) : Name(name), Id(id), IsFolder(isFolder) { }
     virtual ~node_t() = default;
 
     std::string Name;
     GUID Id;
     bool IsFolder;
-    bool IsExpanded;
 };

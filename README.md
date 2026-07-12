@@ -16,6 +16,7 @@ It attempts to recreate the functionality of [foo_plorg](https://wiki.hydrogenau
   * %node_item_count%: the number of playlists in a folder or number of items in a playlist.
   * %playlist_duration%: the duration of the playlist (in seconds).
   * %playlist_size%: the size of the playlist (in bytes).
+* User defined tree images
 
 ## Requirements
 

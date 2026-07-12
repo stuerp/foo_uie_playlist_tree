@@ -55,6 +55,7 @@ public:
     HTREEITEM GetItem(const POINT & point) const noexcept;
 
     std::string GetText(HTREEITEM hItem) const noexcept;
+    uint32_t GetState(HTREEITEM hItem) const noexcept;
     void * GetData(HTREEITEM hItem) const noexcept;
 
     void SetText(HTREEITEM hItem, const std::string & text) const noexcept;

@@ -55,9 +55,11 @@ IDM_CONTEXT_MENU menu
         }
         menuitem "Rename\tF2",      IDM_RENAME
         menuitem "Remove\tDel",     IDM_REMOVE
+/*
         menuitem separator
         menuitem "Contents",        IDM_CONTENTS, grayed
         menuitem separator
         menuitem "Sort",            IDM_SORT, grayed
+*/
     }
 }

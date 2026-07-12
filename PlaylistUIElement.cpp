@@ -51,19 +51,15 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
     if (!InitImageList())
         return -1;
 
-#ifdef Test
-    _State._Object.clear(); // FIXME
+//  _State._Object.clear(); // Uncomment to reset the state.
 
-    GetPlaylists(); // FIXME
-#else
     FromJSON(_State._Object, { });
-#endif
 
     // Select the active playlist.
     {
         size_t Index = _PlaylistManager->get_active_playlist();
 
-        if (Index != ~0llu)
+        if (Index != (size_t) -1)
             SelectPlaylist(Index);
     }
 
@@ -138,9 +134,9 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
         {
             pfc::string Name("New Playlist");
 
-            size_t NewIndex = _PlaylistManager->create_playlist(Name, Name.length(), ~0llu);
+            size_t NewIndex = _PlaylistManager->create_playlist(Name, Name.length(), (size_t) -1);
 
-            if (NewIndex == ~0llu)
+            if (NewIndex == (size_t) -1)
                 break;
             break;
         }
@@ -392,7 +388,7 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
 
                     size_t Index = _PlaylistManager->get_playing_playlist();
 
-                    if (Index != ~0llu)
+                    if (Index != (size_t) -1)
                     {
                         const auto Id = _PlaylistManager->playlist_get_guid(Index);
 
@@ -418,7 +414,7 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
 
             const size_t Index = _PlaylistManager->find_playlist_by_guid(Node->Id);
 
-            if (Index == ~0llu)
+            if (Index == (size_t) -1)
                 break;
 
             _PlaylistManager->set_active_playlist(Index);
@@ -450,7 +446,7 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
                 {
                     const size_t Index = _PlaylistManager->find_playlist_by_guid(Node->Id);
 
-                    if (Index == ~0llu)
+                    if (Index == (size_t) -1)
                         break;
 
                     _IsNotification = true;
@@ -510,7 +506,7 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
             {
                 size_t Index = _PlaylistManager->find_playlist_by_guid(Node->Id);
 
-                if (Index == ~0llu)
+                if (Index == (size_t) -1)
                     return FALSE;
 
                 _PlaylistManager->playlist_rename(Index, Node->Name.c_str(), Node->Name.size());
@@ -667,7 +663,7 @@ void playlist_uielement_t::on_playlist_activate(size_t oldIndex, size_t newIndex
 /// </summary>
 void playlist_uielement_t::on_playlist_created(size_t index, const char * name, size_t size) noexcept
 {
-    if ((index == ~0llu) || (name == nullptr) || (size == 0))
+    if ((index == (size_t) -1) || (name == nullptr) || (size == 0))
         return;
 
     pfc::string Name;
@@ -729,7 +725,7 @@ void playlist_uielement_t::on_playlists_removed(const bit_array & mask, size_t o
 /// </summary>
 void playlist_uielement_t::on_playlist_renamed(size_t index, const char * newName, size_t newSize) noexcept
 {
-    if ((index == ~0llu) || (newName == nullptr) || (newSize == 0))
+    if ((index == (size_t) -1) || (newName == nullptr) || (newSize == 0))
         return;
 
     const auto Id = _PlaylistManager->playlist_get_guid(index);
@@ -797,13 +793,14 @@ void playlist_uielement_t::on_playback_pause(bool state)
 /// </summary>
 void playlist_uielement_t::FromJSON(json object, const GUID & parentId) noexcept
 {
+    // Add all nodes from the JSON object.
     const auto & Nodes = object["nodes"];
 
     for (auto Node : Nodes)
     {
         std::string IdText = Node.value("id", IdText);
         std::string Name   = Node.value("name", Name);
-
+/*
         const auto & Image = Node["image"];
 
         if (!Image.is_null())
@@ -811,7 +808,7 @@ void playlist_uielement_t::FromJSON(json object, const GUID & parentId) noexcept
             std::string ImageFilePath = Image.value("filePath", ImageFilePath);
             int32_t ImageIndex        = Node.value("index", ImageIndex);
         }
-
+*/
         bool IsFolder   = Node.value("isFolder", IsFolder);
         bool IsExpanded = Node.value("isExpanded", IsExpanded);
 
@@ -832,24 +829,22 @@ void playlist_uielement_t::FromJSON(json object, const GUID & parentId) noexcept
         {
             const size_t Index = _PlaylistManager->find_playlist_by_guid(Id);
 
-            if (Index == ~0llu)
+            if (Index == (size_t) -1)
                 continue; // TODO: Use a grayed out image to indicate this playlist is missing and add a command to restore it.
 
             _TreeView.AddItem(parentId, { }, Id, Name, IsFolder, IsExpanded);
         }
     }
-}
 
-/// <summary>
-/// Gets all the playlists and adds them to the treeview.
-/// </summary>
-void playlist_uielement_t::GetPlaylists() noexcept
-{
+    // Add all playlists that are missing to the root.
     const size_t PlaylistCount = _PlaylistManager->get_playlist_count();
 
     for (size_t PlaylistIndex = 0; PlaylistIndex < PlaylistCount; ++PlaylistIndex)
     {
         const auto Id = _PlaylistManager->playlist_get_guid(PlaylistIndex);
+
+        if (_TreeView.FindItem(Id) != NULL)
+            return;
 
         pfc::string Name;
 
@@ -879,6 +874,79 @@ void playlist_uielement_t::SelectPlaylist(size_t index) const noexcept
 
         return true; // Continue enumerating
     });
+}
+
+/// <summary>
+/// Sets the configuration.
+/// </summary>
+void playlist_uielement_t::SetConfiguration(const char * data, size_t size) noexcept
+{
+    _State.FromJSON(data, size);
+}
+
+/// <summary>
+/// Gets the configuration.
+/// </summary>
+std::string playlist_uielement_t::GetConfiguration() const noexcept
+{
+/*
+    // Apply the state to this instance.
+    {
+        InitImageList();
+
+        _TreeView.RefreshAllItems();
+    }
+*/
+    // Save the state to a JSON object.
+    auto Object = _State.ToJSON();
+
+    json::array_t Nodes;
+
+    _TreeView.ToJSON([&](HTREEITEM hItem, json::object_t * node) -> bool
+    {
+        auto Node = (const node_t *) _TreeView.GetData(hItem);
+
+        if (Node == nullptr)
+            return true; // Continue enumerating. Should not occur.
+
+        (*node)["id"]       = msc::GUIDToUTF8(Node->Id);
+        (*node)["name"]     = Node->Name;
+/*
+        (*node)["image"]    =
+        {
+            { "filePath", "test" },
+            { "index", 42 }
+        };
+*/
+        (*node)["isFolder"] = Node->IsFolder;
+
+        if (Node->IsFolder)
+            (*node)["isExpanded"] = _TreeView.IsExpanded(Node->Id);
+
+        return true; // Continue enumerating.
+    }, &Nodes);
+
+    Object["nodes"] = Nodes;
+
+    #ifdef _DEBUG
+    ::OutputDebugStringA(Object.dump(4).c_str());
+    #endif
+
+    const auto Config = Object.dump(-1);
+
+    return Config;
+}
+
+/// <summary>
+/// Gets the default configuration.
+/// </summary>
+std::string playlist_uielement_t::GetDefaultConfiguration() noexcept
+{
+    state_t DefaultState;
+
+    const auto Config = DefaultState.ToJSON().dump(-1);
+
+    return Config;
 }
 
 /// <summary>

@@ -42,6 +42,8 @@ public:
 
     bool RefreshItem(const GUID & id) const noexcept;
 
+    bool IsExpanded(const GUID & id) const noexcept;
+
     /// <summary>
     /// Serializes this instance to JSON.
     /// </summary>

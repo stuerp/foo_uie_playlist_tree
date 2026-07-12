@@ -1,11 +1,10 @@
 
-/** $VER: DUIElement.cpp (2026.07.10) P. Stuer - Implements Default User Interface support **/
+/** $VER: DUIElement.cpp (2026.07.12) P. Stuer - Implements Default User Interface support **/
 
 #include "pch.h"
 
 #include "DUIElement.h"
-#include "Node.h"
-#include "State.h"
+//#include "State.h"
 #include "Theme.h"
 
 #include <helpers\BumpableElem.h>
@@ -61,9 +60,7 @@ GUID duielement_t::g_get_subclass()
 /// </summary>
 ui_element_config::ptr duielement_t::g_get_default_configuration()
 {
-    state_t DefaultState;
-
-    std::string Config = DefaultState.ToJSON().dump(-1);
+    const auto Config = GetDefaultConfiguration();
 
     return ui_element_config::g_create(g_get_guid(), Config.c_str(), Config.size());
 }
@@ -80,67 +77,23 @@ void duielement_t::initialize_window(HWND hWndParent)
 }
 
 /// <summary>
-/// Sets the element configuration.
+/// Sets the instance configuration data.
 /// </summary>
 void duielement_t::set_configuration(ui_element_config::ptr data)
 {
     ui_element_config_parser Parser(data);
 
-    _State.FromJSON((const char *) data->get_data(), data->get_data_size());
+    SetConfiguration((const char *) data->get_data(), data->get_data_size());
 }
 
 /// <summary>
-/// Gets the element configuration.
+/// Gets the instance configuration data.
 /// </summary>
 ui_element_config::ptr duielement_t::get_configuration()
 {
-    // Apply the state to this instance.
-    {
-        InitImageList();
+    const auto Config = GetConfiguration();
 
-        _TreeView.RefreshAllItems();
-    }
-
-    // Save the state to a JSON object.
-    {
-        auto Object = _State.ToJSON();
-
-        json::array_t Nodes;
-
-        _TreeView.ToJSON([&](HTREEITEM hItem, json::object_t * node) -> bool
-        {
-            auto Node = (const node_t *) _TreeView.GetData(hItem);
-
-            if (Node == nullptr)
-                return true; // Continue enumerating. Should not occur.
-
-            (*node)["id"]       = msc::GUIDToUTF8(Node->Id);
-            (*node)["name"]     = Node->Name;
-    /*
-            (*node)["image"]    =
-            {
-                { "filePath", "test" },
-                { "index", 42 }
-            };
-    */
-            (*node)["isFolder"] = Node->IsFolder;
-
-            if (Node->IsFolder)
-                (*node)["isExpanded"] = Node->IsExpanded;
-
-            return true; // Continue enumerating.
-        }, &Nodes);
-
-        Object["nodes"] = Nodes;
-
-        std::string Config = Object.dump(-1);
-
-        #ifdef _DEBUG
-        ::OutputDebugStringA(Object.dump(4).c_str());
-        #endif
-
-        return ui_element_config::g_create(g_get_guid(), Config.c_str(), Config.size());
-    }
+    return ui_element_config::g_create(g_get_guid(), Config.c_str(), Config.size());
 }
 
 /// <summary>
@@ -151,7 +104,7 @@ ui_element_config::ptr duielement_t::get_configuration()
 void duielement_t::notify(const GUID & what, t_size param1, const void * param2, t_size param2Size)
 {
     if (what == ui_element_notify_colors_changed)
-        GetColors();
+        OnColorsChanged();
 }
 
 /// <summary>
@@ -159,10 +112,10 @@ void duielement_t::notify(const GUID & what, t_size param1, const void * param2,
 /// </summary>
 void duielement_t::GetColors() noexcept
 {
-    _Theme.SetColor(COLOR_WINDOW,    (COLORREF) m_callback->query_std_color(ui_color_background));
-    _Theme.SetColor(COLOR_WINDOWTEXT,(COLORREF) m_callback->query_std_color(ui_color_text));
-    _Theme.SetColor(COLOR_HIGHLIGHT, (COLORREF) m_callback->query_std_color(ui_color_selection));
-    _Theme.SetColor(COLOR_HOTLIGHT,  (COLORREF) m_callback->query_std_color(ui_color_highlight));
+    _Theme.SetColor(COLOR_WINDOW,     (COLORREF) m_callback->query_std_color(ui_color_background));
+    _Theme.SetColor(COLOR_WINDOWTEXT, (COLORREF) m_callback->query_std_color(ui_color_text));
+    _Theme.SetColor(COLOR_HIGHLIGHT,  (COLORREF) m_callback->query_std_color(ui_color_selection));
+    _Theme.SetColor(COLOR_HOTLIGHT,   (COLORREF) m_callback->query_std_color(ui_color_highlight));
 }
 
 static service_factory_single_t<ui_element_impl_withpopup<duielement_t>> _Factory;

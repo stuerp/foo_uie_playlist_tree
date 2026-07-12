@@ -52,6 +52,7 @@ void uielement_t::OnSize(UINT type, CSize size) noexcept
 /// </summary>
 void uielement_t::OnColorsChanged()
 {
+    GetColors();
 }
 
 /// <summary>

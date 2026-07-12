@@ -20,7 +20,7 @@ public:
 
     virtual ~duielement_t() { };
 
-    #pragma region ui_element_instance interface
+    #pragma region ui_element_instance
 
     static void g_get_name(pfc::string_base & p_out);
     static const char * g_get_description();

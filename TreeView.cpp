@@ -45,6 +45,7 @@ HTREEITEM tree_view_t::AddItem(HTREEITEM hParent, HTREEITEM hInsertAfter, UINT s
         {
             .mask           = Mask,
             .state          = state,
+            .stateMask      = 0xFF,
             .pszText        = LPSTR_TEXTCALLBACKW,
             .iImage         = I_IMAGECALLBACK,
             .iSelectedImage = I_IMAGECALLBACK,
@@ -248,6 +249,24 @@ void tree_view_t::SetText(HTREEITEM hItem, const std::string & text) const noexc
     };
 
     TreeView_SetItem(_hTreeView, &tvix);
+}
+
+/// <summary>
+/// Gets the state of the specified item.
+/// </summary>
+uint32_t tree_view_t::GetState(HTREEITEM hItem) const noexcept
+{
+    TVITEMEXW tvix =
+    {
+        .mask      = TVIF_STATE,
+        .hItem     = hItem,
+        .stateMask = 0xFF,
+    };
+
+    if (!TreeView_GetItem(_hTreeView, &tvix))
+        return 0;
+
+    return tvix.state;
 }
 
 /// <summary>

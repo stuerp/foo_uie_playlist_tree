@@ -16,6 +16,7 @@
     <ClCompile Include="Preferences.cpp" />
     <ClCompile Include="IconList.cpp" />
     <ClCompile Include="Theme.cpp" />
+    <ClCompile Include="CUIElement.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DUIElement.h" />
@@ -35,6 +36,7 @@
     <ClInclude Include="IconList.h" />
     <ClInclude Include="Theme.h" />
     <ClInclude Include="EditSubclass.h" />
+    <ClInclude Include="CUIElement.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />

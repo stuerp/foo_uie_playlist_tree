@@ -4,6 +4,7 @@
 #include "pch.h"
 
 #include "TitleFormat.h"
+#include "Encoding.h"
 
 #pragma hdrstop
 
@@ -35,7 +36,7 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
 {
     const size_t Index = _PlaylistManager->find_playlist_by_guid(_Id);
 
-    const bool IsFolder = (Index == ~0llu);
+    const bool IsFolder = (Index == (size_t) -1);
 
     const auto Dispatcher = dispatcher_t
     (
@@ -67,7 +68,11 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
         {
             const size_t ItemCount = _PlaylistManager->playlist_get_item_count(Index);
 
-            out->write(titleformat_inputtypes::unknown, std::format("{}", ItemCount).c_str());
+            std::locale Locale(""); // User default Windows locale.
+
+            const auto Text = std::format(Locale, "{:L}", ItemCount);
+
+            out->write(titleformat_inputtypes::unknown, Text.c_str());
 
             isFound = true;
 
@@ -117,9 +122,11 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
 
             pm->playlist_enum_items(Index, Callback, bit_array_true());
 
-            out->write(titleformat_inputtypes::unknown, std::format("{}", Callback.Duration).c_str());
+            std::locale Locale(""); // User default Windows locale.
 
-    //      auto NaturalDuration = pfc::format_time(Callback.Duration);
+            const auto Text = std::format(Locale, "{:L}", Callback.Duration);
+
+            out->write(titleformat_inputtypes::unknown, Text.c_str());
 
             isFound = true;
 
@@ -151,9 +158,11 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
 
             pm->playlist_enum_items(Index, Callback, bit_array_true());
 
-            out->write(titleformat_inputtypes::unknown, std::format("{}", Callback.Size).c_str());
+            std::locale Locale(""); // User default Windows locale.
 
-    //      auto NaturalSize = pfc::format_file_size_short(Callback.Size);
+            const auto Text = std::format(Locale, "{:L}", Callback.Size);
+
+            out->write(titleformat_inputtypes::unknown, Text.c_str());
 
             isFound = true;
 
