@@ -1,11 +1,16 @@
 
-/** $VER: TitleFormat.cpp (2026.07.06) P. Stuer **/
+/** $VER: TitleFormat.cpp (2026.07.12) P. Stuer **/
 
 #include "pch.h"
 
 #include "TitleFormat.h"
 
 #pragma hdrstop
+
+template<typename... Pairs> auto dispatcher_t(Pairs &&... pairs)
+{
+    return std::unordered_map<std::string_view, std::function<bool()>>{ {std::forward<Pairs>(pairs)...} };
+}
 
 /// <summary>
 /// Evaluates a foobar2000 Title Format script.
@@ -24,7 +29,7 @@ HRESULT title_formatter_t::Evaluate(const std::string & script, const GUID id, p
 }
 
 /// <summary>
-/// 
+/// Returns the value of a Title Format field.
 /// </summary>
 bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const char * name, t_size size, bool & isFound)
 {
@@ -32,171 +37,177 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
 
     const bool IsFolder = (Index == ~0llu);
 
-    /** Component specific variables **/
+    const auto Dispatcher = dispatcher_t
+    (
+        /** Component specific variables **/
 
-    if (::_stricmp(name, "node_name") == 0)
-    {
-        pfc::string Text;
-
-        if (IsFolder)
+        std::pair{ "node_name", [&]() -> bool
         {
-            std::string Name;
+            pfc::string Text;
 
-            _FolderManager->GetFolderName(_Id, Name);
-
-            Text = Name.c_str();
-        }
-        else
-            _PlaylistManager->playlist_get_name(Index, Text);
-
-        out->write(titleformat_inputtypes::unknown, Text);
-
-        isFound = true;
-
-        return true;
-    }
-
-    if (::_stricmp(name, "node_item_count") == 0)
-    {
-        const size_t ItemCount = _PlaylistManager->playlist_get_item_count(Index);
-
-        out->write(titleformat_inputtypes::unknown, std::format("{}", ItemCount).c_str());
-
-        isFound = true;
-
-        return true;
-    }
-
-    if (::_stricmp(name, "node_is_folder") == 0)
-    {
-        if (!IsFolder)
-            return false;
-
-        out->write_int(titleformat_inputtypes::unknown, 1);
-
-        isFound = true;
-
-        return true;
-    }
-
-    if (::_stricmp(name, "playlist_duration") == 0)
-    {
-        class callback_t : public playlist_manager::enum_items_callback
-        {
-        public:
-            virtual ~callback_t() { }
-
-            bool on_item(t_size itemIndex, const metadb_handle_ptr & item, bool isSelected) override
+            if (IsFolder)
             {
-                if (item.is_valid())
-                {
-                    const double Length = item->get_length(); // in seconds
+                std::string Name;
 
-                    // Ignore unknown lengths (-1.0 or similar)
-                    if (Length > 0.)
-                        Duration += Length;
+                _FolderManager->GetFolderName(_Id, Name);
+
+                Text = Name.c_str();
+            }
+            else
+                _PlaylistManager->playlist_get_name(Index, Text);
+
+            out->write(titleformat_inputtypes::unknown, Text);
+
+            isFound = true;
+
+            return true;
+        }},
+
+        std::pair{ "node_item_count", [&]() -> bool
+        {
+            const size_t ItemCount = _PlaylistManager->playlist_get_item_count(Index);
+
+            out->write(titleformat_inputtypes::unknown, std::format("{}", ItemCount).c_str());
+
+            isFound = true;
+
+            return true;
+        }},
+
+        std::pair{ "node_is_folder", [&]() -> bool
+        {
+            if (!IsFolder)
+                return false;
+
+            out->write_int(titleformat_inputtypes::unknown, 1);
+
+            isFound = true;
+
+            return true;
+        }},
+
+        std::pair{ "playlist_duration", [&]() -> bool
+        {
+            class callback_t : public playlist_manager::enum_items_callback
+            {
+            public:
+                virtual ~callback_t() { }
+
+                bool on_item(t_size itemIndex, const metadb_handle_ptr & item, bool isSelected) override
+                {
+                    if (item.is_valid())
+                    {
+                        const double Length = item->get_length(); // in seconds
+
+                        // Ignore unknown lengths (-1.0 or similar)
+                        if (Length > 0.)
+                            Duration += Length;
+                    }
+
+                    return true; // Continue enumerating
                 }
 
-                return true; // Continue enumerating
-            }
+            public:
+                double Duration = 0.; // in seconds
+            };
 
-        public:
-            double Duration = 0.; // in seconds
-        };
+            static_api_ptr_t<playlist_manager> pm;
 
-        static_api_ptr_t<playlist_manager> pm;
+            callback_t Callback;
 
-        callback_t Callback;
+            pm->playlist_enum_items(Index, Callback, bit_array_true());
 
-        pm->playlist_enum_items(Index, Callback, bit_array_true());
+            out->write(titleformat_inputtypes::unknown, std::format("{}", Callback.Duration).c_str());
 
-        out->write(titleformat_inputtypes::unknown, std::format("{}", Callback.Duration).c_str());
+    //      auto NaturalDuration = pfc::format_time(Callback.Duration);
 
-//      auto NaturalDuration = pfc::format_time(Callback.Duration);
+            isFound = true;
 
-        isFound = true;
+            return true;
+        }},
 
-        return true;
-    }
-
-    if (::_stricmp(name, "playlist_size") == 0)
-    {
-        class callback_t : public playlist_manager::enum_items_callback
+        std::pair{ "playlist_size", [&]() -> bool
         {
-        public:
-            virtual ~callback_t() { }
-
-            bool on_item(t_size itemIndex, const metadb_handle_ptr & item, bool isSelected) override
+            class callback_t : public playlist_manager::enum_items_callback
             {
-                if (item.is_valid())
-                    Size += item->get_filesize();
+            public:
+                virtual ~callback_t() { }
 
-                return true; // Continue enumerating
-            }
+                bool on_item(t_size itemIndex, const metadb_handle_ptr & item, bool isSelected) override
+                {
+                    if (item.is_valid())
+                        Size += item->get_filesize();
 
-        public:
-            t_filesize Size = 0; // in bytes
-        };
+                    return true; // Continue enumerating
+                }
 
-        static_api_ptr_t<playlist_manager> pm;
+            public:
+                t_filesize Size = 0; // in bytes
+            };
 
-        callback_t Callback;
+            static_api_ptr_t<playlist_manager> pm;
 
-        pm->playlist_enum_items(Index, Callback, bit_array_true());
+            callback_t Callback;
 
-        out->write(titleformat_inputtypes::unknown, std::format("{}", Callback.Size).c_str());
+            pm->playlist_enum_items(Index, Callback, bit_array_true());
 
-//      auto NaturalSize = pfc::format_file_size_short(Callback.Size);
+            out->write(titleformat_inputtypes::unknown, std::format("{}", Callback.Size).c_str());
 
-        isFound = true;
+    //      auto NaturalSize = pfc::format_file_size_short(Callback.Size);
 
-        return true;
-    }
+            isFound = true;
 
-    /** Common foobar2000 variables **/
+            return true;
+        }},
 
-    if (::_stricmp(name, "fb2k_path") == 0)
-    {
-        pfc::string Path;
+        /** Common foobar2000 variables **/
 
-        ::uGetModuleFileName(NULL, Path);
+        std::pair{ "fb2k_path", [&]() -> bool
+        {
+            pfc::string Path;
 
-        Path = pfc::string_directory(Path);
+            ::uGetModuleFileName(NULL, Path);
 
-        out->write(titleformat_inputtypes::unknown, Path);
+            Path = pfc::string_directory(Path);
 
-        isFound = true;
+            out->write(titleformat_inputtypes::unknown, Path);
 
-        return true;
-    }
+            isFound = true;
 
-    if (::_stricmp(name, "fb2k_component_path") == 0)
-    {
-        pfc::string Path;
+            return true;
+        }},
 
-        ::uGetModuleFileName(core_api::get_my_instance(), Path);
+        std::pair{ "fb2k_component_path", [&]() -> bool
+        {
+            pfc::string Path;
 
-        Path = pfc::string_directory(Path);
+            ::uGetModuleFileName(core_api::get_my_instance(), Path);
 
-        out->write(titleformat_inputtypes::unknown, Path);
+            Path = pfc::string_directory(Path);
 
-        isFound = true;
+            out->write(titleformat_inputtypes::unknown, Path);
 
-        return true;
-    }
+            isFound = true;
 
-    if (::_stricmp(name, "fb2k_profile_path") == 0)
-    {
-        pfc::string Path = core_api::get_profile_path();
+            return true;
+        }},
 
-        Path = foobar2000_io::filesystem::g_get_native_path(Path);
+        std::pair{ "fb2k_profile_path", [&]() -> bool
+        {
+            pfc::string Path = core_api::get_profile_path();
 
-        out->write(titleformat_inputtypes::unknown, Path);
+            Path = foobar2000_io::filesystem::g_get_native_path(Path);
 
-        isFound = true;
+            out->write(titleformat_inputtypes::unknown, Path);
 
-        return true;
-    }
+            isFound = true;
+
+            return true;
+        }}
+    );
+
+    if (auto it = Dispatcher.find(name); it != Dispatcher.end())
+        return it->second();
 
     /** Windows environment variables **/
 
