@@ -356,7 +356,11 @@ void tree_view_t::EndDrag(bool cancel) noexcept
 
     // Move the item and its children.
     if ((_hDropTarget != NULL) && (_hDropTarget != _hDragSource) && AllowDrop(_DropZone) && !cancel)
+    {
         MoveItem(_hDropTarget, _hDragSource, _DropZone);
+
+        TreeView_Expand(_hTreeView, _hDropTarget, TVE_EXPAND);
+    }
 
     // Remove the drop target highlight.
     TreeView_SelectDropTarget(_hTreeView, NULL);
