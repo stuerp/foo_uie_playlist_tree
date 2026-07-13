@@ -6,17 +6,17 @@
 #define TOSTRING_IMPL(x) #x
 #define TOSTRING(x) TOSTRING_IMPL(x)
 
-#define NUM_FILE_MAJOR          0
+#define NUM_FILE_MAJOR          1
 #define NUM_FILE_MINOR          1
 #define NUM_FILE_PATCH          0
 #define NUM_FILE_PRERELEASE     0
 
-#define NUM_PRODUCT_MAJOR       0
+#define NUM_PRODUCT_MAJOR       1
 #define NUM_PRODUCT_MINOR       1
 #define NUM_PRODUCT_PATCH       0
 #define NUM_PRODUCT_PRERELEASE  0
 
-#define STR_PRERELEASE          "-alpha1"
+#define STR_PRERELEASE          ""
 
 /** Component specific **/
 

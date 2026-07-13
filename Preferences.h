@@ -4,7 +4,7 @@
 #pragma once
 
 #define IDC_TEXT_FORMAT     1000
-#define IDC_IMAGE_TYPE      1001
+#define IDC_NODE_TYPE      1001
 #define IDC_FILE_PATH       1002
 #define IDC_IMAGE_LIST      1003
 

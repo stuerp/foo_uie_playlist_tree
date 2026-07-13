@@ -112,7 +112,7 @@ public:
         COMMAND_HANDLER_EX(IDC_TEXT_FORMAT, EN_CHANGE,      OnEditChange)
         COMMAND_HANDLER_EX(IDC_FILE_PATH,   EN_CHANGE,      OnEditChange)
 
-        COMMAND_HANDLER_EX(IDC_IMAGE_TYPE,  CBN_SELCHANGE,  OnSelectionChange)
+        COMMAND_HANDLER_EX(IDC_NODE_TYPE,  CBN_SELCHANGE,  OnSelectionChange)
 
         MSG_WM_NOTIFY(OnNotify);
     END_MSG_MAP()
@@ -140,7 +140,7 @@ private:
 
         // Initialize the Image Type combobox.
         {
-            auto w = (CComboBox) GetDlgItem(IDC_IMAGE_TYPE);
+            auto w = (CComboBox) GetDlgItem(IDC_NODE_TYPE);
 
             w.ResetContent();
 
@@ -162,7 +162,7 @@ private:
     /// </summary>
     void OnSelectionChange(UINT, int id, CWindow w) noexcept
     {
-        if (id != IDC_IMAGE_TYPE)
+        if (id != IDC_NODE_TYPE)
             return;
 
         auto cb = (CComboBox) w;
