@@ -355,7 +355,7 @@
     <ClInclude Include="State.h" />
     <ClInclude Include="TreeView.h" />
     <ClInclude Include="UIElement.h" />
-    <ClInclude Include="UIElementTracker.h" />
+    <ClInclude Include="Tracker.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Preferences.rc" />

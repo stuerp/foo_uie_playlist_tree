@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.cpp (2026.07.12) P. Stuer **/
+/** $VER: Preferences.cpp (2026.07.13) P. Stuer **/
 
 #include "pch.h"
 
@@ -9,7 +9,7 @@
 #include <helpers/DarkMode.h>
 
 #include "PlaylistUIElement.h"
-#include "UIElementTracker.h"
+#include "Tracker.h"
 #include "Resources.h"
 #include "Preferences.h"
 #include "State.h"
@@ -81,10 +81,10 @@ public:
             }
         }
 
-        auto CurrentElement = _UIElementTracker.GetCurrentElement();
+        auto CurrentElement = _UIElementTracker.GetCurrent();
 
         if (CurrentElement != nullptr)
-            CurrentElement->ApplyConfiguration();
+            CurrentElement->Refresh();
 
          OnChanged();
     }
@@ -175,20 +175,24 @@ private:
     /// <summary>
     /// Handles a textbox change.
     /// </summary>
-    void OnEditChange(UINT, int, CWindow) noexcept
+    void OnEditChange(UINT id, int, CWindow) noexcept
     {
         if (_IgnoreNotifications)
             return;
 
-        std::wstring Text;
+        // Update the icon list when the user changes the file path.
+        if (id == IDC_FILE_PATH)
+        {
+            std::wstring Text;
 
-        Text.resize(4096);
+            Text.resize(4096);
 
-        GetDlgItemTextW(IDC_FILE_PATH, Text.data(), (int) Text.size());
+            GetDlgItemTextW(IDC_FILE_PATH, Text.data(), (int) Text.size());
 
-        const auto Index = (uint32_t) SendDlgItemMessageW(IDC_IMAGE_LIST, ILM_GETSELECTEDITEM);
+            const auto Index = (uint32_t) SendDlgItemMessageW(IDC_IMAGE_LIST, ILM_GETSELECTEDITEM);
 
-        UpdateIconList(msc::WideToUTF8(Text.c_str()), Index);
+            UpdateIconList(msc::WideToUTF8(Text.c_str()), Index);
+        }
 
         OnChanged();
     }

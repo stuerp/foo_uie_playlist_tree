@@ -38,7 +38,7 @@
     <ClInclude Include="Theme.h" />
     <ClInclude Include="EditSubclass.h" />
     <ClInclude Include="CUIElement.h" />
-    <ClInclude Include="UIElementTracker.h" />
+    <ClInclude Include="Tracker.h" />
     <ClInclude Include="DropTarget.h" />
   </ItemGroup>
   <ItemGroup>

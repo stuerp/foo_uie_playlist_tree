@@ -996,9 +996,9 @@ void playlist_uielement_t::DropFiles(const std::vector<std::wstring> & filePaths
 }
 
 /// <summary>
-/// Applies the configuration to this instance.
+/// Refreshes this instance.
 /// </summary>
-void playlist_uielement_t::ApplyConfiguration() noexcept
+void playlist_uielement_t::Refresh() noexcept
 {
     InitImageList();
 
@@ -1101,4 +1101,4 @@ bool playlist_uielement_t::InitImageList() noexcept
     return true;
 }
 
-uielement_tracker_t<playlist_uielement_t> _UIElementTracker;
+tracker_t<playlist_uielement_t> _UIElementTracker;

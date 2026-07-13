@@ -6,7 +6,7 @@
 #include "pch.h"
 
 #include "UIElement.h"
-#include "UIElementTracker.h"
+#include "Tracker.h"
 #include "PlaylistTreeView.h"
 #include "FolderManager.h"
 #include "EditSubclass.h"
@@ -31,7 +31,7 @@ public:
     DWORD GetDropEffect(DWORD keyState, const POINT & pt) noexcept;
     void DropFiles(const std::vector<std::wstring> & filePaths) noexcept;
 
-    void ApplyConfiguration() noexcept;
+    void Refresh() noexcept;
 
 protected:
     void SetConfiguration(const char * data, size_t size) noexcept;
@@ -144,4 +144,4 @@ private:
     IDropTarget * _DropTarget = nullptr;
 };
 
-extern uielement_tracker_t<playlist_uielement_t> _UIElementTracker;
+extern tracker_t<playlist_uielement_t> _UIElementTracker;
