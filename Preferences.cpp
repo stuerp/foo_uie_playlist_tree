@@ -16,6 +16,8 @@
 #include "IconList.h"
 #include "ImageList.h"
 #include "Theme.h"
+#include "TitleFormat.h"
+#include "Log.h"
 
 #pragma hdrstop
 
@@ -175,7 +177,7 @@ private:
     /// <summary>
     /// Handles a textbox change.
     /// </summary>
-    void OnEditChange(UINT id, int, CWindow) noexcept
+    void OnEditChange(UINT, int id, CWindow) noexcept
     {
         if (_IgnoreNotifications)
             return;
@@ -290,6 +292,12 @@ private:
     /// </summary>
     void UpdateIconList(const std::string & filePath, uint32_t iconIndex) noexcept
     {
+        pfc::string Text;
+
+        HRESULT hResult = title_formatter_t::Evaluate(filePath, { }, Text);
+
+        auto FilePath = (SUCCEEDED(hResult)) ? Text.c_str() : filePath;
+
         const auto IconSize = (uint32_t) ::GetSystemMetrics(SM_CXSMICON);
 
         HIMAGELIST hImageList = image_list_factory_t::Create(filePath, IconSize);

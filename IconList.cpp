@@ -176,8 +176,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
                     if (nmlv->uNewState & LVIS_SELECTED)
                     {
-                        Log.Write("Selected %3d", nmlv->iItem);
-
                         // Notify the parent of the selection change.
                         const NMHDR nh
                         {

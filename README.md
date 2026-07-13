@@ -16,6 +16,10 @@ It attempts to recreate the functionality of [foo_plorg](https://wiki.hydrogenau
   * %node_item_count%: the number of playlists in a folder or number of items in a playlist.
   * %playlist_duration%: the duration of the playlist (in seconds).
   * %playlist_size%: the size of the playlist (in bytes).
+  * %fb2k_path%: the directory path of the foobar2000 installation.
+  * %fb2k_component_path%: the directory path of the component.
+  * %fb2k_profile_path%: the directory path of the foobar2000 profile.
+  * Any Windows environment variable.
 * User defined tree images
 * Supports drag & drop from foobar2000, Explorer and other applications.
 * Supports the foobar2000 playlist recycle bin.

@@ -55,8 +55,6 @@ private:
     void OnMouseLeave() noexcept;
     void OnLButtonUp(UINT flags, CPoint point) noexcept;
 
-    void OnDropFiles(HDROP hDropInfo) noexcept;
-
     BEGIN_MSG_MAP(playlist_uielement_t)
         CHAIN_MSG_MAP(uielement_t)
 
@@ -68,8 +66,6 @@ private:
         MSG_WM_MOUSEMOVE(OnMouseMove);
         MSG_WM_MOUSELEAVE(OnMouseLeave);
         MSG_WM_LBUTTONUP(OnLButtonUp);
-
-        MSG_WM_DROPFILES(OnDropFiles);
     END_MSG_MAP()
 
     #pragma region playlist_callback

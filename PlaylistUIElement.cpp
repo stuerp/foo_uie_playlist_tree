@@ -96,7 +96,11 @@ void playlist_uielement_t::OnDestroy() noexcept
     {
         ::RevokeDragDrop(m_hWnd);
 
-        _DropTarget->Release();
+        if (_DropTarget != nullptr)
+        {
+            _DropTarget->Release();
+            _DropTarget = nullptr;
+        }
 
         ::OleUninitialize();
     }
@@ -680,11 +684,6 @@ void playlist_uielement_t::OnLButtonUp(UINT flags, CPoint point) noexcept
     _TreeView.EndDrag(false);
 }
 
-void playlist_uielement_t::OnDropFiles(HDROP hDropInfo) noexcept
-{
-    Log.Write("Drop files");
-}
-
 #pragma region playlist_callback
 
 /// <summary>
@@ -922,8 +921,6 @@ void playlist_uielement_t::FromJSON(json object) noexcept
         _PlaylistManager->playlist_get_name(PlaylistIndex, Name);
 
         _TreeView.AddItem({ }, { }, Id, Name.c_str(), false, false);
-
-        Log.Write("P %s", Name.c_str());
     }
 }
 
@@ -972,8 +969,6 @@ void playlist_uielement_t::FromJSON(json object, const GUID & parentId) noexcept
                 continue; // TODO: Use a grayed out image to indicate this playlist is missing and add a command to restore it.
 
             _TreeView.AddItem(parentId, { }, Id, Name, IsFolder, IsExpanded);
-
-            Log.Write("T %s", Name.c_str());
         }
     }
 }
