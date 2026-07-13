@@ -54,7 +54,7 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
 
 //  _State._Object.clear(); // Uncomment to reset the state.
 
-    FromJSON(_State._Object, { });
+    FromJSON(_State._Object);
 
     // Select the active playlist.
     {
@@ -114,7 +114,7 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
             _FolderManager->CreateFolder(Id, Name);
 
             // Get the data of the item we were hovering over, if any.
-            auto Parent = (const node_t *) _TreeView.GetData(_hItemPopup);
+            auto Parent = (const node_t *) _TreeView.GetData(_hPopupItem);
 
             // Add the item.
             auto ParentId = GUID();
@@ -130,7 +130,7 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
 
             _TreeView.AddItem(ParentId, InsertAfterId, Id, Name, true, false);
 
-            _hItemPopup = NULL;
+            _hPopupItem = NULL;
             break;
         }
 
@@ -163,6 +163,13 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
             _IsUser = false;
             break;
         }
+
+        // Handles the "Sort" command.
+        case IDM_SORT:
+        {
+            _TreeView.Sort(_hPopupItem);
+            break;
+        }
     }
 }
 
@@ -185,7 +192,7 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
 
             {
                 // Remember the item we're hovering over, if any.
-                _hItemPopup = _TreeView.GetItem(pt);
+                _hPopupItem = _TreeView.GetItem(pt);
 
                 // Uncomment if the item pointed to should become the selected item.
                 //if (hTreeItem != NULL)
@@ -202,6 +209,11 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
 
                 if (hPopup != NULL)
                 {
+                    const UINT State = (_hPopupItem != NULL) ? MF_ENABLED : MF_DISABLED | MF_GRAYED;
+
+                    ::EnableMenuItem(hPopup, IDM_RENAME, State);
+                    ::EnableMenuItem(hPopup, IDM_REMOVE, State);
+
                     ::TrackPopupMenu(hPopup, TPM_RIGHTBUTTON, pt.x, pt.y, 0, m_hWnd, NULL);
 
                     ::PostMessageW(m_hWnd, WM_NULL, 0, 0);
@@ -678,7 +690,7 @@ void playlist_uielement_t::on_playlist_created(size_t index, const char * name, 
     const auto Id = _PlaylistManager->playlist_get_guid(index);
 
     // Get the data of the item we were hovering over, if any.
-    auto Parent = (const node_t *) _TreeView.GetData(_hItemPopup);
+    auto Parent = (const node_t *) _TreeView.GetData(_hPopupItem);
 
     // Add the item.
     auto ParentId = GUID();
@@ -694,7 +706,7 @@ void playlist_uielement_t::on_playlist_created(size_t index, const char * name, 
 
     _TreeView.AddItem(ParentId, InsertAfterId, Id, Name.c_str(), false, false);
 
-    _hItemPopup = NULL;
+    _hPopupItem = NULL;
 }
 
 /// <summary>
@@ -796,6 +808,33 @@ void playlist_uielement_t::on_playback_pause(bool state)
 /// <summary>
 /// Deserializes this instance from a JSON object.
 /// </summary>
+void playlist_uielement_t::FromJSON(json object) noexcept
+{
+    FromJSON(object, { });
+
+    // Add all playlists that are missing to the root.
+    const size_t PlaylistCount = _PlaylistManager->get_playlist_count();
+
+    for (size_t PlaylistIndex = 0; PlaylistIndex < PlaylistCount; ++PlaylistIndex)
+    {
+        const auto Id = _PlaylistManager->playlist_get_guid(PlaylistIndex);
+
+        if (_TreeView.FindItem(Id) != NULL)
+            continue;
+
+        pfc::string Name;
+
+        _PlaylistManager->playlist_get_name(PlaylistIndex, Name);
+
+        _TreeView.AddItem({ }, { }, Id, Name.c_str(), false, false);
+
+        Log.Write("P %s", Name.c_str());
+    }
+}
+
+/// <summary>
+/// Deserializes this instance from a JSON object.
+/// </summary>
 void playlist_uielement_t::FromJSON(json object, const GUID & parentId) noexcept
 {
     // Add all nodes from the JSON object.
@@ -838,24 +877,9 @@ void playlist_uielement_t::FromJSON(json object, const GUID & parentId) noexcept
                 continue; // TODO: Use a grayed out image to indicate this playlist is missing and add a command to restore it.
 
             _TreeView.AddItem(parentId, { }, Id, Name, IsFolder, IsExpanded);
+
+            Log.Write("T %s", Name.c_str());
         }
-    }
-
-    // Add all playlists that are missing to the root.
-    const size_t PlaylistCount = _PlaylistManager->get_playlist_count();
-
-    for (size_t PlaylistIndex = 0; PlaylistIndex < PlaylistCount; ++PlaylistIndex)
-    {
-        const auto Id = _PlaylistManager->playlist_get_guid(PlaylistIndex);
-
-        if (_TreeView.FindItem(Id) != NULL)
-            continue;
-
-        pfc::string Name;
-
-        _PlaylistManager->playlist_get_name(PlaylistIndex, Name);
-
-        _TreeView.AddItem({ }, { }, Id, Name.c_str(), false, false);
     }
 }
 

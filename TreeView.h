@@ -1,5 +1,5 @@
 
-/** $VER: TreeView.h (2026.07.12) P. Stuer **/
+/** $VER: TreeView.h (2026.07.13) P. Stuer **/
 
 #pragma once
 
@@ -47,6 +47,11 @@ public:
         return TreeView_GetSelection(_hTreeView);
     }
 
+    HTREEITEM GetDropHilight() const noexcept
+    {
+        return TreeView_GetDropHilight(_hTreeView);
+    }
+
     HWND GetEditControl() const noexcept
     {
         return TreeView_GetEditControl(_hTreeView);
@@ -80,6 +85,11 @@ public:
     void DeleteAllItems() const noexcept
     {
         TreeView_DeleteAllItems(_hTreeView);
+    }
+
+    void Sort(HTREEITEM hParent = TVI_ROOT) const noexcept
+    {
+        TreeView_SortChildren(_hTreeView, hParent, FALSE);
     }
 
     void RedrawItem(HTREEITEM hItem) const noexcept;

@@ -1,5 +1,5 @@
 
-/** $VER: Resources.rc (2026.07.05) P. Stuer **/
+/** $VER: Resources.rc (2026.07.13) P. Stuer **/
 
 #include "Resources.h"
 
@@ -48,18 +48,20 @@ IDM_CONTEXT_MENU menu
 {
     popup "&File"
     {
-        popup "New..."
+        popup "New"
         {
             menuitem "Folder",      IDM_NEW_FOLDER
             menuitem "Playlist",    IDM_NEW_PLAYLIST
         }
+
+        menuitem separator
+
         menuitem "Rename\tF2",      IDM_RENAME
         menuitem "Remove\tDel",     IDM_REMOVE
+        menuitem "Sort",            IDM_SORT
 /*
         menuitem separator
         menuitem "Contents",        IDM_CONTENTS, grayed
-        menuitem separator
-        menuitem "Sort",            IDM_SORT, grayed
 */
     }
 }

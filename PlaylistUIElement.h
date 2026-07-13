@@ -111,7 +111,9 @@ private:
 
     #pragma endregion
 
+    void FromJSON(json object) noexcept;
     void FromJSON(json object, const GUID & parentId) noexcept;
+
     void SelectPlaylist(size_t playlistIndex) const noexcept;
     bool InitImageList() noexcept;
 
@@ -125,7 +127,7 @@ private:
     static_api_ptr_t<folder_manager_t> _FolderManager;
 
     HTREEITEM _hDropTarget = NULL;
-    HTREEITEM _hItemPopup = NULL;
+    HTREEITEM _hPopupItem = NULL;
 
     edit_subclass_t _EditSubclass;
 
