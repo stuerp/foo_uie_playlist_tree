@@ -1,5 +1,5 @@
 
-/** $VER: TreeView.cpp (2026.07.12) P. Stuer **/
+/** $VER: TreeView.cpp (2026.07.13) P. Stuer **/
 
 #include "pch.h"
 
@@ -78,7 +78,7 @@ void tree_view_t::RefreshItem(HTREEITEM hItem) const noexcept
 {
     const TVITEMW tvi =
     {
-        .mask           = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_CHILDREN,
+        .mask           = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE,// | TVIF_CHILDREN,
         .hItem          = hItem,
         .pszText        = LPSTR_TEXTCALLBACK,
         .iImage         = I_IMAGECALLBACK,
@@ -113,7 +113,7 @@ void tree_view_t::RefreshAllItems() const noexcept
                 hItem = TreeView_GetParent(_hTreeView, hItem);
 
                 if (hItem != NULL)
-                    return;
+                    break;
 
                 hNext = TreeView_GetNextSibling(_hTreeView, hItem);
             }

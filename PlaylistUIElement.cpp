@@ -213,7 +213,7 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
         {
             if (id >= IDM_HISTORY)
             {
-                const size_t Index = id - IDM_HISTORY;
+                const auto Index = (size_t) (id - IDM_HISTORY);
 
                 _PlaylistManager->recycler_restore(Index);
             }
@@ -484,14 +484,17 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
                 {
                     auto Image = ItemImage::Playlist;
 
-                    size_t Index = _PlaylistManager->get_playing_playlist();
-
-                    if (Index != SIZE_MAX)
+                    if (_IsPlaying)
                     {
-                        const auto Id = _PlaylistManager->playlist_get_guid(Index);
+                        const size_t Index = _PlaylistManager->get_playing_playlist();
 
-                        if (Id == Node->Id)
-                            Image = ItemImage::PlaylistPlaying;
+                        if (Index != SIZE_MAX)
+                        {
+                            const auto Id = _PlaylistManager->playlist_get_guid(Index);
+
+                            if (Id == Node->Id)
+                                Image = ItemImage::PlaylistPlaying;
+                        }
                     }
 
                     tvi.iImage = tvi.iSelectedImage = Image;
@@ -687,7 +690,7 @@ void playlist_uielement_t::OnDropFiles(HDROP hDropInfo) noexcept
 /// <summary>
 /// 
 /// </summary>
-void playlist_uielement_t::on_items_added(size_t playlistIndex, size_t start, const pfc::list_base_const_t<metadb_handle_ptr> & data, const bit_array & selection) noexcept
+void playlist_uielement_t::on_items_added(size_t playlistIndex, size_t start, const pfc::list_base_const_t<metadb_handle_ptr> & handles, const bit_array & selection) noexcept
 {
     auto Id = _PlaylistManager->playlist_get_guid(playlistIndex);
 
@@ -870,6 +873,8 @@ void playlist_uielement_t::on_playlist_locked(size_t index, bool isLocked) noexc
 /// </summary>
 void playlist_uielement_t::on_playback_new_track(metadb_handle_ptr track)
 {
+    _IsPlaying = true;
+
     _TreeView.RefreshAllItems();
 }
 
@@ -878,14 +883,18 @@ void playlist_uielement_t::on_playback_new_track(metadb_handle_ptr track)
 /// </summary>
 void playlist_uielement_t::on_playback_stop(play_control::t_stop_reason reason)
 {
+    _IsPlaying = false;
+
     _TreeView.RefreshAllItems();
 }
 
 /// <summary>
 /// Playback paused/resumed.
 /// </summary>
-void playlist_uielement_t::on_playback_pause(bool state)
+void playlist_uielement_t::on_playback_pause(bool isPaused)
 {
+    _IsPlaying = !isPaused;
+
     _TreeView.RefreshAllItems();
 }
 

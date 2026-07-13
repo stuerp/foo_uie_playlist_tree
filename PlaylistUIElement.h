@@ -74,7 +74,7 @@ private:
 
     #pragma region playlist_callback
 
-    void on_items_added(size_t p_playlist, size_t p_start, const pfc::list_base_const_t<metadb_handle_ptr> & p_data,const bit_array & p_selection) noexcept override;
+    void on_items_added(size_t playlistIndex, size_t start, const pfc::list_base_const_t<metadb_handle_ptr> & handles, const bit_array & selection) noexcept override;
     void on_items_reordered(size_t playlistIndex, const size_t * order, size_t count) noexcept override;
     void on_items_removing(size_t playlistIndex, const bit_array & mask, size_t oldCount, size_t newCount) noexcept override;
     void on_items_removed(size_t playlistIndex, const bit_array & mask, size_t oldCount, size_t newCount) noexcept override;
@@ -89,17 +89,17 @@ private:
     void on_item_ensure_visible(size_t playlistIndex, size_t itemIndex) noexcept override;
 
     void on_playlist_activate(size_t oldIndex, size_t newIndex) noexcept override;
-    void on_playlist_created(size_t index, const char * name, size_t size) noexcept override;
+    void on_playlist_created(size_t playlistIndex, const char * name, size_t size) noexcept override;
     void on_playlists_reorder(const size_t * order, size_t count) noexcept override;
     void on_playlists_removing(const bit_array & mask, size_t oldCount, size_t newCount) noexcept override;
     void on_playlists_removed(const bit_array & mask, size_t oldCount, size_t newCount) noexcept override;
-    void on_playlist_renamed(size_t index, const char * name, size_t size) noexcept override;
+    void on_playlist_renamed(size_t playlistIndex, const char * name, size_t size) noexcept override;
 
-    void on_playlist_locked(size_t index, bool isLocked) noexcept override;
+    void on_playlist_locked(size_t playlistIndex, bool isLocked) noexcept override;
 
     void on_default_format_changed() noexcept override;
 
-    void on_playback_order_changed(size_t index) noexcept override;
+    void on_playback_order_changed(size_t playlistIndex) noexcept override;
 
     #pragma endregion
 
@@ -109,7 +109,7 @@ private:
     void on_playback_new_track(metadb_handle_ptr track);
     void on_playback_stop(play_control::t_stop_reason reason);
     void on_playback_seek(double time) { }
-    void on_playback_pause(bool state);
+    void on_playback_pause(bool isPaused);
     void on_playback_edited(metadb_handle_ptr track) { }
     void on_playback_dynamic_info(const file_info&  info) { }
     void on_playback_dynamic_info_track(const file_info & info) { }
@@ -138,6 +138,7 @@ private:
 
     edit_subclass_t _EditSubclass;
 
+    bool _IsPlaying = false;
     bool _IsNotification = false;
     bool _IsUser = false;
 
