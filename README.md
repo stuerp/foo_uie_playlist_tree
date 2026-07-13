@@ -9,7 +9,7 @@ It attempts to recreate the functionality of [foo_plorg](https://wiki.hydrogenau
 
 * Supports the Default User Interface (DUI) and the [Columns User Interface](https://yuo.be/columns-ui) (CUI).
 * Supports dark mode.
-* Supports foobar2000 2.0 and later (32-bit and 64-bit version).
+* Supports foobar2000 2.0 and later (Intel 32-bit/64-bit and ARM64EC version).
 * Title formatting variables
   * %node_name%: the name of the node, either a playlist or a folder.
   * %node_is_folder%: boolean value for use in $if( ...) expressions and is true when the node is a folder.
@@ -18,10 +18,11 @@ It attempts to recreate the functionality of [foo_plorg](https://wiki.hydrogenau
   * %playlist_size%: the size of the playlist (in bytes).
 * User defined tree images
 * Supports drag & drop from foobar2000, Explorer and other applications.
+* Supports the foobar2000 playlist recycle bin.
 
 ## Requirements
 
-* [foobar2000](https://www.foobar2000.org/download) v2.0 or later (32 or 64-bit). ![foobar2000](https://www.foobar2000.org/button-small.png)
+* [foobar2000](https://www.foobar2000.org/download) v2.0 or later. ![foobar2000](https://www.foobar2000.org/button-small.png)
 * Tested on Microsoft Windows 10 and later.
 * Tested with [Columns UI](https://yuo.be/columns-ui) 2.1.0.
 
@@ -81,7 +82,7 @@ To create the component first build the x86 configuration and next the x64 confi
 
 ## Change Log
 
-v0.1.0.0-alpha1, 2026-xx-xx, *"Scratchin' the itch"*
+v1.0.0.0, 2026-07-13, *"Scratchin' the itch"*
 
 * Initial release.
 
