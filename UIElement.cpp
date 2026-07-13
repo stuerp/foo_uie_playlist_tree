@@ -28,7 +28,7 @@ uielement_t::~uielement_t()
 /// <summary>
 /// Creates the window.
 /// </summary>
-LRESULT uielement_t::OnCreate(LPCREATESTRUCT cs) noexcept
+LRESULT uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
 {
     return 0;
 }

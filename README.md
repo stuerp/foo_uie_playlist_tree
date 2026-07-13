@@ -17,6 +17,7 @@ It attempts to recreate the functionality of [foo_plorg](https://wiki.hydrogenau
   * %playlist_duration%: the duration of the playlist (in seconds).
   * %playlist_size%: the size of the playlist (in bytes).
 * User defined tree images
+* Supports drag & drop from foobar2000, Explorer and other applications.
 
 ## Requirements
 
@@ -91,6 +92,8 @@ v0.1.0.0-alpha1, 2026-xx-xx, *"Scratchin' the itch"*
 ## Reference Material
 
 * [Windows Icons](https://diymediahome.org/windows-icons-reference-list-with-details-locations-images/)
+* [Using Explorer's fancy drag/drop effects in your own programs](https://devblogs.microsoft.com/oldnewthing/20210512-00/?p=105208), Raymond Che, The Old New Thing, 2021-05-12
+* [Drag/drop effects: The little drop information box](https://devblogs.microsoft.com/oldnewthing/20210513-00/?p=105212), Raymond Che, The Old New Thing, 2021-05-13
 
 ## Links
 

@@ -1,10 +1,10 @@
 
-/** $VER: PlaylistsUIElement.cpp (2026.07.12) P. Stuer **/
+/** $VER: PlaylistsUIElement.cpp (2026.07.13) P. Stuer **/
 
 #include "pch.h"
 
 #include "PlaylistUIElement.h"
-#include "UIElementTracker.h"
+#include "DropTarget.h"
 #include "ImageList.h"
 #include "TitleFormat.h"
 #include "Node.h"
@@ -13,6 +13,7 @@
 #include "Log.h"
 
 #include <SDK\playlist.h>
+#include <SDK\metadb.h>
 
 #pragma hdrstop
 
@@ -44,13 +45,16 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
     if (Result != 0)
         return Result;
 
-    if (!_TreeView.Create(m_hWnd, IDC_TREEVIEW))
-        return -1;
+    // Create the tree view.
+    {
+        if (!_TreeView.Create(m_hWnd, IDC_TREEVIEW))
+            return -1;
 
-    _DarkMode.AddCtrlAuto(_TreeView.Get());
+        _DarkMode.AddCtrlAuto(_TreeView.Get());
 
-    if (!InitImageList())
-        return -1;
+        if (!InitImageList())
+            return -1;
+    }
 
 //  _State._Object.clear(); // Uncomment to reset the state.
 
@@ -60,8 +64,20 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
     {
         size_t Index = _PlaylistManager->get_active_playlist();
 
-        if (Index != (size_t) -1)
+        if (Index != SIZE_MAX)
             SelectPlaylist(Index);
+    }
+
+    // Create the drop target.
+    {
+        HRESULT hResult = ::OleInitialize(nullptr);
+
+        _DropTarget = new drop_target_t(m_hWnd, this);
+
+        hResult = ::RegisterDragDrop(m_hWnd, _DropTarget);
+
+        if (!SUCCEEDED(hResult))
+            Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to register drop target: 0x08X", hResult);
     }
 
    _UIElementTracker.Add(this);
@@ -76,7 +92,21 @@ void playlist_uielement_t::OnDestroy() noexcept
 {
     _UIElementTracker.Remove(this);
 
-    _TreeView.Destroy();
+    // Destroy the drop target.
+    {
+        ::RevokeDragDrop(m_hWnd);
+
+        _DropTarget->Release();
+
+        ::OleUninitialize();
+    }
+
+    // Destroy the tree view.
+    {
+        _hImageList.Reset();
+
+        _TreeView.Destroy();
+    }
 
     uielement_t::OnDestroy();
 }
@@ -137,11 +167,14 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
         // Handles the "New Playlist" command.
         case IDM_NEW_PLAYLIST:
         {
+/*
             pfc::string Name("New Playlist");
 
-            size_t NewIndex = _PlaylistManager->create_playlist(Name, Name.length(), (size_t) -1);
+            size_t NewIndex = _PlaylistManager->create_playlist(Name, Name.length(), SIZE_MAX);
+*/
+            size_t NewIndex = _PlaylistManager->create_playlist_autoname();
 
-            if (NewIndex == (size_t) -1)
+            if (NewIndex == SIZE_MAX)
                 break;
             break;
         }
@@ -405,7 +438,7 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
 
                     size_t Index = _PlaylistManager->get_playing_playlist();
 
-                    if (Index != (size_t) -1)
+                    if (Index != SIZE_MAX)
                     {
                         const auto Id = _PlaylistManager->playlist_get_guid(Index);
 
@@ -431,7 +464,7 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
 
             const size_t Index = _PlaylistManager->find_playlist_by_guid(Node->Id);
 
-            if (Index == (size_t) -1)
+            if (Index == SIZE_MAX)
                 break;
 
             _PlaylistManager->set_active_playlist(Index);
@@ -463,7 +496,7 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
                 {
                     const size_t Index = _PlaylistManager->find_playlist_by_guid(Node->Id);
 
-                    if (Index == (size_t) -1)
+                    if (Index == SIZE_MAX)
                         break;
 
                     _IsNotification = true;
@@ -523,7 +556,7 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
             {
                 size_t Index = _PlaylistManager->find_playlist_by_guid(Node->Id);
 
-                if (Index == (size_t) -1)
+                if (Index == SIZE_MAX)
                     return FALSE;
 
                 _PlaylistManager->playlist_rename(Index, Node->Name.c_str(), Node->Name.size());
@@ -594,6 +627,11 @@ void playlist_uielement_t::OnMouseLeave() noexcept
 void playlist_uielement_t::OnLButtonUp(UINT flags, CPoint point) noexcept
 {
     _TreeView.EndDrag(false);
+}
+
+void playlist_uielement_t::OnDropFiles(HDROP hDropInfo) noexcept
+{
+    Log.Write("Drop files");
 }
 
 #pragma region playlist_callback
@@ -680,7 +718,7 @@ void playlist_uielement_t::on_playlist_activate(size_t oldIndex, size_t newIndex
 /// </summary>
 void playlist_uielement_t::on_playlist_created(size_t index, const char * name, size_t size) noexcept
 {
-    if ((index == (size_t) -1) || (name == nullptr) || (size == 0))
+    if ((index == SIZE_MAX) || (name == nullptr) || (size == 0))
         return;
 
     pfc::string Name;
@@ -742,7 +780,7 @@ void playlist_uielement_t::on_playlists_removed(const bit_array & mask, size_t o
 /// </summary>
 void playlist_uielement_t::on_playlist_renamed(size_t index, const char * newName, size_t newSize) noexcept
 {
-    if ((index == (size_t) -1) || (newName == nullptr) || (newSize == 0))
+    if ((index == SIZE_MAX) || (newName == nullptr) || (newSize == 0))
         return;
 
     const auto Id = _PlaylistManager->playlist_get_guid(index);
@@ -873,7 +911,7 @@ void playlist_uielement_t::FromJSON(json object, const GUID & parentId) noexcept
         {
             const size_t Index = _PlaylistManager->find_playlist_by_guid(Id);
 
-            if (Index == (size_t) -1)
+            if (Index == SIZE_MAX)
                 continue; // TODO: Use a grayed out image to indicate this playlist is missing and add a command to restore it.
 
             _TreeView.AddItem(parentId, { }, Id, Name, IsFolder, IsExpanded);
@@ -903,6 +941,58 @@ void playlist_uielement_t::SelectPlaylist(size_t index) const noexcept
 
         return true; // Continue enumerating
     });
+}
+
+/// <summary>
+/// Determines the drop effect.
+/// </summary>
+DWORD playlist_uielement_t::GetDropEffect(DWORD keyState, const POINT & pt) noexcept
+{
+    _hDropTarget = _TreeView.GetItem(pt);
+
+    if (keyState & MK_CONTROL)
+        return DROPEFFECT_MOVE;
+
+    return DROPEFFECT_COPY;
+}
+
+/// <summary>
+/// Drops the specified files an the tree view.
+/// </summary>
+void playlist_uielement_t::DropFiles(const std::vector<std::wstring> & filePaths) noexcept
+{
+    auto Node = (const node_t *) _TreeView.GetData(_hDropTarget);
+
+    size_t Index = SIZE_MAX;
+
+    {
+        if ((Node == nullptr) || Node->IsFolder)
+            Index = _PlaylistManager->create_playlist_autoname();
+        else
+            Index = _PlaylistManager->find_playlist_by_guid(Node->Id);
+
+        if (Index == SIZE_MAX)
+            return;
+    }
+
+    {
+        metadb_handle_list Handles;
+
+        static_api_ptr_t<metadb_io> IO;
+
+        for (const auto & FilePath : filePaths)
+        {
+            metadb_handle_list Temp;
+
+            // Properly resolve paths (including archive subsongs, canonicalization, etc.)
+            IO->path_to_handles_simple(msc::WideToUTF8(FilePath).c_str(), Temp);
+
+            Handles.add_items(Temp);
+        }
+
+        // Add the handles to the playlist and select them.
+        _PlaylistManager->playlist_add_items(Index, Handles, bit_array_true());
+    }
 }
 
 /// <summary>

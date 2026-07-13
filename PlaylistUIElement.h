@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.h (2026.07.12) P. Stuer **/
+/** $VER: PlaylistsUIElement.h (2026.07.13) P. Stuer **/
 
 #pragma once
 
@@ -28,6 +28,9 @@ public:
 
     virtual ~playlist_uielement_t();
 
+    DWORD GetDropEffect(DWORD keyState, const POINT & pt) noexcept;
+    void DropFiles(const std::vector<std::wstring> & filePaths) noexcept;
+
     void ApplyConfiguration() noexcept;
 
 protected:
@@ -52,6 +55,8 @@ private:
     void OnMouseLeave() noexcept;
     void OnLButtonUp(UINT flags, CPoint point) noexcept;
 
+    void OnDropFiles(HDROP hDropInfo) noexcept;
+
     BEGIN_MSG_MAP(playlist_uielement_t)
         CHAIN_MSG_MAP(uielement_t)
 
@@ -63,6 +68,8 @@ private:
         MSG_WM_MOUSEMOVE(OnMouseMove);
         MSG_WM_MOUSELEAVE(OnMouseLeave);
         MSG_WM_LBUTTONUP(OnLButtonUp);
+
+        MSG_WM_DROPFILES(OnDropFiles);
     END_MSG_MAP()
 
     #pragma region playlist_callback
@@ -133,6 +140,8 @@ private:
 
     bool _IsNotification = false;
     bool _IsUser = false;
+
+    IDropTarget * _DropTarget = nullptr;
 };
 
 extern uielement_tracker_t<playlist_uielement_t> _UIElementTracker;

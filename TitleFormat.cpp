@@ -36,7 +36,7 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
 {
     const size_t Index = _PlaylistManager->find_playlist_by_guid(_Id);
 
-    const bool IsFolder = (Index == (size_t) -1);
+    const bool IsFolder = (Index == SIZE_MAX);
 
     const auto Dispatcher = dispatcher_t
     (

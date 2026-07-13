@@ -311,6 +311,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CUIElement.cpp" />
+    <ClCompile Include="DropTarget.cpp" />
     <ClCompile Include="FolderManager.cpp" />
     <ClCompile Include="IconList.cpp" />
     <ClCompile Include="ImageList.cpp" />
@@ -336,6 +337,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CUIElement.h" />
+    <ClInclude Include="DropTarget.h" />
     <ClInclude Include="EditSubclass.h" />
     <ClInclude Include="FolderManager.h" />
     <ClInclude Include="IconList.h" />
