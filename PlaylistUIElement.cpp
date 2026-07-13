@@ -849,7 +849,7 @@ void playlist_uielement_t::FromJSON(json object, const GUID & parentId) noexcept
         const auto Id = _PlaylistManager->playlist_get_guid(PlaylistIndex);
 
         if (_TreeView.FindItem(Id) != NULL)
-            return;
+            continue;
 
         pfc::string Name;
 
