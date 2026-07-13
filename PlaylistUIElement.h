@@ -5,11 +5,11 @@
 
 #include "pch.h"
 
-#include "UIElement.h"
-#include "Tracker.h"
-#include "PlaylistTreeView.h"
-#include "FolderManager.h"
 #include "EditSubclass.h"
+#include "FolderManager.h"
+#include "PlaylistTreeView.h"
+#include "Tracker.h"
+#include "UIElement.h"
 
 #include <SDK\playlist.h>
 

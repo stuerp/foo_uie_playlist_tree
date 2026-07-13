@@ -1,5 +1,5 @@
 
-/** $VER: Resources.h (2026.07.09) P. Stuer **/
+/** $VER: Resources.h (2026.07.13) P. Stuer **/
 
 #pragma once
 
@@ -77,3 +77,6 @@
 #define IDM_CONTENTS                           6
 
 #define IDM_SORT                               7
+
+#define IDM_CLEAR_HISTORY                      8
+#define IDM_HISTORY                            (IDM_CLEAR_HISTORY + 1)

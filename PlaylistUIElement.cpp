@@ -167,11 +167,6 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
         // Handles the "New Playlist" command.
         case IDM_NEW_PLAYLIST:
         {
-/*
-            pfc::string Name("New Playlist");
-
-            size_t NewIndex = _PlaylistManager->create_playlist(Name, Name.length(), SIZE_MAX);
-*/
             size_t NewIndex = _PlaylistManager->create_playlist_autoname();
 
             if (NewIndex == SIZE_MAX)
@@ -202,6 +197,26 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
         {
             _TreeView.Sort(_hPopupItem);
             break;
+        }
+
+        // Handles the "Clear history" command.
+        case IDM_CLEAR_HISTORY:
+        {
+            int Result = popup_message_v3::get()->messageBox(m_hWnd, "Delete removed playlists permanently?", STR_COMPONENT_NAME, MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2);
+
+            if (Result == IDYES)
+                _PlaylistManager->recycler_purge(bit_array_true());
+            break;
+        }
+
+        default:
+        {
+            if (id >= IDM_HISTORY)
+            {
+                const size_t Index = id - IDM_HISTORY;
+
+                _PlaylistManager->recycler_restore(Index);
+            }
         }
     }
 }
@@ -247,7 +262,40 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
                     ::EnableMenuItem(hPopup, IDM_RENAME, State);
                     ::EnableMenuItem(hPopup, IDM_REMOVE, State);
 
-                    ::TrackPopupMenu(hPopup, TPM_RIGHTBUTTON, pt.x, pt.y, 0, m_hWnd, NULL);
+                    // Create and append the Restore submenu.
+                    const size_t RecycleCount = _PlaylistManager->recycler_get_count();
+
+                    if (RecycleCount != 0)
+                    {
+                        HMENU hRestore = ::CreatePopupMenu();
+
+                        for (size_t Index = 0; Index < RecycleCount; ++Index)
+                        {
+                            pfc::string Name;
+
+                            _PlaylistManager->recycler_get_name(Index, Name);
+
+                            ::AppendMenuW(hRestore, MF_STRING, IDM_HISTORY + Index, msc::UTF8ToWide(Name.c_str()).c_str());
+                        }
+
+                        ::AppendMenuW(hRestore, MF_SEPARATOR, 0, NULL);
+                        ::AppendMenuW(hRestore, MF_STRING, IDM_CLEAR_HISTORY, L"Clear history");
+
+                        // Append the Restore menu to the popup menu.
+                        ::AppendMenuW(hPopup, MF_SEPARATOR, 0, NULL);
+
+                        MENUITEMINFOW mii =
+                        {
+                            .cbSize     = sizeof(mii),
+                            .fMask      = MIIM_STRING | MIIM_SUBMENU,
+                            .hSubMenu   = hRestore,
+                            .dwTypeData = (LPWSTR) L"Restore",
+                        };
+
+                        ::InsertMenuItemW(hPopup, (UINT) ::GetMenuItemCount(hPopup), TRUE, &mii);
+                    }
+
+                    ::TrackPopupMenu(hPopup, TPM_RIGHTBUTTON, pt.x, pt.y, 0, m_hWnd, nullptr);
 
                     ::PostMessageW(m_hWnd, WM_NULL, 0, 0);
                 }
@@ -759,9 +807,9 @@ void playlist_uielement_t::on_playlists_reorder(const size_t * order, size_t cou
 /// </summary>
 void playlist_uielement_t::on_playlists_removing(const bit_array & mask, size_t oldCount, size_t newCount) noexcept
 {
-    for (size_t index = mask.find_first(true, 0, oldCount); index < oldCount; index = mask.find_next(true, index, oldCount))
+    for (size_t Index = mask.find_first(true, 0, oldCount); Index < oldCount; Index = mask.find_next(true, Index, oldCount))
     {
-        const auto Id = _PlaylistManager->playlist_get_guid(index);
+        auto Id = _PlaylistManager->playlist_get_guid(Index);
 
         if (!_IsNotification)
             _TreeView.RemoveItem(Id);
