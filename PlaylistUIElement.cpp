@@ -1148,7 +1148,8 @@ bool playlist_uielement_t::InitImageList() noexcept
         ::ImageList_ReplaceIcon(_hImageList, -1, hIcon);
     }
 
-    _TreeView.SetImageList(_hImageList);
+    _TreeView.SetNormalImageList(_hImageList);
+    _TreeView.SetStateImageList(_hImageList);
 
     return true;
 }

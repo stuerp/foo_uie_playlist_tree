@@ -11,34 +11,36 @@
 /// <summary>
 /// Gets the text of the specified item.
 /// </summary>
-std::string playlist_tree_view_t::GetText(const GUID id) const noexcept
+bool playlist_tree_view_t::GetText(const GUID & id, std::string & text) const noexcept
 {
     HTREEITEM hItem = FindItem(id);
 
     if (hItem == NULL)
-        return { };
+        return false;
 
-    return tree_view_t::GetText(hItem);
+    return tree_view_t::GetText(hItem, text);
 }
 
 /// <summary>
-/// Sets the text of the specified item.
+/// Sets the name of the specified item.
 /// </summary>
-void playlist_tree_view_t::SetName(const GUID id, const std::string & name) const noexcept
+bool playlist_tree_view_t::SetName(const GUID & id, const std::string & name) const noexcept
 {
     HTREEITEM hItem = FindItem(id);
 
     if (hItem == NULL)
-        return;
+        return false;
 
     auto Node = (node_t *) GetData(hItem);
 
     if (Node == nullptr)
-        return;
+        return false;
 
     Node->Name = name;
 
     RedrawItem(hItem);
+
+    return true;
 }
 
 /// <summary>
@@ -56,7 +58,7 @@ node_t * playlist_tree_view_t::AddItem(const GUID & parentId, const GUID & inser
     HTREEITEM hInsertAfter = FindItem(insertAfterId);
 
     if (hInsertAfter == NULL)
-        hParent = TVI_LAST;
+        hInsertAfter = TVI_LAST;
 
     const UINT State = isExpanded ? TVIS_EXPANDED : 0;
 
@@ -153,7 +155,10 @@ bool playlist_tree_view_t::IsExpanded(const GUID & id) const noexcept
     if (hItem == NULL)
         return false;
 
-    auto State = GetState(hItem);
+    UINT State = 0;
+
+    if (!GetState(hItem, State))
+        return false;
 
     return ((State & TVIS_EXPANDED) == TVIS_EXPANDED);
 }

@@ -28,18 +28,24 @@ public:
         return _hTreeView;
     }
 
-    void SetImageList(HIMAGELIST hImageList) const noexcept
+    HIMAGELIST SetNormalImageList(HIMAGELIST hImageList) const noexcept
     {
-        TreeView_SetImageList(_hTreeView, hImageList, TVSIL_NORMAL);
-        TreeView_SetImageList(_hTreeView, hImageList, TVSIL_STATE);
+        return TreeView_SetImageList(_hTreeView, hImageList, TVSIL_NORMAL);
     }
 
-    void SelectItem(HTREEITEM hTreeItem) const noexcept
+    HIMAGELIST SetStateImageList(HIMAGELIST hImageList) const noexcept
+    {
+        return TreeView_SetImageList(_hTreeView, hImageList, TVSIL_STATE);
+    }
+
+    bool SelectItem(HTREEITEM hTreeItem) const noexcept
     {
         if (TreeView_SelectItem(_hTreeView, hTreeItem) != TRUE)
-            return;
+            return false;
 
         TreeView_EnsureVisible(_hTreeView, hTreeItem);
+
+        return true;
     }
 
     HTREEITEM GetSelectedItem() const noexcept
@@ -59,8 +65,8 @@ public:
 
     HTREEITEM GetItem(const POINT & point) const noexcept;
 
-    std::string GetText(HTREEITEM hItem) const noexcept;
-    uint32_t GetState(HTREEITEM hItem) const noexcept;
+    bool GetText(HTREEITEM hItem, std::string & text) const noexcept;
+    bool GetState(HTREEITEM hItem, UINT & state) const noexcept;
     void * GetData(HTREEITEM hItem) const noexcept;
 
     void SetText(HTREEITEM hItem, const std::string & text) const noexcept;
@@ -77,14 +83,19 @@ public:
         return RemoveItem(GetSelectedItem());
     }
 
-    void EditSelectedItem() const noexcept
+    HWND EditSelectedItem() const noexcept
     {
-        TreeView_EditLabel(_hTreeView, TreeView_GetSelection(_hTreeView));
+        auto hItem = GetSelectedItem();
+
+        if (hItem == NULL)
+            return NULL;
+
+        return TreeView_EditLabel(_hTreeView, hItem);
     }
 
-    void DeleteAllItems() const noexcept
+    bool DeleteAllItems() const noexcept
     {
-        TreeView_DeleteAllItems(_hTreeView);
+        return (TreeView_DeleteAllItems(_hTreeView) == TRUE);
     }
 
     bool ExpandItem(HTREEITEM hItem) const noexcept
@@ -102,15 +113,16 @@ public:
         return (TreeView_Expand(_hTreeView, hItem, TVE_TOGGLE) != 0);
     }
 
-    void Sort(HTREEITEM hParent = TVI_ROOT) const noexcept
+    bool Sort(HTREEITEM hParent = TVI_ROOT) const noexcept
     {
-        TreeView_SortChildren(_hTreeView, hParent, FALSE);
+        return (TreeView_SortChildren(_hTreeView, hParent, FALSE) == TRUE);
     }
 
-    void RedrawItem(HTREEITEM hItem) const noexcept;
+    bool RedrawItem(HTREEITEM hItem) const noexcept;
 
-    void RefreshItem(HTREEITEM hItem) const noexcept;
-    void RefreshAllItems() const noexcept;
+    bool RefreshItem(HTREEITEM hItem) const noexcept;
+
+    bool RefreshAllItems() const noexcept;
 
     enum DropZone
     {

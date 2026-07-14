@@ -30,8 +30,8 @@ public:
 
     virtual ~playlist_tree_view_t() noexcept { };
 
-    std::string GetText(const GUID id) const noexcept;
-    void SetName(const GUID id, const std::string & name) const noexcept;
+    bool GetText(const GUID & id, std::string & text) const noexcept;
+    bool SetName(const GUID & id, const std::string & name) const noexcept;
 
     node_t * AddItem(const GUID & parentId, const GUID & insertAfterId, const GUID & id, const std::string & name, bool isFolder, bool isExpanded) const noexcept;
     bool RemoveItem(const GUID & id) const noexcept;

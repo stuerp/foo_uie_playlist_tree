@@ -61,22 +61,24 @@ HTREEITEM tree_view_t::AddItem(HTREEITEM hParent, HTREEITEM hInsertAfter, UINT s
 /// <summary>
 /// Forces an item to redraw.
 /// </summary>
-void tree_view_t::RedrawItem(HTREEITEM hItem) const noexcept
+bool tree_view_t::RedrawItem(HTREEITEM hItem) const noexcept
 {
     RECT r;
 
     if (!TreeView_GetItemRect(_hTreeView, hItem, &r, FALSE))
-        return;
+        return false;
 
     ::InvalidateRect(Get(), &r, TRUE);
+
+    return true;
 }
 
 /// <summary>
 /// Refreshes the specified item.
 /// </summary>
-void tree_view_t::RefreshItem(HTREEITEM hItem) const noexcept
+bool tree_view_t::RefreshItem(HTREEITEM hItem) const noexcept
 {
-    const TVITEMW tvi =
+    const TVITEMEXW tvi =
     {
         .mask           = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE,// | TVIF_CHILDREN,
         .hItem          = hItem,
@@ -86,13 +88,13 @@ void tree_view_t::RefreshItem(HTREEITEM hItem) const noexcept
 //      .cChildren      = I_CHILDRENCALLBACK
     };
 
-    TreeView_SetItem(_hTreeView, &tvi);
+    return (TreeView_SetItem(_hTreeView, &tvi) != 0);
 }
 
 /// <summary>
 /// Refreshes all items.
 /// </summary>
-void tree_view_t::RefreshAllItems() const noexcept
+bool tree_view_t::RefreshAllItems() const noexcept
 {
     auto hItem = TreeView_GetRoot(_hTreeView);
 
@@ -122,7 +124,7 @@ void tree_view_t::RefreshAllItems() const noexcept
         }
     }
 
-    ::InvalidateRect(_hTreeView, nullptr, TRUE);
+    return (::InvalidateRect(_hTreeView, nullptr, TRUE) != 0);
 }
 
 /// <summary>
@@ -214,13 +216,13 @@ HTREEITEM tree_view_t::GetItem(const POINT & pt) const noexcept
 /// <summary>
 /// Gets the text of the specified item.
 /// </summary>
-std::string tree_view_t::GetText(HTREEITEM hItem) const noexcept
+bool tree_view_t::GetText(HTREEITEM hItem, std::string & text) const noexcept
 {
     std::wstring Text;
 
     Text.resize(256);
 
-    TVITEMEXW tvix =
+    TVITEMEXW tvi =
     {
         .mask       = TVIF_TEXT,
         .hItem      = hItem,
@@ -228,10 +230,12 @@ std::string tree_view_t::GetText(HTREEITEM hItem) const noexcept
         .cchTextMax = (int) Text.size(),
     };
 
-    if (!TreeView_GetItem(_hTreeView, &tvix))
-        return { };
+    if (!TreeView_GetItem(_hTreeView, &tvi))
+        return false;
 
-    return msc::WideToUTF8(Text);
+    text = msc::WideToUTF8(Text);
+
+    return true;
 }
 
 /// <summary>
@@ -241,32 +245,34 @@ void tree_view_t::SetText(HTREEITEM hItem, const std::string & text) const noexc
 {
     std::wstring Text = msc::UTF8ToWide(text.c_str());
 
-    TVITEMEXW tvix =
+    const TVITEMEXW tvi =
     {
         .mask    = TVIF_TEXT,
         .hItem   = hItem,
         .pszText = (LPWSTR) Text.c_str(),
     };
 
-    TreeView_SetItem(_hTreeView, &tvix);
+    TreeView_SetItem(_hTreeView, &tvi);
 }
 
 /// <summary>
 /// Gets the state of the specified item.
 /// </summary>
-uint32_t tree_view_t::GetState(HTREEITEM hItem) const noexcept
+bool tree_view_t::GetState(HTREEITEM hItem, UINT & state) const noexcept
 {
-    TVITEMEXW tvix =
+    TVITEMEXW tvi =
     {
         .mask      = TVIF_STATE,
         .hItem     = hItem,
         .stateMask = 0xFF,
     };
 
-    if (!TreeView_GetItem(_hTreeView, &tvix))
-        return 0;
+    if (!TreeView_GetItem(_hTreeView, &tvi))
+        return false;
 
-    return tvix.state;
+    state = tvi.state; 
+
+    return true;
 }
 
 /// <summary>
