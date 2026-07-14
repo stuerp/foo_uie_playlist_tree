@@ -112,10 +112,19 @@ void dui_element_t::notify(const GUID & what, t_size param1, const void * param2
 /// </summary>
 void dui_element_t::GetColors() noexcept
 {
-    _Theme.SetColor(COLOR_WINDOW,     (COLORREF) m_callback->query_std_color(ui_color_background));
-    _Theme.SetColor(COLOR_WINDOWTEXT, (COLORREF) m_callback->query_std_color(ui_color_text));
-    _Theme.SetColor(COLOR_HIGHLIGHT,  (COLORREF) m_callback->query_std_color(ui_color_selection));
-    _Theme.SetColor(COLOR_HOTLIGHT,   (COLORREF) m_callback->query_std_color(ui_color_highlight));
+    _Theme.SetWindowColor               ((COLORREF) m_callback->query_std_color(ui_color_background));
+    _Theme.SetWindowTextColor           ((COLORREF) m_callback->query_std_color(ui_color_text));
+
+    _Theme.SetSelectionColor            ((COLORREF) m_callback->query_std_color(ui_color_selection));
+    _Theme.SetSelectionTextColor        ((COLORREF) m_callback->query_std_color(ui_color_text));
+
+    _Theme.SetInactiveSelectionColor    ((COLORREF) m_callback->query_std_color(ui_color_selection));
+    _Theme.SetInactiveSelectionTextColor((COLORREF) m_callback->query_std_color(ui_color_text));
+
+    TreeView_SetBkColor  (_TreeView.Get(), _Theme.GetWindowColor());
+    TreeView_SetTextColor(_TreeView.Get(), _Theme.GetWindowTextColor());
+
+    ::InvalidateRect(_TreeView.Get(), nullptr, TRUE);
 }
 
 static service_factory_single_t<ui_element_impl_withpopup<dui_element_t>> _Factory;

@@ -5,8 +5,8 @@
 
 #include "CUIElement.h"
 #include "CUIColorClient.h"
+
 #include "Resources.h"
-#include "State.h"
 #include "Theme.h"
 
 #pragma hdrstop
@@ -95,22 +95,21 @@ void cui_element_t::GetColors() noexcept
 {
     cui::colours::helper Helper(GUID_UI_ELEMENT); // Use pfc::guid_null for Global
 
-    _Theme.SetColor(COLOR_WINDOW,        Helper.get_colour(cui::colours::colour_background));
-    _Theme.SetColor(COLOR_WINDOWTEXT,    Helper.get_colour(cui::colours::colour_text));
+    _Theme.SetWindowColor               (Helper.get_colour(cui::colours::colour_background));
+    _Theme.SetWindowTextColor           (Helper.get_colour(cui::colours::colour_text));
 
-    _Theme.SetColor(COLOR_HIGHLIGHT,     Helper.get_colour(cui::colours::colour_selection_background));
-    _Theme.SetColor(COLOR_HIGHLIGHTTEXT, Helper.get_colour(cui::colours::colour_selection_text));
+    _Theme.SetSelectionColor            (Helper.get_colour(cui::colours::colour_selection_background));
+    _Theme.SetSelectionTextColor        (Helper.get_colour(cui::colours::colour_selection_text));
 
-    _Theme.SetColor(COLOR_MENUHILIGHT,   Helper.get_colour(cui::colours::colour_inactive_selection_background));
-    _Theme.SetColor(COLOR_GRAYTEXT,      Helper.get_colour(cui::colours::colour_inactive_selection_text));
+    _Theme.SetInactiveSelectionColor    (Helper.get_colour(cui::colours::colour_inactive_selection_background));
+    _Theme.SetInactiveSelectionTextColor(Helper.get_colour(cui::colours::colour_inactive_selection_text));
 
-    _Theme.SetColor(COLOR_HOTLIGHT,      Helper.get_colour(cui::colours::colour_active_item_frame));
+    _Theme.SetActiveItemFrameColor      (Helper.get_colour(cui::colours::colour_active_item_frame));
 
+    TreeView_SetBkColor  (_TreeView.Get(), _Theme.GetWindowColor());
+    TreeView_SetTextColor(_TreeView.Get(), _Theme.GetWindowTextColor());
 
-    TreeView_SetBkColor(_TreeView.Get(), _Theme.GetColor(COLOR_WINDOW));
-    TreeView_SetTextColor(_TreeView.Get(), _Theme.GetColor(COLOR_WINDOWTEXT));
-
-    ::InvalidateRect(m_hWnd, nullptr, TRUE);
+    ::InvalidateRect(_TreeView.Get(), nullptr, TRUE);
 }
 
 }

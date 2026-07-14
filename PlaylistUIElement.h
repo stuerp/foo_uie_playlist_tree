@@ -118,7 +118,8 @@ private:
     void FromJSON(json object, const GUID & parentId) noexcept;
 
     void SelectPlaylist(size_t playlistIndex) const noexcept;
-    bool InitImageList() noexcept;
+
+    HRESULT InitImageList() noexcept;
 
 protected:
     playlist_tree_view_t _TreeView;

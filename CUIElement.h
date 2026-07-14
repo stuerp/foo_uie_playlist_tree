@@ -4,7 +4,6 @@
 #pragma once
 
 #include "PlaylistUIElement.h"
-#include "Theme.h"
 
 #include <ui_extension.h>
 

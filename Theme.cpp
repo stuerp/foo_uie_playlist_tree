@@ -1,5 +1,5 @@
 
-/** $VER: Theme.cpp (2026.07.10) P. Stuer **/
+/** $VER: Theme.cpp (2026.07.14) P. Stuer **/
 
 #include "pch.h"
 
@@ -32,18 +32,15 @@ void theme_t::SetColor(int index, COLORREF color) noexcept
         case COLOR_HIGHLIGHTTEXT:
             _ColorHighLightText = color;
             break;
-/*
-#4E4E4E // Selection, no focus
-#909090 // Focus Rect, No selection
 
-// Active selection
-#BBBBBB // Focus Rect
-#747474 // Back
-#FFFFFF // Fore
-// Inactive selection
-#484848 // Back
-#FFFFFF // Fore
-*/
+        case COLOR_MENUHILIGHT:
+            _ColorInactiveSelection = color;
+            break;
+
+        case COLOR_GRAYTEXT:
+            _ColorInactiveSelectionText = color;
+            break;
+
         case COLOR_HOTLIGHT:
             _ColorHotLight = color;
             break;
@@ -51,7 +48,7 @@ void theme_t::SetColor(int index, COLORREF color) noexcept
 }
 
 /// <summary>
-/// Retrieves the current color of the specified display element., taking dark mode into account (Taken from libppui)
+/// Retrieves the current color of the specified display element, taking dark mode into account (Taken from libppui)
 /// </summary>
 COLORREF theme_t::GetColor(int index) const noexcept
 {
@@ -95,5 +92,19 @@ COLORREF theme_t::GetColor(int index) const noexcept
             return ::GetSysColor(index);
     }
 }
+
+/*
+#4E4E4E // Selection, no focus
+#909090 // Focus Rect, No selection
+
+// Active selection
+#BBBBBB // Focus Rect
+#747474 // Back
+#FFFFFF // Fore
+
+// Inactive selection
+#484848 // Back
+#FFFFFF // Fore
+*/
 
 theme_t _Theme;

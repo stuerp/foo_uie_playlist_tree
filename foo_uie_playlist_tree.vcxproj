@@ -126,6 +126,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Manifest>
       <EnableSegmentHeap>true</EnableSegmentHeap>
+      <AdditionalManifestFiles>
+      </AdditionalManifestFiles>
     </Manifest>
     <ClCompile>
       <PreprocessorDefinitions>_USE_MATH_DEFINES;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -156,6 +158,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Manifest>
       <EnableSegmentHeap>true</EnableSegmentHeap>
+      <AdditionalManifestFiles>
+      </AdditionalManifestFiles>
     </Manifest>
     <ClCompile>
       <PreprocessorDefinitions>_USE_MATH_DEFINES;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -188,6 +192,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Manifest>
       <EnableSegmentHeap>true</EnableSegmentHeap>
+      <AdditionalManifestFiles>
+      </AdditionalManifestFiles>
     </Manifest>
     <ClCompile>
       <PreprocessorDefinitions>_USE_MATH_DEFINES;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -218,6 +224,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64EC'">
     <Manifest>
       <EnableSegmentHeap>true</EnableSegmentHeap>
+      <AdditionalManifestFiles>
+      </AdditionalManifestFiles>
     </Manifest>
     <ClCompile>
       <PreprocessorDefinitions>_USE_MATH_DEFINES;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -248,6 +256,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Manifest>
       <EnableSegmentHeap>true</EnableSegmentHeap>
+      <AdditionalManifestFiles>
+      </AdditionalManifestFiles>
     </Manifest>
     <ClCompile>
       <PreprocessorDefinitions>_USE_MATH_DEFINES;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -280,6 +290,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64EC'">
     <Manifest>
       <EnableSegmentHeap>true</EnableSegmentHeap>
+      <AdditionalManifestFiles>
+      </AdditionalManifestFiles>
     </Manifest>
     <ClCompile>
       <PreprocessorDefinitions>_USE_MATH_DEFINES;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>

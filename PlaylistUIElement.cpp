@@ -52,10 +52,18 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
 
         _DarkMode.AddCtrlAuto(_TreeView.Get());
 
-        if (!InitImageList())
-            return -1;
+        HRESULT hResult = ::SetWindowTheme(_TreeView.Get(), L"", L"");
+
+        if (!SUCCEEDED(hResult))
+            Log.Write(STR_COMPONENT_BASENAME " failed to disable visual styles for the tree view: 0x%08X", hResult);
+
+        hResult = InitImageList();
+
+        if (!SUCCEEDED(hResult))
+            Log.Write(STR_COMPONENT_BASENAME " failed to initialize image lists: 0x%08X", hResult);
     }
 
+    // Deserialize the state.
 //  _State._Object.clear(); // Uncomment to reset the state.
 
     FromJSON(_State._Object);
@@ -240,45 +248,62 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
             auto tvcd = (NMTVCUSTOMDRAW *) nmhd;
 
             const HWND hTreeView = tvcd->nmcd.hdr.hwndFrom;
+            const HDC hDC        = tvcd->nmcd.hdc;
 
             switch (tvcd->nmcd.dwDrawStage)
             {
                 case CDDS_PREPAINT:
                 {
-                    return CDRF_NOTIFYITEMDRAW;
+                    // Draw the control background.
+                    RECT rc;
+
+                    ::GetClientRect(hTreeView, &rc);
+
+                    HBRUSH hBrush = ::CreateSolidBrush(_Theme.GetWindowColor());
+
+                    ::FillRect(hDC, &rc, hBrush);
+
+                    ::DeleteObject(hBrush);
+
+                    return CDRF_NOTIFYITEMDRAW; // Request item-specific notifications.
                 }
 
                 case CDDS_ITEMPREPAINT:
                 {
-HTHEME hTheme = ::OpenThemeData(hTreeView, L"TreeView");
+                    const auto hItem = (HTREEITEM) tvcd->nmcd.dwItemSpec;
 
-COLORREF bk, text;
-HRESULT hr;
-
-if (hTheme)
-{
-    hr = ::GetThemeColor(hTheme, TVP_TREEITEM, TREIS_SELECTED, TMT_FILLCOLOR, &bk);
-    hr = ::GetThemeColor(hTheme, TVP_TREEITEM, TREIS_SELECTED, TMT_TEXTCOLOR, &text);
-
-    hr = S_OK;
-}
-
-/*
-TREIS_SELECTED → selected + focused
-TREIS_SELECTEDNOTFOCUS → selected + not focused (inactive selection)
-TREIS_HOT → hover
-TREIS_NORMAL → normal item
-*/
-                    if (tvcd->nmcd.uItemState & CDIS_SELECTED)
+                    const TVITEMEX tvi
                     {
-                        tvcd->clrTextBk = 0x747474; //_Theme.GetColor(COLOR_HIGHLIGHT);
-                        tvcd->clrText   = 0xFFFFFF; //_Theme.GetColor(COLOR_HIGHLIGHTTEXT);
+                        .mask       = TVIF_STATE,
+                        .hItem      = hItem,
+                        .stateMask = 0xFF,
+                    };
 
-                        Log.Write("B: %06X, F: %06X", tvcd->clrTextBk, tvcd->clrText);
+                    TreeView_GetItem(hTreeView, &tvi);
 
-                        return CDRF_NEWFONT;
+                    const auto HasFocus      = (::GetFocus() == hTreeView);
+                    const auto IsSelected    = ((tvi.state & TVIS_SELECTED) != 0);
+                    const auto IsHighlighted = ((tvi.state & TVIS_DROPHILITED) != 0);
+                    const auto IsHot         = ((tvcd->nmcd.uItemState & CDIS_HOT) != 0);
+
+                    if (IsSelected || IsHighlighted)
+                    {
+                        tvcd->clrText   = HasFocus ? _Theme.GetSelectionTextColor() : _Theme.GetInactiveSelectionTextColor();
+                        tvcd->clrTextBk = HasFocus ? _Theme.GetSelectionColor()     : _Theme.GetInactiveSelectionColor();
                     }
-                    break;
+                    else
+                    if (IsHot)
+                    {
+                        tvcd->clrText   = _Theme.GetHighlightTextColor();
+                        tvcd->clrTextBk = _Theme.GetHighlightColor();
+                    }
+                    else
+                    {
+                        tvcd->clrText   = _Theme.GetWindowTextColor();
+                        tvcd->clrTextBk = _Theme.GetWindowColor();
+                    }
+
+                    return CDRF_NEWFONT; // Tell the control we've changed colors.
                 }
             }
             break;
@@ -309,6 +334,7 @@ TREIS_NORMAL → normal item
                     {
                         .mask       = TVIF_TEXT | TVIF_IMAGE | TVIF_STATE,
                         .hItem      = hItem,
+                        .stateMask  = 0xFF,
                         .pszText    = Text,
                         .cchTextMax = _countof(Text),
                     };
@@ -695,6 +721,15 @@ TREIS_NORMAL → normal item
 
             _TreeView.BeginDrag(nmtv);
             break;
+        }
+
+        // Handles a parent item's list of child items has expanded or collapsed. Note: This is only required when using Custom Draw.
+        case TVN_ITEMEXPANDED:
+        {
+            ::InvalidateRect(_TreeView.Get(), nullptr, TRUE);
+            ::UpdateWindow(_TreeView.Get());
+
+            return TRUE;
         }
     }
 
@@ -1093,7 +1128,10 @@ void playlist_uielement_t::DropFiles(const std::vector<std::wstring> & filePaths
 /// </summary>
 void playlist_uielement_t::Refresh() noexcept
 {
-    InitImageList();
+    HRESULT hResult = InitImageList();
+
+    if (!SUCCEEDED(hResult))
+        Log.Write(STR_COMPONENT_BASENAME " failed to initialize image list: 0x%08", hResult);
 
     _TreeView.RefreshAllItems();
 }
@@ -1166,7 +1204,7 @@ std::string playlist_uielement_t::GetDefaultConfiguration() noexcept
 /// <summary>
 /// Initializes the image list.
 /// </summary>
-bool playlist_uielement_t::InitImageList() noexcept
+HRESULT playlist_uielement_t::InitImageList() noexcept
 {
     _hImageList.Reset();
 
@@ -1175,16 +1213,19 @@ bool playlist_uielement_t::InitImageList() noexcept
     _hImageList = ::ImageList_Create((int) IconSize, (int) IconSize, ILC_COLOR32 | ILC_MASK, (int) _State._Images.size(), 0);
 
     if (!_hImageList)
-        return false;
+        return HRESULT_FROM_WIN32(::GetLastError());
 
     for (const auto & Image : _State._Images)
     {
         himagelist_t hSrcImageList = image_list_factory_t::Create(Image._FilePath, IconSize);
 
+        if (!hSrcImageList)
+            return HRESULT_FROM_WIN32(::GetLastError());
+
         hicon_t hIcon = ::ImageList_GetIcon(hSrcImageList, (int) Image._IconIndex, ILD_TRANSPARENT);
 
         if (!hIcon)
-            return false;
+            return HRESULT_FROM_WIN32(::GetLastError());
 
         ::ImageList_ReplaceIcon(_hImageList, -1, hIcon);
     }
@@ -1192,7 +1233,7 @@ bool playlist_uielement_t::InitImageList() noexcept
     _TreeView.SetNormalImageList(_hImageList);
     _TreeView.SetStateImageList(_hImageList);
 
-    return true;
+    return S_OK;
 }
 
 tracker_t<playlist_uielement_t> _UIElementTracker;
