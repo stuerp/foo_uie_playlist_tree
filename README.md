@@ -11,7 +11,7 @@ It attempts to recreate the functionality of [foo_plorg](https://wiki.hydrogenau
 - Supports dark mode.
 - Supports foobar2000 2.0 and later (Intel 32-bit/64-bit and ARM64EC version).
 - Custom Title Formatting fields
-- User defined tree images
+- Configurable tree node images
 - Drag & drop from foobar2000, Explorer and other applications.
 - Supports the foobar2000 playlist recycle bin.
 

@@ -57,7 +57,7 @@ You can experiment with the component without modifying your layout by selecting
 - Supports dark mode.
 - Supports foobar2000 2.0 and later (Intel 32-bit/64-bit and ARM64EC version).
 - Custom Title Formatting fields
-- User defined tree images
+- Configurable tree node images
 - Drag & drop from foobar2000, Explorer and other applications.
 - Supports the foobar2000 playlist recycle bin.
 
@@ -183,13 +183,21 @@ Here are some examples:
 > [!Note]
 > This setting supports title formatting.
 
+### Node Image
+
+You can configure the image that is used for each node type.
+
 ### Node Type
 
 This setting determines for which node type the image will be selected.
 
+- Folder: A folder in the tree
+- Playlist: A playlist in the tree
+- Playlist (Playing): The playlist from which foobar2000 is playing audio. This can be different from the currently displayed playlist.
+
 ### File Path
 
-This setting determines which file will be used to extract node images from.
+This setting determines which file will be used to create node images. Many Windows executables (.exe) and libraries (.dll) contain icons. The component can extract those icons and create node images from them.
 
 Here are some examples:
 
