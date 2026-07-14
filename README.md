@@ -9,9 +9,9 @@ It attempts to recreate the functionality of [foo_plorg](https://wiki.hydrogenau
 
 - Supports the Default User Interface (DUI) and the [Columns User Interface](https://yuo.be/columns-ui) (CUI).
 - Supports dark mode.
-- Supports foobar2000 2.0 and later (Intel 32-bit/64-bit and ARM64EC version).
-- Custom Title Formatting fields
-- Configurable tree node images
+- Supports foobar2000 2.0 and later (Intel 32-bit/64-bit version).
+- Custom Title Formatting fields.
+- Configurable tree node images.
 - Drag & drop from foobar2000, Explorer and other applications.
 - Supports the foobar2000 playlist recycle bin.
 
@@ -77,13 +77,14 @@ To create the component first build the x86 configuration and next the x64 confi
 
 ## Change Log
 
-v1.1.0.0, 2026-xx-xx
+v1.0.0.0, 2026-07-13, *"Scratchin' the itch"*
 
-- 
+* Initial release.
 
 ## Acknowledgements / Credits
 
 - Peter Pawlowski for the [foobar2000](https://www.foobar2000.org/) audio player. ![foobar2000](https://www.foobar2000.org/button-small.png)
+- [Niels Lohmann](https://github.com/nlohmann) for [JSON for Modern C++](https://github.com/nlohmann/json).
 
 ## Links
 
