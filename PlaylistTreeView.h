@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsTreeView.h (2026.07.12) P. Stuer **/
+/** $VER: PlaylistsTreeView.h (2026.07.14) P. Stuer **/
 
 #pragma once
 
@@ -33,8 +33,8 @@ public:
     std::string GetText(const GUID id) const noexcept;
     void SetName(const GUID id, const std::string & name) const noexcept;
 
-    void AddItem(const GUID & parentId, const GUID & insertAfterId, const GUID & id, const std::string & name, bool isFolder, bool isExpanded) const noexcept;
-    void RemoveItem(const GUID id) const noexcept;
+    node_t * AddItem(const GUID & parentId, const GUID & insertAfterId, const GUID & id, const std::string & name, bool isFolder, bool isExpanded) const noexcept;
+    bool RemoveItem(const GUID & id) const noexcept;
 
     HTREEITEM FindItem(const GUID & id) const noexcept;
 

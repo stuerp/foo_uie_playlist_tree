@@ -1,5 +1,5 @@
 
-/** $VER: TreeView.h (2026.07.13) P. Stuer **/
+/** $VER: TreeView.h (2026.07.14) P. Stuer **/
 
 #pragma once
 
@@ -85,6 +85,21 @@ public:
     void DeleteAllItems() const noexcept
     {
         TreeView_DeleteAllItems(_hTreeView);
+    }
+
+    bool ExpandItem(HTREEITEM hItem) const noexcept
+    {
+        return (TreeView_Expand(_hTreeView, hItem, TVE_EXPAND) != 0);
+    }
+
+    bool CollapseItem(HTREEITEM hItem) const noexcept
+    {
+        return (TreeView_Expand(_hTreeView, hItem, TVE_COLLAPSE) != 0);
+    }
+
+    bool ToggleItem(HTREEITEM hItem) const noexcept
+    {
+        return (TreeView_Expand(_hTreeView, hItem, TVE_TOGGLE) != 0);
     }
 
     void Sort(HTREEITEM hParent = TVI_ROOT) const noexcept

@@ -722,37 +722,37 @@ void playlist_uielement_t::on_items_removed(size_t playlistIndex, const bit_arra
 /// <summary>
 /// 
 /// </summary>
-void playlist_uielement_t::on_items_selection_change(size_t playlistIndex, const bit_array & p_affected, const bit_array & p_state) noexcept
+void playlist_uielement_t::on_items_selection_change(size_t playlistIndex, const bit_array & affected, const bit_array & state) noexcept
 {}
 
 /// <summary>
 /// 
 /// </summary>
-void playlist_uielement_t::on_item_focus_change(size_t playlistIndex, size_t p_from, size_t p_to) noexcept
+void playlist_uielement_t::on_item_focus_change(size_t playlistIndex, size_t from, size_t to) noexcept
 {}
 	
 /// <summary>
 /// 
 /// </summary>
-void playlist_uielement_t::on_items_modified(size_t playlistIndex, const bit_array & p_mask) noexcept
+void playlist_uielement_t::on_items_modified(size_t playlistIndex, const bit_array & mask) noexcept
 {}
 
 /// <summary>
 /// 
 /// </summary>
-void playlist_uielement_t::on_items_modified_fromplayback(size_t playlistIndex, const bit_array & p_mask,play_control::t_display_level p_level) noexcept
+void playlist_uielement_t::on_items_modified_fromplayback(size_t playlistIndex, const bit_array & mask, play_control::t_display_level level) noexcept
 {}
 
 /// <summary>
 /// 
 /// </summary>
-void playlist_uielement_t::on_items_replaced(size_t playlistIndex, const bit_array & p_mask, const pfc::list_base_const_t<t_on_items_replaced_entry> & p_data) noexcept
+void playlist_uielement_t::on_items_replaced(size_t playlistIndex, const bit_array & mask, const pfc::list_base_const_t<t_on_items_replaced_entry> & data) noexcept
 {}
 
 /// <summary>
 /// 
 /// </summary>
-void playlist_uielement_t::on_item_ensure_visible(size_t playlistIndex, size_t p_idx) noexcept
+void playlist_uielement_t::on_item_ensure_visible(size_t playlistIndex, size_t itemIndex) noexcept
 {}
 
 /// <summary>
@@ -906,7 +906,7 @@ void playlist_uielement_t::FromJSON(json object) noexcept
 {
     FromJSON(object, { });
 
-    // Add all playlists that are missing to the root.
+    // Add all playlists that are missing in the loaded configuration to the root.
     const size_t PlaylistCount = _PlaylistManager->get_playlist_count();
 
     for (size_t PlaylistIndex = 0; PlaylistIndex < PlaylistCount; ++PlaylistIndex)

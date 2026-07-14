@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsTreeView.cpp (2026.07.12) P. Stuer **/
+/** $VER: PlaylistsTreeView.cpp (2026.07.14) P. Stuer **/
 
 #include "pch.h"
 
@@ -44,27 +44,51 @@ void playlist_tree_view_t::SetName(const GUID id, const std::string & name) cons
 /// <summary>
 /// Adds an item.
 /// </summary>
-void playlist_tree_view_t::AddItem(const GUID & parentId, const GUID & insertAfterId, const GUID & id, const std::string & name, bool isFolder, bool isExpanded) const noexcept
+node_t * playlist_tree_view_t::AddItem(const GUID & parentId, const GUID & insertAfterId, const GUID & id, const std::string & name, bool isFolder, bool isExpanded) const noexcept
 {
     auto Node = new node_t(id, name, isFolder);
 
     HTREEITEM hParent = FindItem(parentId);
+
+    if (hParent == NULL)
+        hParent = TVI_ROOT;
+
     HTREEITEM hInsertAfter = FindItem(insertAfterId);
 
-    tree_view_t::AddItem((hParent == NULL) ? TVI_ROOT : hParent, (hInsertAfter == NULL) ? TVI_LAST : hInsertAfter, isExpanded ? TVIS_EXPANDED : 0, Node);
+    if (hInsertAfter == NULL)
+        hParent = TVI_LAST;
+
+    const UINT State = isExpanded ? TVIS_EXPANDED : 0;
+
+    auto hNewItem = tree_view_t::AddItem(hParent, hInsertAfter, State, Node);
+
+    if (hNewItem == NULL)
+    {
+        delete Node;
+
+        return nullptr;
+    }
+
+    // Expand the parent.
+    tree_view_t::ExpandItem(hParent);
+
+    // Select the added item.
+    tree_view_t::SelectItem(hNewItem);
+
+    return Node;
 }
 
 /// <summary>
 /// Removes the specified item.
 /// </summary>
-void playlist_tree_view_t::RemoveItem(const GUID id) const noexcept
+bool playlist_tree_view_t::RemoveItem(const GUID & id) const noexcept
 {
     HTREEITEM hItem = FindItem(id);
 
     if (hItem == NULL)
-        return;
+        return false;
 
-    tree_view_t::RemoveItem(hItem);
+    return tree_view_t::RemoveItem(hItem);
 }
 
 /// <summary>
