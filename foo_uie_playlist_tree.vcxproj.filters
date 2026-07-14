@@ -18,6 +18,7 @@
     <ClCompile Include="Theme.cpp" />
     <ClCompile Include="CUIElement.cpp" />
     <ClCompile Include="DropTarget.cpp" />
+    <ClCompile Include="CUIColorClient.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DUIElement.h" />
@@ -40,6 +41,7 @@
     <ClInclude Include="CUIElement.h" />
     <ClInclude Include="Tracker.h" />
     <ClInclude Include="DropTarget.h" />
+    <ClInclude Include="CUIColorClient.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />

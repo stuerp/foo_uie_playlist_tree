@@ -1,9 +1,11 @@
 
-/** $VER: cuielement_t.cpp (2026.07.12) P. Stuer **/
+/** $VER: CUIElement.cpp (2026.07.14) P. Stuer **/
 
 #include "pch.h"
 
 #include "CUIElement.h"
+#include "CUIColorClient.h"
+#include "Resources.h"
 #include "State.h"
 #include "Theme.h"
 
@@ -11,20 +13,15 @@
 
 namespace uie
 {
-#pragma region cuielement_t
 
-/// <summary>
-/// Initializes a new instance.
-/// </summary>
-cuielement_t::cuielement_t()
-{
-    GetColors();
-}
+static uie::window_factory<cui_element_t> _CUIElementFactory;
+
+static cui::colours::client::factory<cui_color_client_t> _CUIColorClientFactory;
 
 /// <summary>
 /// Creates or transfers the window.
 /// </summary>
-HWND cuielement_t::create_or_transfer_window(HWND hParent, const window_host_ptr & newHost, const ui_helpers::window_position_t & position)
+HWND cui_element_t::create_or_transfer_window(HWND hParent, const window_host_ptr & newHost, const ui_helpers::window_position_t & position)
 {
     _hParent = hParent;
 
@@ -49,7 +46,12 @@ HWND cuielement_t::create_or_transfer_window(HWND hParent, const window_host_ptr
         SetWindowPos(NULL, position.x, position.y, (int) position.cx, (int) position.cy, SWP_NOZORDER);
     }
 
-    cui_color_client_t::Register(this);
+    auto Client = &_CUIColorClientFactory.get_static_instance();
+
+    if (Client != nullptr)
+        Client->_Element = this;
+
+    GetColors();
 
     return *this;
 }
@@ -57,10 +59,8 @@ HWND cuielement_t::create_or_transfer_window(HWND hParent, const window_host_ptr
 /// <summary>
 /// Destroys the window.
 /// </summary>
-void cuielement_t::destroy_window()
+void cui_element_t::destroy_window()
 {
-    cui_color_client_t::Unregister(this);
-
     ::DestroyWindow(*this);
 
     _Host.release();
@@ -69,7 +69,7 @@ void cuielement_t::destroy_window()
 /// <summary>
 /// Sets the instance configuration data.
 /// </summary>
-void cuielement_t::set_config(stream_reader * stream, size_t size, abort_callback & abortHandler)
+void cui_element_t::set_config(stream_reader * stream, size_t size, abort_callback & abortHandler)
 {
     std::vector<uint8_t> Config(size);
 
@@ -81,7 +81,7 @@ void cuielement_t::set_config(stream_reader * stream, size_t size, abort_callbac
 /// <summary>
 /// Gets the instance configuration data.
 /// </summary>
-void cuielement_t::get_config(stream_writer * stream, abort_callback & abortHandler) const
+void cui_element_t::get_config(stream_writer * stream, abort_callback & abortHandler) const
 {
     const auto Config = GetConfiguration();
 
@@ -91,35 +91,26 @@ void cuielement_t::get_config(stream_writer * stream, abort_callback & abortHand
 /// <summary>
 /// Gets the colors.
 /// </summary>
-void cuielement_t::GetColors() noexcept
+void cui_element_t::GetColors() noexcept
 {
-    cui::colours::helper Helper(pfc::guid_null);
+    cui::colours::helper Helper(GUID_UI_ELEMENT); // Use pfc::guid_null for Global
 
-    _Theme.SetColor(COLOR_WINDOW,     Helper.get_colour(cui::colours::colour_background));
-    _Theme.SetColor(COLOR_WINDOWTEXT, Helper.get_colour(cui::colours::colour_text));
-    _Theme.SetColor(COLOR_HIGHLIGHT,  Helper.get_colour(cui::colours::colour_selection_background));
-    _Theme.SetColor(COLOR_HOTLIGHT,   Helper.get_colour(cui::colours::colour_active_item_frame));
+    _Theme.SetColor(COLOR_WINDOW,        Helper.get_colour(cui::colours::colour_background));
+    _Theme.SetColor(COLOR_WINDOWTEXT,    Helper.get_colour(cui::colours::colour_text));
+
+    _Theme.SetColor(COLOR_HIGHLIGHT,     Helper.get_colour(cui::colours::colour_selection_background));
+    _Theme.SetColor(COLOR_HIGHLIGHTTEXT, Helper.get_colour(cui::colours::colour_selection_text));
+
+    _Theme.SetColor(COLOR_MENUHILIGHT,   Helper.get_colour(cui::colours::colour_inactive_selection_background));
+    _Theme.SetColor(COLOR_GRAYTEXT,      Helper.get_colour(cui::colours::colour_inactive_selection_text));
+
+    _Theme.SetColor(COLOR_HOTLIGHT,      Helper.get_colour(cui::colours::colour_active_item_frame));
+
+
+    TreeView_SetBkColor(_TreeView.Get(), _Theme.GetColor(COLOR_WINDOW));
+    TreeView_SetTextColor(_TreeView.Get(), _Theme.GetColor(COLOR_WINDOWTEXT));
+
+    ::InvalidateRect(m_hWnd, nullptr, TRUE);
 }
 
-static uie::window_factory<cuielement_t> _CUIElementFactory;
-
-#pragma endregion
-
-#pragma region cui_color_client_t
-
-void cui_color_client_t::on_colour_changed(uint32_t changed_items_mask) const
-{
-    for (auto Iter : _Elements)
-        Iter->OnColorsChanged();
-}
-
-void cui_color_client_t::on_bool_changed(uint32_t changed_items_mask) const
-{
-    for (auto Iter : _Elements)
-        Iter->OnColorsChanged();
-}
-
-static cui::colours::client::factory<cui_color_client_t> _CUIColorClientFactory;
-
-#pragma endregion
 }

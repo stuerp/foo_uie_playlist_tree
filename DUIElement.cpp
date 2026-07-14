@@ -16,7 +16,7 @@
 /// <summary>
 /// Initializes a new instance.
 /// </summary>
-duielement_t::duielement_t(ui_element_config::ptr data, ui_element_instance_callback::ptr callback) : m_callback(callback)
+dui_element_t::dui_element_t(ui_element_config::ptr data, ui_element_instance_callback::ptr callback) : m_callback(callback)
 {
     set_configuration(data);
 
@@ -26,7 +26,7 @@ duielement_t::duielement_t(ui_element_config::ptr data, ui_element_instance_call
 /// <summary>
 /// Retrieves the name of the element.
 /// </summary>
-void duielement_t::g_get_name(pfc::string_base & name)
+void dui_element_t::g_get_name(pfc::string_base & name)
 {
     name = STR_COMPONENT_NAME;
 }
@@ -34,7 +34,7 @@ void duielement_t::g_get_name(pfc::string_base & name)
 /// <summary>
 /// Retrieves the description of the element.
 /// </summary>
-const char * duielement_t::g_get_description()
+const char * dui_element_t::g_get_description()
 {
     return STR_COMPONENT_DESCRIPTION;
 }
@@ -42,7 +42,7 @@ const char * duielement_t::g_get_description()
 /// <summary>
 /// Retrieves the GUID of the element.
 /// </summary>
-GUID duielement_t::g_get_guid()
+GUID dui_element_t::g_get_guid()
 {
     return uielement_t::GetGUID();
 }
@@ -50,7 +50,7 @@ GUID duielement_t::g_get_guid()
 /// <summary>
 /// Retrieves the subclass GUID of the element.
 /// </summary>
-GUID duielement_t::g_get_subclass()
+GUID dui_element_t::g_get_subclass()
 {
     return ui_element_subclass_utility;
 }
@@ -58,7 +58,7 @@ GUID duielement_t::g_get_subclass()
 /// <summary>
 /// Retrieves the default configuration of the element.
 /// </summary>
-ui_element_config::ptr duielement_t::g_get_default_configuration()
+ui_element_config::ptr dui_element_t::g_get_default_configuration()
 {
     const auto Config = GetDefaultConfiguration();
 
@@ -68,7 +68,7 @@ ui_element_config::ptr duielement_t::g_get_default_configuration()
 /// <summary>
 /// Initializes the element's windows.
 /// </summary>
-void duielement_t::initialize_window(HWND hWndParent)
+void dui_element_t::initialize_window(HWND hWndParent)
 {
     const DWORD Style = 0;
     const DWORD ExStyle = 0;
@@ -79,7 +79,7 @@ void duielement_t::initialize_window(HWND hWndParent)
 /// <summary>
 /// Sets the instance configuration data.
 /// </summary>
-void duielement_t::set_configuration(ui_element_config::ptr data)
+void dui_element_t::set_configuration(ui_element_config::ptr data)
 {
     ui_element_config_parser Parser(data);
 
@@ -89,7 +89,7 @@ void duielement_t::set_configuration(ui_element_config::ptr data)
 /// <summary>
 /// Gets the instance configuration data.
 /// </summary>
-ui_element_config::ptr duielement_t::get_configuration()
+ui_element_config::ptr dui_element_t::get_configuration()
 {
     const auto Config = GetConfiguration();
 
@@ -101,7 +101,7 @@ ui_element_config::ptr duielement_t::get_configuration()
 /// See ui_element_notify_* GUIDs for possible "what" parameter; meaning of other parameters depends on the "what" value.
 /// Container classes should dispatch all notifications to their children.
 /// </summary>
-void duielement_t::notify(const GUID & what, t_size param1, const void * param2, t_size param2Size)
+void dui_element_t::notify(const GUID & what, t_size param1, const void * param2, t_size param2Size)
 {
     if (what == ui_element_notify_colors_changed)
         OnColorsChanged();
@@ -110,7 +110,7 @@ void duielement_t::notify(const GUID & what, t_size param1, const void * param2,
 /// <summary>
 /// Gets the colors.
 /// </summary>
-void duielement_t::GetColors() noexcept
+void dui_element_t::GetColors() noexcept
 {
     _Theme.SetColor(COLOR_WINDOW,     (COLORREF) m_callback->query_std_color(ui_color_background));
     _Theme.SetColor(COLOR_WINDOWTEXT, (COLORREF) m_callback->query_std_color(ui_color_text));
@@ -118,6 +118,6 @@ void duielement_t::GetColors() noexcept
     _Theme.SetColor(COLOR_HOTLIGHT,   (COLORREF) m_callback->query_std_color(ui_color_highlight));
 }
 
-static service_factory_single_t<ui_element_impl_withpopup<duielement_t>> _Factory;
+static service_factory_single_t<ui_element_impl_withpopup<dui_element_t>> _Factory;
 
 #pragma endregion

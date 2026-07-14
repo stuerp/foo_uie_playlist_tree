@@ -310,6 +310,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CUIColorClient.cpp" />
     <ClCompile Include="CUIElement.cpp" />
     <ClCompile Include="DropTarget.cpp" />
     <ClCompile Include="FolderManager.cpp" />
@@ -336,6 +337,7 @@
     <ClCompile Include="UIElement.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CUIColorClient.h" />
     <ClInclude Include="CUIElement.h" />
     <ClInclude Include="DropTarget.h" />
     <ClInclude Include="EditSubclass.h" />

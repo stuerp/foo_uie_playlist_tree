@@ -31,10 +31,16 @@ public:
 private:
     bool _DarkMode;
 
-    COLORREF _ColorWindow       = 0x202020;
-    COLORREF _ColorWindowText   = 0xC0C0C0;
-    COLORREF _ColorHighLight    = ::GetSysColor(COLOR_HOTLIGHT); //0x777777;
-    COLORREF _ColorHotLight     = 0xD69C56;
+    COLORREF _ColorWindow        = 0x202020;
+    COLORREF _ColorWindowText    = 0xC0C0C0;
+
+    COLORREF _ColorSelection     = 0x747474;
+    COLORREF _ColorSelectionText = 0xFFFFFF;
+
+    COLORREF _ColorHighLight     = 0x747474;
+    COLORREF _ColorHighLightText = 0xFFFFFF;
+
+    COLORREF _ColorHotLight      = 0xD69C56;
 };
 
 extern theme_t _Theme;

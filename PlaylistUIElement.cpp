@@ -235,81 +235,56 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
 
     switch (nmhd->code)
     {
-        // Handles a right mouse button click within the control.
-        case NM_RCLICK:
+        case NM_CUSTOMDRAW:
         {
-            const DWORD Position = ::GetMessagePos();
+            auto tvcd = (NMTVCUSTOMDRAW *) nmhd;
 
-            const POINT pt = { GET_X_LPARAM(Position), GET_Y_LPARAM(Position) };
+            const HWND hTreeView = tvcd->nmcd.hdr.hwndFrom;
 
+            switch (tvcd->nmcd.dwDrawStage)
             {
-                // Remember the item we're hovering over, if any.
-                _hPopupItem = _TreeView.GetItem(pt);
-
-                // Uncomment if the item pointed to should become the selected item.
-                //if (hTreeItem != NULL)
-                //    _TreeView.SelectItem(hTreeItem);
-            }
-
-            {
-                const HMENU hMenu = ::LoadMenuW(THIS_HINSTANCE, MAKEINTRESOURCE(IDM_CONTEXT_MENU));
-
-                if (hMenu == NULL)
-                    break;
-
-                const HMENU hPopup = ::GetSubMenu(hMenu, 0);
-
-                if (hPopup != NULL)
+                case CDDS_PREPAINT:
                 {
-                    const UINT State = (_hPopupItem != NULL) ? MF_ENABLED : MF_DISABLED | MF_GRAYED;
-
-                    ::EnableMenuItem(hPopup, IDM_RENAME, State);
-                    ::EnableMenuItem(hPopup, IDM_REMOVE, State);
-
-                    // Create and append the Restore submenu.
-                    const size_t RecycleCount = _PlaylistManager->recycler_get_count();
-
-                    if (RecycleCount != 0)
-                    {
-                        HMENU hRestore = ::CreatePopupMenu();
-
-                        for (size_t Index = 0; Index < RecycleCount; ++Index)
-                        {
-                            pfc::string Name;
-
-                            _PlaylistManager->recycler_get_name(Index, Name);
-
-                            ::AppendMenuW(hRestore, MF_STRING, IDM_HISTORY + Index, msc::UTF8ToWide(Name.c_str()).c_str());
-                        }
-
-                        ::AppendMenuW(hRestore, MF_SEPARATOR, 0, NULL);
-                        ::AppendMenuW(hRestore, MF_STRING, IDM_CLEAR_HISTORY, L"Clear history");
-
-                        // Append the Restore menu to the popup menu.
-                        ::AppendMenuW(hPopup, MF_SEPARATOR, 0, NULL);
-
-                        MENUITEMINFOW mii =
-                        {
-                            .cbSize     = sizeof(mii),
-                            .fMask      = MIIM_STRING | MIIM_SUBMENU,
-                            .hSubMenu   = hRestore,
-                            .dwTypeData = (LPWSTR) L"Restore",
-                        };
-
-                        ::InsertMenuItemW(hPopup, (UINT) ::GetMenuItemCount(hPopup), TRUE, &mii);
-                    }
-
-                    ::TrackPopupMenu(hPopup, TPM_RIGHTBUTTON, pt.x, pt.y, 0, m_hWnd, nullptr);
-
-                    ::PostMessageW(m_hWnd, WM_NULL, 0, 0);
+                    return CDRF_NOTIFYITEMDRAW;
                 }
 
-                ::DestroyMenu(hMenu);
+                case CDDS_ITEMPREPAINT:
+                {
+HTHEME hTheme = ::OpenThemeData(hTreeView, L"TreeView");
+
+COLORREF bk, text;
+HRESULT hr;
+
+if (hTheme)
+{
+    hr = ::GetThemeColor(hTheme, TVP_TREEITEM, TREIS_SELECTED, TMT_FILLCOLOR, &bk);
+    hr = ::GetThemeColor(hTheme, TVP_TREEITEM, TREIS_SELECTED, TMT_TEXTCOLOR, &text);
+
+    hr = S_OK;
+}
+
+/*
+TREIS_SELECTED → selected + focused
+TREIS_SELECTEDNOTFOCUS → selected + not focused (inactive selection)
+TREIS_HOT → hover
+TREIS_NORMAL → normal item
+*/
+                    if (tvcd->nmcd.uItemState & CDIS_SELECTED)
+                    {
+                        tvcd->clrTextBk = 0x747474; //_Theme.GetColor(COLOR_HIGHLIGHT);
+                        tvcd->clrText   = 0xFFFFFF; //_Theme.GetColor(COLOR_HIGHLIGHTTEXT);
+
+                        Log.Write("B: %06X, F: %06X", tvcd->clrTextBk, tvcd->clrText);
+
+                        return CDRF_NEWFONT;
+                    }
+                    break;
+                }
             }
             break;
         }
 
-#ifdef CustomDraw
+#ifdef FullCustomDraw
         case NM_CUSTOMDRAW:
         {
             auto tvcd = (const NMTVCUSTOMDRAW *) nmhd;
@@ -458,6 +433,72 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
             break;
         }
 #endif
+        // Handles a right mouse button click within the control.
+        case NM_RCLICK:
+        {
+            const DWORD Position = ::GetMessagePos();
+
+            const POINT pt = { GET_X_LPARAM(Position), GET_Y_LPARAM(Position) };
+
+            // Remember the item we're hovering over, if any.
+            _hPopupItem = _TreeView.GetItem(pt);
+
+            const HMENU hMenu = ::LoadMenuW(THIS_HINSTANCE, MAKEINTRESOURCE(IDM_CONTEXT_MENU));
+
+            if (hMenu == NULL)
+                break;
+
+            const HMENU hPopup = ::GetSubMenu(hMenu, 0);
+
+            if (hPopup != NULL)
+            {
+                const UINT State = (_hPopupItem != NULL) ? MF_ENABLED : MF_DISABLED | MF_GRAYED;
+
+                ::EnableMenuItem(hPopup, IDM_RENAME, State);
+                ::EnableMenuItem(hPopup, IDM_REMOVE, State);
+
+                // Create and append the Restore submenu.
+                const size_t RecycleCount = _PlaylistManager->recycler_get_count();
+
+                if (RecycleCount != 0)
+                {
+                    HMENU hRestore = ::CreatePopupMenu();
+
+                    for (size_t Index = 0; Index < RecycleCount; ++Index)
+                    {
+                        pfc::string Name;
+
+                        _PlaylistManager->recycler_get_name(Index, Name);
+
+                        ::AppendMenuW(hRestore, MF_STRING, IDM_HISTORY + Index, msc::UTF8ToWide(Name.c_str()).c_str());
+                    }
+
+                    ::AppendMenuW(hRestore, MF_SEPARATOR, 0, NULL);
+                    ::AppendMenuW(hRestore, MF_STRING, IDM_CLEAR_HISTORY, L"Clear history");
+
+                    // Append the Restore menu to the popup menu.
+                    ::AppendMenuW(hPopup, MF_SEPARATOR, 0, NULL);
+
+                    MENUITEMINFOW mii =
+                    {
+                        .cbSize     = sizeof(mii),
+                        .fMask      = MIIM_STRING | MIIM_SUBMENU,
+                        .hSubMenu   = hRestore,
+                        .dwTypeData = (LPWSTR) L"Restore",
+                    };
+
+                    ::InsertMenuItemW(hPopup, (UINT) ::GetMenuItemCount(hPopup), TRUE, &mii);
+                }
+
+                ::TrackPopupMenu(hPopup, TPM_RIGHTBUTTON, pt.x, pt.y, 0, m_hWnd, nullptr);
+
+                ::PostMessageW(m_hWnd, WM_NULL, 0, 0);
+            }
+
+            ::DestroyMenu(hMenu);
+            break;
+        }
+
         // Handles a need for display or sort info.
         case TVN_GETDISPINFO:
         {

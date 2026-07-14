@@ -29,6 +29,21 @@ void theme_t::SetColor(int index, COLORREF color) noexcept
             _ColorHighLight = color;
             break;
 
+        case COLOR_HIGHLIGHTTEXT:
+            _ColorHighLightText = color;
+            break;
+/*
+#4E4E4E // Selection, no focus
+#909090 // Focus Rect, No selection
+
+// Active selection
+#BBBBBB // Focus Rect
+#747474 // Back
+#FFFFFF // Fore
+// Inactive selection
+#484848 // Back
+#FFFFFF // Fore
+*/
         case COLOR_HOTLIGHT:
             _ColorHotLight = color;
             break;
