@@ -121,6 +121,21 @@ void dui_element_t::GetColors() noexcept
     _Theme.SetInactiveSelectionColor    ((COLORREF) m_callback->query_std_color(ui_color_selection));
     _Theme.SetInactiveSelectionTextColor((COLORREF) m_callback->query_std_color(ui_color_text));
 
+    _Theme.SetHighlightColor            ((COLORREF) m_callback->query_std_color(ui_color_highlight));
+    _Theme.SetHighlightTextColor        ((COLORREF) m_callback->query_std_color(ui_color_text));
+/*
+    _Theme.SetWindowColor               ((COLORREF) _DarkMode ? m_callback->query_std_color(ui_color_background): ::GetSysColor(COLOR_WINDOW));
+    _Theme.SetWindowTextColor           ((COLORREF) _DarkMode ? m_callback->query_std_color(ui_color_text)      : ::GetSysColor(COLOR_WINDOWTEXT));
+
+    _Theme.SetSelectionColor            ((COLORREF) _DarkMode ? m_callback->query_std_color(ui_color_selection) : ::GetSysColor(COLOR_HIGHLIGHT));
+    _Theme.SetSelectionTextColor        ((COLORREF) _DarkMode ? m_callback->query_std_color(ui_color_text)      : ::GetSysColor(COLOR_HIGHLIGHTTEXT));
+
+    _Theme.SetInactiveSelectionColor    ((COLORREF) _DarkMode ? m_callback->query_std_color(ui_color_selection) : ::GetSysColor(COLOR_BTNFACE));
+    _Theme.SetInactiveSelectionTextColor((COLORREF) _DarkMode ? m_callback->query_std_color(ui_color_text)      : ::GetSysColor(COLOR_BTNTEXT));
+
+    _Theme.SetHighlightColor            ((COLORREF) _DarkMode ? m_callback->query_std_color(ui_color_highlight) : ::GetSysColor(COLOR_HIGHLIGHT));
+    _Theme.SetHighlightTextColor        ((COLORREF) _DarkMode ? m_callback->query_std_color(ui_color_text)      : ::GetSysColor(COLOR_HIGHLIGHTTEXT));
+*/
     TreeView_SetBkColor  (_TreeView.Get(), _Theme.GetWindowColor());
     TreeView_SetTextColor(_TreeView.Get(), _Theme.GetWindowTextColor());
 

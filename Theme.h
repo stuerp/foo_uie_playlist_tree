@@ -10,8 +10,6 @@
 #include <SDKDDKVer.h>
 #include <Windows.h>
 
-#include <map>
-
 class theme_t
 {
 public:
