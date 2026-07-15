@@ -8,17 +8,17 @@
 /// <summary>
 /// Implements a Default UI element.
 /// </summary>
-class duielement_t : public playlist_uielement_t, public ui_element_instance
+class dui_element_t : public playlist_uielement_t, public ui_element_instance
 {
 public:
-    duielement_t(ui_element_config::ptr data, ui_element_instance_callback::ptr callback);
+    dui_element_t(ui_element_config::ptr data, ui_element_instance_callback::ptr callback);
 
-    duielement_t(const duielement_t &) = delete;
-    duielement_t & operator=(const duielement_t &) = delete;
-    duielement_t(duielement_t &&) = delete;
-    duielement_t & operator=(duielement_t &&) = delete;
+    dui_element_t(const dui_element_t &) = delete;
+    dui_element_t & operator=(const dui_element_t &) = delete;
+    dui_element_t(dui_element_t &&) = delete;
+    dui_element_t & operator=(dui_element_t &&) = delete;
 
-    virtual ~duielement_t() { };
+    virtual ~dui_element_t() { };
 
     #pragma region ui_element_instance
 

@@ -38,7 +38,7 @@ To build the code you need:
 - [Microsoft Visual Studio 2026 Community Edition](https://visualstudio.microsoft.com/downloads/) or later
 - [foobar2000 SDK](https://www.foobar2000.org/SDK) 2025-03-07
 - [Windows Template Library (WTL)](https://github.com/Win32-WTL/WTL) 10.0.10320
-- [Columns UI SDK](https://yuo.be/columns-ui-sdk) 8.0.0
+- [Columns UI SDK](https://yuo.be/columns-ui-sdk) 8.1.0
 
 To create the deployment package you need:
 
@@ -77,9 +77,13 @@ To create the component first build the x86 configuration and next the x64 confi
 
 ## Change Log
 
-v1.0.0.0, 2026-07-13, *"Scratchin' the itch"*
+v1.1.0.0, 2026-07-15
 
-* Initial release.
+* New: [User Guide](https://github.com/stuerp/foo_uie_playlist_tree/blob/main/docs/README.md).
+* New: **Load playlist**, **Save playlist** and **Save all playlists** commands.
+* New: ARM64EC version.
+* Improved: Usability
+* Improved: DUI and CUI rendering.
 
 ## Acknowledgements / Credits
 

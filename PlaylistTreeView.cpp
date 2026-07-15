@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsTreeView.cpp (2026.07.12) P. Stuer **/
+/** $VER: PlaylistsTreeView.cpp (2026.07.14) P. Stuer **/
 
 #include "pch.h"
 
@@ -11,60 +11,86 @@
 /// <summary>
 /// Gets the text of the specified item.
 /// </summary>
-std::string playlist_tree_view_t::GetText(const GUID id) const noexcept
+bool playlist_tree_view_t::GetText(const GUID & id, std::string & text) const noexcept
 {
     HTREEITEM hItem = FindItem(id);
 
     if (hItem == NULL)
-        return { };
+        return false;
 
-    return tree_view_t::GetText(hItem);
+    return tree_view_t::GetText(hItem, text);
 }
 
 /// <summary>
-/// Sets the text of the specified item.
+/// Sets the name of the specified item.
 /// </summary>
-void playlist_tree_view_t::SetName(const GUID id, const std::string & name) const noexcept
+bool playlist_tree_view_t::SetName(const GUID & id, const std::string & name) const noexcept
 {
     HTREEITEM hItem = FindItem(id);
 
     if (hItem == NULL)
-        return;
+        return false;
 
     auto Node = (node_t *) GetData(hItem);
 
     if (Node == nullptr)
-        return;
+        return false;
 
     Node->Name = name;
 
     RedrawItem(hItem);
+
+    return true;
 }
 
 /// <summary>
 /// Adds an item.
 /// </summary>
-void playlist_tree_view_t::AddItem(const GUID & parentId, const GUID & insertAfterId, const GUID & id, const std::string & name, bool isFolder, bool isExpanded) const noexcept
+node_t * playlist_tree_view_t::AddItem(const GUID & parentId, const GUID & insertAfterId, const GUID & id, const std::string & name, bool isFolder, bool isExpanded) const noexcept
 {
     auto Node = new node_t(id, name, isFolder);
 
     HTREEITEM hParent = FindItem(parentId);
+
+    if (hParent == NULL)
+        hParent = TVI_ROOT;
+
     HTREEITEM hInsertAfter = FindItem(insertAfterId);
 
-    tree_view_t::AddItem((hParent == NULL) ? TVI_ROOT : hParent, (hInsertAfter == NULL) ? TVI_LAST : hInsertAfter, isExpanded ? TVIS_EXPANDED : 0, Node);
+    if (hInsertAfter == NULL)
+        hInsertAfter = TVI_LAST;
+
+    const UINT State = isExpanded ? TVIS_EXPANDED : 0;
+
+    auto hNewItem = tree_view_t::AddItem(hParent, hInsertAfter, State, Node);
+
+    if (hNewItem == NULL)
+    {
+        delete Node;
+
+        return nullptr;
+    }
+
+    // Expand the parent.
+    tree_view_t::ExpandItem(hParent);
+
+    // Select the added item.
+    tree_view_t::SelectItem(hNewItem);
+
+    return Node;
 }
 
 /// <summary>
 /// Removes the specified item.
 /// </summary>
-void playlist_tree_view_t::RemoveItem(const GUID id) const noexcept
+bool playlist_tree_view_t::RemoveItem(const GUID & id) const noexcept
 {
     HTREEITEM hItem = FindItem(id);
 
     if (hItem == NULL)
-        return;
+        return false;
 
-    tree_view_t::RemoveItem(hItem);
+    return tree_view_t::RemoveItem(hItem);
 }
 
 /// <summary>
@@ -129,7 +155,10 @@ bool playlist_tree_view_t::IsExpanded(const GUID & id) const noexcept
     if (hItem == NULL)
         return false;
 
-    auto State = GetState(hItem);
+    UINT State = 0;
+
+    if (!GetState(hItem, State))
+        return false;
 
     return ((State & TVIS_EXPANDED) == TVIS_EXPANDED);
 }

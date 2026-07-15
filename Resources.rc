@@ -1,5 +1,5 @@
 
-/** $VER: Resources.rc (2026.07.13) P. Stuer **/
+/** $VER: Resources.rc (2026.07.15) P. Stuer **/
 
 #include "Resources.h"
 
@@ -50,18 +50,24 @@ IDM_CONTEXT_MENU menu
     {
         popup "New"
         {
-            menuitem "Folder",      IDM_NEW_FOLDER
-            menuitem "Playlist",    IDM_NEW_PLAYLIST
+            menuitem "Folder",              IDM_NEW_FOLDER
+            menuitem "Playlist",            IDM_NEW_PLAYLIST
         }
 
         menuitem separator
 
-        menuitem "Rename\tF2",      IDM_RENAME
-        menuitem "Remove\tDel",     IDM_REMOVE
-        menuitem "Sort",            IDM_SORT
+        menuitem "Rename\tF2",              IDM_RENAME
+        menuitem "Remove\tDel",             IDM_REMOVE
+        menuitem "Sort",                    IDM_SORT
+
+        menuitem separator
+
+        menuitem "Save all playlists...",   IDM_SAVE_ALL
+        menuitem "Save playlist...",        IDM_SAVE
+        menuitem "Load playlist...",        IDM_LOAD
 /*
         menuitem separator
-        menuitem "Contents",        IDM_CONTENTS, grayed
+        menuitem "Contents",                IDM_CONTENTS, grayed
 */
     }
 }

@@ -112,11 +112,17 @@ Allows you to restore a playlist that has been removed during the current sessio
 
 You can reorder the items of the tree using drag and drop.
 
-To add an item to a folder drop it on its item.
+When dropping a folder or playlist node think about how the drop target is divided into three zones:
 
-Dropping an item on the top part of an item inserts it before that item.
+- A top zone that occupies the top quarter of a node
+- A bottom zone that occupies the bottom quarter of a node
+- A center zone that is double as high as the top or the bottom zone.
 
-Dropping an item on the bottom part of an item insert it after that item.
+Drop an item (folder or playlist) on the center zone of a folder to add it to that folder. Dropping an item on a playlist is ignored.
+
+Drop an item (folder or playlist) on the top zone of an item to insert it before that item.
+
+Drop an item (folder or playlist) on the bottom zone of an item to insert it after that item.
 
 ### From foobar2000
 
@@ -124,7 +130,7 @@ You can drag items from any playlist or from the media library.
 
 When you drop one or more tracks on a playlist item the tracks get added to the playlist.
 
-Drop one or more tracks on a folder or anywhere on the panel and a new playlist gets created with those tracks.
+Drop one or more tracks on a folder item or anywhere on the panel and a new playlist gets created with the dragged tracks.
 
 ### From other applications
 

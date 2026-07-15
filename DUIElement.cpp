@@ -1,5 +1,5 @@
 
-/** $VER: DUIElement.cpp (2026.07.12) P. Stuer - Implements Default User Interface support **/
+/** $VER: DUIElement.cpp (2026.07.15) P. Stuer - Implements Default User Interface support **/
 
 #include "pch.h"
 
@@ -11,22 +11,24 @@
 
 #pragma hdrstop
 
-#pragma region ui_element_instance interface
-
 /// <summary>
 /// Initializes a new instance.
 /// </summary>
-duielement_t::duielement_t(ui_element_config::ptr data, ui_element_instance_callback::ptr callback) : m_callback(callback)
+dui_element_t::dui_element_t(ui_element_config::ptr data, ui_element_instance_callback::ptr callback) : m_callback(callback)
 {
+    _IsDUI = true;
+
     set_configuration(data);
 
     GetColors();
 }
 
+#pragma region ui_element_instance interface
+
 /// <summary>
 /// Retrieves the name of the element.
 /// </summary>
-void duielement_t::g_get_name(pfc::string_base & name)
+void dui_element_t::g_get_name(pfc::string_base & name)
 {
     name = STR_COMPONENT_NAME;
 }
@@ -34,7 +36,7 @@ void duielement_t::g_get_name(pfc::string_base & name)
 /// <summary>
 /// Retrieves the description of the element.
 /// </summary>
-const char * duielement_t::g_get_description()
+const char * dui_element_t::g_get_description()
 {
     return STR_COMPONENT_DESCRIPTION;
 }
@@ -42,7 +44,7 @@ const char * duielement_t::g_get_description()
 /// <summary>
 /// Retrieves the GUID of the element.
 /// </summary>
-GUID duielement_t::g_get_guid()
+GUID dui_element_t::g_get_guid()
 {
     return uielement_t::GetGUID();
 }
@@ -50,7 +52,7 @@ GUID duielement_t::g_get_guid()
 /// <summary>
 /// Retrieves the subclass GUID of the element.
 /// </summary>
-GUID duielement_t::g_get_subclass()
+GUID dui_element_t::g_get_subclass()
 {
     return ui_element_subclass_utility;
 }
@@ -58,7 +60,7 @@ GUID duielement_t::g_get_subclass()
 /// <summary>
 /// Retrieves the default configuration of the element.
 /// </summary>
-ui_element_config::ptr duielement_t::g_get_default_configuration()
+ui_element_config::ptr dui_element_t::g_get_default_configuration()
 {
     const auto Config = GetDefaultConfiguration();
 
@@ -68,7 +70,7 @@ ui_element_config::ptr duielement_t::g_get_default_configuration()
 /// <summary>
 /// Initializes the element's windows.
 /// </summary>
-void duielement_t::initialize_window(HWND hWndParent)
+void dui_element_t::initialize_window(HWND hWndParent)
 {
     const DWORD Style = 0;
     const DWORD ExStyle = 0;
@@ -79,7 +81,7 @@ void duielement_t::initialize_window(HWND hWndParent)
 /// <summary>
 /// Sets the instance configuration data.
 /// </summary>
-void duielement_t::set_configuration(ui_element_config::ptr data)
+void dui_element_t::set_configuration(ui_element_config::ptr data)
 {
     ui_element_config_parser Parser(data);
 
@@ -89,7 +91,7 @@ void duielement_t::set_configuration(ui_element_config::ptr data)
 /// <summary>
 /// Gets the instance configuration data.
 /// </summary>
-ui_element_config::ptr duielement_t::get_configuration()
+ui_element_config::ptr dui_element_t::get_configuration()
 {
     const auto Config = GetConfiguration();
 
@@ -101,7 +103,7 @@ ui_element_config::ptr duielement_t::get_configuration()
 /// See ui_element_notify_* GUIDs for possible "what" parameter; meaning of other parameters depends on the "what" value.
 /// Container classes should dispatch all notifications to their children.
 /// </summary>
-void duielement_t::notify(const GUID & what, t_size param1, const void * param2, t_size param2Size)
+void dui_element_t::notify(const GUID & what, t_size param1, const void * param2, t_size param2Size)
 {
     if (what == ui_element_notify_colors_changed)
         OnColorsChanged();
@@ -110,14 +112,38 @@ void duielement_t::notify(const GUID & what, t_size param1, const void * param2,
 /// <summary>
 /// Gets the colors.
 /// </summary>
-void duielement_t::GetColors() noexcept
+void dui_element_t::GetColors() noexcept
 {
-    _Theme.SetColor(COLOR_WINDOW,     (COLORREF) m_callback->query_std_color(ui_color_background));
-    _Theme.SetColor(COLOR_WINDOWTEXT, (COLORREF) m_callback->query_std_color(ui_color_text));
-    _Theme.SetColor(COLOR_HIGHLIGHT,  (COLORREF) m_callback->query_std_color(ui_color_selection));
-    _Theme.SetColor(COLOR_HOTLIGHT,   (COLORREF) m_callback->query_std_color(ui_color_highlight));
+    _Theme.SetWindowColor               ((COLORREF) m_callback->query_std_color(ui_color_background));
+    _Theme.SetWindowTextColor           ((COLORREF) m_callback->query_std_color(ui_color_text));
+
+    _Theme.SetSelectionColor            ((COLORREF) m_callback->query_std_color(ui_color_selection));
+    _Theme.SetSelectionTextColor        ((COLORREF) m_callback->query_std_color(ui_color_text));
+
+    _Theme.SetInactiveSelectionColor    ((COLORREF) m_callback->query_std_color(ui_color_selection));
+    _Theme.SetInactiveSelectionTextColor((COLORREF) m_callback->query_std_color(ui_color_text));
+
+    _Theme.SetHighlightColor            ((COLORREF) m_callback->query_std_color(ui_color_highlight));
+    _Theme.SetHighlightTextColor        ((COLORREF) m_callback->query_std_color(ui_color_text));
+/*
+    _Theme.SetWindowColor               ((COLORREF) _DarkMode ? m_callback->query_std_color(ui_color_background): ::GetSysColor(COLOR_WINDOW));
+    _Theme.SetWindowTextColor           ((COLORREF) _DarkMode ? m_callback->query_std_color(ui_color_text)      : ::GetSysColor(COLOR_WINDOWTEXT));
+
+    _Theme.SetSelectionColor            ((COLORREF) _DarkMode ? m_callback->query_std_color(ui_color_selection) : ::GetSysColor(COLOR_HIGHLIGHT));
+    _Theme.SetSelectionTextColor        ((COLORREF) _DarkMode ? m_callback->query_std_color(ui_color_text)      : ::GetSysColor(COLOR_HIGHLIGHTTEXT));
+
+    _Theme.SetInactiveSelectionColor    ((COLORREF) _DarkMode ? m_callback->query_std_color(ui_color_selection) : ::GetSysColor(COLOR_BTNFACE));
+    _Theme.SetInactiveSelectionTextColor((COLORREF) _DarkMode ? m_callback->query_std_color(ui_color_text)      : ::GetSysColor(COLOR_BTNTEXT));
+
+    _Theme.SetHighlightColor            ((COLORREF) _DarkMode ? m_callback->query_std_color(ui_color_highlight) : ::GetSysColor(COLOR_HIGHLIGHT));
+    _Theme.SetHighlightTextColor        ((COLORREF) _DarkMode ? m_callback->query_std_color(ui_color_text)      : ::GetSysColor(COLOR_HIGHLIGHTTEXT));
+*/
+    TreeView_SetBkColor  (_TreeView.Get(), _Theme.GetWindowColor());
+    TreeView_SetTextColor(_TreeView.Get(), _Theme.GetWindowTextColor());
+
+    ::InvalidateRect(_TreeView.Get(), nullptr, TRUE);
 }
 
-static service_factory_single_t<ui_element_impl_withpopup<duielement_t>> _Factory;
+static service_factory_single_t<ui_element_impl_withpopup<dui_element_t>> _Factory;
 
 #pragma endregion

@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.cpp (2026.07.13) P. Stuer **/
+/** $VER: PlaylistsUIElement.cpp (2026.07.15) P. Stuer **/
 
 #include "pch.h"
 
@@ -51,11 +51,24 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
             return -1;
 
         _DarkMode.AddCtrlAuto(_TreeView.Get());
+/*
+        if (!_IsDUI)
+        {
+            HRESULT hResult = ::SetWindowTheme(_TreeView.Get(), L"", L"");
 
-        if (!InitImageList())
-            return -1;
+            if (!SUCCEEDED(hResult))
+                Log.Write(STR_COMPONENT_BASENAME " failed to disable visual styles for the tree view: 0x%08X", hResult);
+        }
+*/
+        {
+            HRESULT hResult = InitImageList();
+
+            if (!SUCCEEDED(hResult))
+                Log.Write(STR_COMPONENT_BASENAME " failed to initialize image lists: 0x%08X", hResult);
+        }
     }
 
+    // Deserialize the state.
 //  _State._Object.clear(); // Uncomment to reset the state.
 
     FromJSON(_State._Object);
@@ -148,7 +161,7 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
             _FolderManager->CreateFolder(Id, Name);
 
             // Get the data of the item we were hovering over, if any.
-            auto Parent = (const node_t *) _TreeView.GetData(_hPopupItem);
+            const auto Parent = (node_t *) _TreeView.GetData(_hPopupItem);
 
             // Add the item.
             auto ParentId = GUID();
@@ -165,6 +178,10 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
             _TreeView.AddItem(ParentId, InsertAfterId, Id, Name, true, false);
 
             _hPopupItem = NULL;
+
+            // Redraw the tree view. Note: Only required when using custom draw.
+            ::InvalidateRect(_TreeView.Get(), nullptr, FALSE);
+            ::UpdateWindow(_TreeView.Get());
             break;
         }
 
@@ -203,6 +220,78 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
             break;
         }
 
+        // Handles the "Save all playlists..." command.
+        case IDM_SAVE_ALL:
+        {
+            standard_commands::main_save_all_playlists();
+            break;
+        }
+
+        // Handles the "Save playlist..." command.
+        case IDM_SAVE:
+        {
+            const auto Node = (node_t *) _TreeView.GetData(_hPopupItem);
+
+            if (Node == nullptr)
+                break;
+
+            auto Index = _PlaylistManager->find_playlist_by_guid(Node->Id);
+
+            if (Index == SIZE_MAX)
+                break;
+
+            pfc::string FileName;
+
+            if (!_PlaylistManager->playlist_get_name(Index, FileName))
+                break;
+
+            pfc::list_t<metadb_handle_ptr> Items;
+
+            _PlaylistManager->playlist_get_all_items(Index, Items);
+
+            pfc::string_formatter Extensions;
+            uint32_t DefaultExtension = 0;
+
+            {
+                service_enum_t<playlist_loader> LoaderEnumerator;
+                service_ptr_t<playlist_loader> Loader;
+
+                uint32_t i = 0;
+
+                while (LoaderEnumerator.next(Loader))
+                {
+                    if (Loader->can_write())
+                    {
+                        Extensions << Loader->get_extension() << " files|*." << Loader->get_extension() << "|";
+
+                        if (!::stricmp_utf8(Loader->get_extension(), "fpl"))
+                            DefaultExtension = i;
+                        i++;
+                    }
+                }
+            }
+
+            if (::uGetOpenFileName(wnd, Extensions, DefaultExtension, "fpl", "Save playlist...", nullptr, FileName, TRUE))
+            {
+                try
+                {
+                    playlist_loader::g_save_playlist(FileName, Items, fb2k::noAbort);
+                }
+                catch (pfc::exception & e)
+                {
+                    popup_message::g_show(e.what(), "Error writing playlist", popup_message::icon_error);
+                }
+            }
+            break;
+        }
+
+        // Handles the "Load playlist..." command.
+        case IDM_LOAD:
+        {
+            standard_commands::main_load_playlist();
+            break;
+        }
+
         // Handles the "Clear history" command.
         case IDM_CLEAR_HISTORY:
         {
@@ -235,6 +324,320 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
 
     switch (nmhd->code)
     {
+#ifdef SimpleCustomDraw
+        case NM_CUSTOMDRAW:
+        {
+            if (_IsDUI)
+                break;
+
+            auto tvcd = (NMTVCUSTOMDRAW *) nmhd;
+
+            const auto hTreeView = tvcd->nmcd.hdr.hwndFrom;
+            const auto hDC        = tvcd->nmcd.hdc;
+
+            switch (tvcd->nmcd.dwDrawStage)
+            {
+                case CDDS_PREPAINT:
+                {
+                    // Draw the control background.
+                    RECT rc;
+
+                    ::GetClientRect(hTreeView, &rc);
+
+                    HBRUSH hBrush = ::CreateSolidBrush(_Theme.GetWindowColor());
+
+                    ::FillRect(hDC, &rc, hBrush);
+
+                    ::DeleteObject(hBrush);
+
+                    return CDRF_NOTIFYITEMDRAW; // Request item-specific notifications.
+                }
+
+                case CDDS_ITEMPREPAINT:
+                {
+                    const auto hItem = (HTREEITEM) tvcd->nmcd.dwItemSpec;
+
+                    const TVITEMEX tvi
+                    {
+                        .mask       = TVIF_STATE,
+                        .hItem      = hItem,
+                        .stateMask = 0xFF,
+                    };
+
+                    TreeView_GetItem(hTreeView, &tvi);
+
+                    const auto HasFocus      = (::GetFocus() == hTreeView);
+                    const auto IsSelected    = ((tvi.state & TVIS_SELECTED) != 0);
+                    const auto IsHighlighted = ((tvi.state & TVIS_DROPHILITED) != 0);
+                    const auto IsHot         = ((tvcd->nmcd.uItemState & CDIS_HOT) != 0);
+
+                    if (IsSelected || IsHighlighted)
+                    {
+                        tvcd->clrText   = HasFocus ? _Theme.GetSelectionTextColor() : _Theme.GetInactiveSelectionTextColor();
+                        tvcd->clrTextBk = HasFocus ? _Theme.GetSelectionColor()     : _Theme.GetInactiveSelectionColor();
+                    }
+                    else
+                    if (IsHot)
+                    {
+                        tvcd->clrText   = _Theme.GetHighlightTextColor();
+                        tvcd->clrTextBk = _Theme.GetHighlightColor();
+                    }
+                    else
+                    {
+                        tvcd->clrText   = _Theme.GetWindowTextColor();
+                        tvcd->clrTextBk = _Theme.GetWindowColor();
+                    }
+
+                    return CDRF_NEWFONT; // Tell the control we've changed colors.
+                }
+            }
+            break;
+        }
+#endif
+
+#ifndef FullCustomDraw
+        case NM_CUSTOMDRAW:
+        {
+            const auto tvcd = (NMTVCUSTOMDRAW *) nmhd;
+
+            const auto hTreeView = tvcd->nmcd.hdr.hwndFrom;
+            const auto hDC       = tvcd->nmcd.hdc;
+
+            switch (tvcd->nmcd.dwDrawStage)
+            {
+                case CDDS_PREPAINT:
+                {
+                    // Draw the control background. Note: Only required when using custom draw.
+                    {
+                        RECT rc;
+
+                        ::GetClientRect(hTreeView, &rc);
+
+                        auto hBrush = ::CreateSolidBrush(_Theme.GetWindowColor());
+
+                        ::FillRect(hDC, &rc, hBrush);
+
+                        ::DeleteObject(hBrush);
+                    }
+
+                    return CDRF_NOTIFYITEMDRAW; // Request item-specific notifications.
+                }
+
+                case CDDS_ITEMPREPAINT:
+                {
+                    const RECT & rcItem = tvcd->nmcd.rc;
+
+                    if ((rcItem.right - rcItem.left) == 0)
+                        return CDRF_SKIPDEFAULT;
+
+                    const auto hItem = (HTREEITEM) tvcd->nmcd.dwItemSpec;
+
+                    // Get information about the item.
+                    wchar_t Text[512];
+
+                    const TVITEMEX tvi
+                    {
+                        .mask       = TVIF_TEXT | TVIF_IMAGE | TVIF_STATE | TVIF_CHILDREN,
+                        .hItem      = hItem,
+                        .stateMask  = 0xFF,
+                        .pszText    = Text,
+                        .cchTextMax = _countof(Text),
+                    };
+
+                    TreeView_GetItem(hTreeView, &tvi);
+
+                    const auto HasFocus      = (::GetFocus() == hTreeView);
+                    const auto HasChildren   = (tvi.cChildren != 0);
+                    const auto IsSelected    = ((tvi.state & TVIS_SELECTED) != 0);
+                    const auto IsHighlighted = ((tvi.state & TVIS_DROPHILITED) != 0);
+                    const auto IsHot         = ((tvcd->nmcd.uItemState & CDIS_HOT) != 0);
+
+                    // Get bounding rectangle of the item text.
+                    RECT rcText;
+
+                    TreeView_GetItemRect(hTreeView, hItem, &rcText, TRUE);
+
+                    const LONG ImageSize = rcText.bottom - rcText.top;
+
+                    RECT rc = rcItem;
+
+                    rc.left += ImageSize * tvcd->iLevel;
+
+                    // Draw a chevron for a Folder node.
+                    {
+                        if (HasChildren)
+                        {
+                            RECT rcChev = rc;
+
+                            rcChev.right = rcChev.left + ImageSize;
+
+                            // Get the font height.
+                            NONCLIENTMETRICSW ncm { sizeof(ncm) };
+
+                            ::SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(ncm), &ncm, 0);
+
+                            const LOGFONTW & lf = ncm.lfMessageFont;
+
+                            // Create the font.
+                            const HFONT hFont = ::CreateFontW(lf.lfHeight, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH, L"Segoe Fluent Icons");
+
+                            const auto hOldFont = (HFONT) ::SelectObject(hDC, hFont);
+
+                        //  const wchar_t * ChevronLeft  = L"\uE76B";
+                            const wchar_t * ChevronRight = L"\uE76C";
+                            const wchar_t * ChevronDown  = L"\uE70D";
+                        //  const wchar_t * ChevronUp    = L"\uE70E";
+
+                            const HTHEME hTheme = ::OpenThemeData(nullptr, L"TEXTSTYLE");
+
+                            const DTTOPTS Options =
+                            {
+                                .dwSize = sizeof(Options),
+                                .dwFlags = DTT_TEXTCOLOR,
+                                .crText = _Theme.GetWindowTextColor()
+                            };
+
+                            ::DrawThemeTextEx(hTheme, hDC, 0, 0, (tvi.state & TVIS_EXPANDED) ? ChevronDown : ChevronRight, -1, DT_CENTER | DT_VCENTER | DT_SINGLELINE, &rcChev, &Options);
+
+                            ::CloseThemeData(hTheme);
+
+                            ::SelectObject(hDC, hOldFont);
+
+                            ::DeleteObject(hFont);
+                        }
+
+                        rc.left += ImageSize;
+                    }
+
+                    // Draw background.
+                    {
+                        rc.right = rc.left + 1 + ImageSize + 1 + 3 + (rcText.right - rcText.left);
+
+                        if (IsSelected)
+                        {
+                            COLORREF Color = HasFocus ? _Theme.GetSelectionColor() : _Theme.GetInactiveSelectionColor();
+
+                            if (_IsDUI)
+                            {
+                                const int Mix = _DarkMode ? 80 : 20;
+
+                                auto c1 = (int32_t) _Theme.GetWindowColor();
+                                auto c2 = (int32_t) Color;
+
+                                auto v1 = c1 & 0xFF;
+                                auto v2 = c2 & 0xFF;
+
+                                auto r = v1 + ::MulDiv(v2 - v1, Mix, 100); c1 >>= 8; c2 >>= 8;
+
+                                v1 = c1 & 0xFF;
+                                v2 = c2 & 0xFF;
+
+                                auto g = v1 + ::MulDiv(v2 - v1, Mix, 100); c1 >>= 8; c2 >>= 8;
+
+                                v1 = c1 & 0xFF;
+                                v2 = c2 & 0xFF;
+
+                                auto b = v1 + ::MulDiv(v2 - v1, Mix, 100);
+
+                                Color = RGB(r, g, b);
+                            }
+
+                            HBRUSH hBrush = ::CreateSolidBrush(Color);
+
+                            ::FillRect(hDC, &rc, hBrush);
+
+                            // Draw the focus rectangle.
+                            auto hPen = ::CreatePen(PS_SOLID, 1, _Theme.GetWindowTextColor());
+
+                            auto hOldBrush = ::SelectObject(hDC, hBrush);
+                            auto hOldPen = ::SelectObject(hDC, hPen);
+
+                            ::RoundRect(hDC, rc.left, rc.top, rc.right, rc.bottom, 1, 1);
+
+                            ::SelectObject(hDC, hOldPen);
+                            ::SelectObject(hDC, hOldBrush);
+
+                            ::DeleteObject(hPen);
+                            ::DeleteObject(hBrush);
+                        }
+                        else
+                        if (IsHot || IsHighlighted)
+                        {
+                            COLORREF Color = _Theme.GetHighlightColor();
+
+                            if (_IsDUI)
+                            {
+                                const int Mix = _DarkMode ? 80 : 20;
+
+                                auto c1 = (int32_t) _Theme.GetWindowColor();
+                                auto c2 = (int32_t) Color;
+
+                                auto v1 = c1 & 0xFF;
+                                auto v2 = c2 & 0xFF;
+
+                                auto r = v1 + ::MulDiv(v2 - v1, Mix, 100); c1 >>= 8; c2 >>= 8;
+
+                                v1 = c1 & 0xFF;
+                                v2 = c2 & 0xFF;
+
+                                auto g = v1 + ::MulDiv(v2 - v1, Mix, 100); c1 >>= 8; c2 >>= 8;
+
+                                v1 = c1 & 0xFF;
+                                v2 = c2 & 0xFF;
+
+                                auto b = v1 + ::MulDiv(v2 - v1, Mix, 100);
+
+                                Color = RGB(r, g, b);
+                            }
+
+                            HBRUSH hBrush = ::CreateSolidBrush(Color);
+
+                            ::FillRect(hDC, &rc, hBrush);
+
+                            ::DeleteObject(hBrush);
+                        }
+                    }
+
+                    // Draw the image.
+                    {
+                        const LONG dx = ((1 + ImageSize + 1) - 16) / 2;
+                        const LONG dy = (ImageSize           - 16) / 2;
+
+                        ::ImageList_Draw(_hImageList, tvi.iImage, hDC, rc.left + dx, rc.top + dy, ILD_NORMAL);
+
+                        rc.left += 1 + ImageSize + 1 + 3;
+                    }
+
+                    // Draw the text.
+                    {
+                        const COLORREF Color = IsSelected ? (HasFocus ? _Theme.GetSelectionTextColor() : _Theme.GetInactiveSelectionTextColor()) : ((IsHot || IsHighlighted) ? _Theme.GetHighlightTextColor() : _Theme.GetWindowTextColor());
+
+                        const HTHEME hTheme = ::OpenThemeData(nullptr, L"TEXTSTYLE");
+
+                        if (hTheme != NULL)
+                        {
+                            const DTTOPTS Options =
+                            {
+                                .dwSize = sizeof(Options),
+                                .dwFlags = DTT_TEXTCOLOR,
+                                .crText = Color
+                            };
+
+                            rc.right = rc.left + (rcText.right - rcText.left);
+
+                            ::DrawThemeTextEx(hTheme, hDC, 0, 0, Text, -1, DT_LEFT | DT_SINGLELINE, &rc, &Options);
+
+                            ::CloseThemeData(hTheme);
+                        }
+                    }
+
+                    return CDRF_SKIPDEFAULT; // Skip all other stages because we've drawn the complete item.
+                }
+            }
+
+            break;
+        }
+#endif
         // Handles a right mouse button click within the control.
         case NM_RCLICK:
         {
@@ -242,31 +645,38 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
 
             const POINT pt = { GET_X_LPARAM(Position), GET_Y_LPARAM(Position) };
 
+            // Remember the item we're hovering over, if any.
+            _hPopupItem = _TreeView.GetItem(pt);
+
+            const auto Node = (node_t *) _TreeView.GetData(_hPopupItem);
+
+            const bool OnPlaylistNode = (Node != nullptr) && (_PlaylistManager->find_playlist_by_guid(Node->Id) != SIZE_MAX);
+
+            const HMENU hMenu = ::LoadMenuW(THIS_HINSTANCE, MAKEINTRESOURCE(IDM_CONTEXT_MENU));
+
+            if (hMenu == NULL)
+                break;
+
+            const HMENU hPopup = ::GetSubMenu(hMenu, 0);
+
+            if (hPopup != NULL)
             {
-                // Remember the item we're hovering over, if any.
-                _hPopupItem = _TreeView.GetItem(pt);
-
-                // Uncomment if the item pointed to should become the selected item.
-                //if (hTreeItem != NULL)
-                //    _TreeView.SelectItem(hTreeItem);
-            }
-
-            {
-                const HMENU hMenu = ::LoadMenuW(THIS_HINSTANCE, MAKEINTRESOURCE(IDM_CONTEXT_MENU));
-
-                if (hMenu == NULL)
-                    break;
-
-                const HMENU hPopup = ::GetSubMenu(hMenu, 0);
-
-                if (hPopup != NULL)
                 {
                     const UINT State = (_hPopupItem != NULL) ? MF_ENABLED : MF_DISABLED | MF_GRAYED;
 
                     ::EnableMenuItem(hPopup, IDM_RENAME, State);
                     ::EnableMenuItem(hPopup, IDM_REMOVE, State);
+                }
 
-                    // Create and append the Restore submenu.
+                {
+                    ::EnableMenuItem(hPopup, IDM_SAVE,     OnPlaylistNode ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+
+                    ::EnableMenuItem(hPopup, IDM_SAVE_ALL, (_hPopupItem == NULL) ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+                    ::EnableMenuItem(hPopup, IDM_LOAD,     (_hPopupItem == NULL) ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+                }
+
+                // Create and append the Restore submenu.
+                {
                     const size_t RecycleCount = _PlaylistManager->recycler_get_count();
 
                     if (RecycleCount != 0)
@@ -298,166 +708,17 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
 
                         ::InsertMenuItemW(hPopup, (UINT) ::GetMenuItemCount(hPopup), TRUE, &mii);
                     }
-
-                    ::TrackPopupMenu(hPopup, TPM_RIGHTBUTTON, pt.x, pt.y, 0, m_hWnd, nullptr);
-
-                    ::PostMessageW(m_hWnd, WM_NULL, 0, 0);
                 }
 
-                ::DestroyMenu(hMenu);
+                ::TrackPopupMenu(hPopup, TPM_RIGHTBUTTON, pt.x, pt.y, 0, m_hWnd, nullptr);
+
+                ::PostMessageW(m_hWnd, WM_NULL, 0, 0);
             }
+
+            ::DestroyMenu(hMenu);
             break;
         }
 
-#ifdef CustomDraw
-        case NM_CUSTOMDRAW:
-        {
-            auto tvcd = (const NMTVCUSTOMDRAW *) nmhd;
-
-            const HWND hTreeView = tvcd->nmcd.hdr.hwndFrom;
-            const HDC hDC        = tvcd->nmcd.hdc;
-
-            switch (tvcd->nmcd.dwDrawStage)
-            {
-                case CDDS_PREPAINT:
-                {
-                    return CDRF_NOTIFYITEMDRAW; // Request item-specific notifications.
-                }
-
-                case CDDS_ITEMPREPAINT:
-                {
-                    const auto hItem = (HTREEITEM) tvcd->nmcd.dwItemSpec;
-
-                    wchar_t Text[512];
-
-                    const TVITEMEX tvi
-                    {
-                        .mask       = TVIF_TEXT | TVIF_IMAGE | TVIF_STATE,
-                        .hItem      = hItem,
-                        .pszText    = Text,
-                        .cchTextMax = _countof(Text),
-                    };
-
-                    TreeView_GetItem(hTreeView, &tvi);
-
-                    const RECT & rcItem = tvcd->nmcd.rc;
-
-                    // Draw the background.
-                    if (tvi.state & TVIS_SELECTED)
-                    {
-                        HBRUSH hBrush = ::CreateSolidBrush(_Theme.GetColor(COLOR_HIGHLIGHT));
-
-                        ::FillRect(hDC, &rcItem, hBrush);
-
-                        ::DeleteObject(hBrush);
-                    }
-                    else
-                    if (tvi.state & TVIS_DROPHILITED)
-                    {
-                        auto c1 = (int32_t) _Theme.GetColor(COLOR_WINDOW);
-                        auto c2 = (int32_t) _Theme.GetColor(COLOR_HIGHLIGHT);
-
-                        auto v1 = c1 & 0xFF;
-                        auto v2 = c2 & 0xFF;
-
-                        auto r = v1 + ::MulDiv(v2 - v1, 50, 100); c1 >>= 8; c2 >>= 8;
-
-                        v1 = c1 & 0xFF;
-                        v2 = c2 & 0xFF;
-
-                        auto g = v1 + ::MulDiv(v2 - v1, 50, 100); c1 >>= 8; c2 >>= 8;
-
-                        v1 = c1 & 0xFF;
-                        v2 = c2 & 0xFF;
-
-                        auto b = v1 + ::MulDiv(v2 - v1, 50, 100);
-
-                        HBRUSH hBrush = ::CreateSolidBrush(RGB(r, g, b));
-
-                        ::FillRect(hDC, &rcItem, hBrush);
-
-                        ::DeleteObject(hBrush);
-                    }
-
-                    {
-                        RECT rc = rcItem;
-
-                        rc.left += 16 * tvcd->iLevel;
-
-                        if (tvi.iImage == NodeType::Folder)
-                        {
-                            RECT rcChev = rc;
-
-                            rcChev.right = rcChev.left + 16;
-
-                            // Get the font height.
-                            NONCLIENTMETRICSW ncm { sizeof(ncm) };
-
-                            ::SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(ncm), &ncm, 0);
-
-                            const LOGFONTW & lf = ncm.lfMessageFont;
-
-                            // Create the font.
-                            const HFONT hFont = ::CreateFontW(lf.lfHeight, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH, L"Segoe Fluent Icons");
-
-                            const auto hOldFont = (HFONT) ::SelectObject(hDC, hFont);
-
-                        //  const wchar_t * ChevronLeft  = L"\uE76B";
-                            const wchar_t * ChevronRight = L"\uE76C";
-                            const wchar_t * ChevronDown  = L"\uE70D";
-                        //  const wchar_t * ChevronUp    = L"\uE70E";
-
-                            const HTHEME hTheme = ::OpenThemeData(nullptr, L"TEXTSTYLE");
-
-                            const DTTOPTS Options =
-                            {
-                                .dwSize = sizeof(Options),
-                                .dwFlags = DTT_TEXTCOLOR,
-                                .crText = _Theme.GetColor(COLOR_WINDOWTEXT)
-                            };
-
-                            ::DrawThemeTextEx(hTheme, hDC, 0, 0, (tvi.state & TVIS_EXPANDED) ? ChevronDown : ChevronRight, -1, DT_CENTER | DT_VCENTER | DT_SINGLELINE, &rcChev, &Options);
-
-                            ::CloseThemeData(hTheme);
-
-                            ::SelectObject(hDC, hOldFont);
-
-                            ::DeleteObject(hFont);
-                        }
-
-                        rc.left += 16;          // Skip past the chevron.
-
-                        // Draw the image.
-                        ::ImageList_Draw(_hImageList, tvi.iImage, hDC, rc.left, rcItem.top, ILD_NORMAL);
-
-                        rc.left += 1 + 16 + 1;  // Skip past the icon.
-
-                        // Draw the text.
-                        const HTHEME hTheme = ::OpenThemeData(nullptr, L"TEXTSTYLE");
-
-                        const DTTOPTS Options =
-                        {
-                            .dwSize = sizeof(Options),
-                            .dwFlags = DTT_TEXTCOLOR,
-                            .crText = (tvi.state & TVIS_SELECTED) ? _Theme.GetColor(COLOR_HIGHLIGHTTEXT) : _Theme.GetColor(COLOR_WINDOWTEXT)
-                        };
-
-                        ::DrawThemeTextEx(hTheme, hDC, 0, 0, Text, -1, DT_LEFT | DT_SINGLELINE, &rc, &Options);
-
-                        ::CloseThemeData(hTheme);
-                    }
-
-                    // Draw the focus rectangle.
-                    if (tvcd->nmcd.uItemState & CDIS_FOCUS)
-                        ::DrawFocusRect(hDC, &rcItem);
-
-                    return CDRF_SKIPDEFAULT; // Skip all other stages because we've drawn the complete item.
-                }
-            }
-
-            break;
-        }
-#endif
         // Handles a need for display or sort info.
         case TVN_GETDISPINFO:
         {
@@ -655,6 +916,15 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
             _TreeView.BeginDrag(nmtv);
             break;
         }
+
+        // Handles a parent item's list of child items has expanded or collapsed. Note: This is only required when using Custom Draw.
+        case TVN_ITEMEXPANDED:
+        {
+            ::InvalidateRect(_TreeView.Get(), nullptr, FALSE);
+            ::UpdateWindow(_TreeView.Get());
+
+            return TRUE;
+        }
     }
 
     return FALSE;
@@ -694,6 +964,10 @@ void playlist_uielement_t::on_items_added(size_t playlistIndex, size_t start, co
     auto Id = _PlaylistManager->playlist_get_guid(playlistIndex);
 
     _TreeView.RefreshItem(Id);
+
+    // Redraw the tree view. Note: Only required when using custom draw.
+    ::InvalidateRect(_TreeView.Get(), nullptr, FALSE);
+    ::UpdateWindow(_TreeView.Get());
 }
 
 /// <summary>
@@ -717,42 +991,46 @@ void playlist_uielement_t::on_items_removed(size_t playlistIndex, const bit_arra
     auto Id = _PlaylistManager->playlist_get_guid(playlistIndex);
 
     _TreeView.RefreshItem(Id);
+
+    // Redraw the tree view. Note: Only required when using custom draw.
+    ::InvalidateRect(_TreeView.Get(), nullptr, FALSE);
+    ::UpdateWindow(_TreeView.Get());
 }
 
 /// <summary>
 /// 
 /// </summary>
-void playlist_uielement_t::on_items_selection_change(size_t playlistIndex, const bit_array & p_affected, const bit_array & p_state) noexcept
+void playlist_uielement_t::on_items_selection_change(size_t playlistIndex, const bit_array & affected, const bit_array & state) noexcept
 {}
 
 /// <summary>
 /// 
 /// </summary>
-void playlist_uielement_t::on_item_focus_change(size_t playlistIndex, size_t p_from, size_t p_to) noexcept
+void playlist_uielement_t::on_item_focus_change(size_t playlistIndex, size_t from, size_t to) noexcept
 {}
 	
 /// <summary>
 /// 
 /// </summary>
-void playlist_uielement_t::on_items_modified(size_t playlistIndex, const bit_array & p_mask) noexcept
+void playlist_uielement_t::on_items_modified(size_t playlistIndex, const bit_array & mask) noexcept
 {}
 
 /// <summary>
 /// 
 /// </summary>
-void playlist_uielement_t::on_items_modified_fromplayback(size_t playlistIndex, const bit_array & p_mask,play_control::t_display_level p_level) noexcept
+void playlist_uielement_t::on_items_modified_fromplayback(size_t playlistIndex, const bit_array & mask, play_control::t_display_level level) noexcept
 {}
 
 /// <summary>
 /// 
 /// </summary>
-void playlist_uielement_t::on_items_replaced(size_t playlistIndex, const bit_array & p_mask, const pfc::list_base_const_t<t_on_items_replaced_entry> & p_data) noexcept
+void playlist_uielement_t::on_items_replaced(size_t playlistIndex, const bit_array & mask, const pfc::list_base_const_t<t_on_items_replaced_entry> & data) noexcept
 {}
 
 /// <summary>
 /// 
 /// </summary>
-void playlist_uielement_t::on_item_ensure_visible(size_t playlistIndex, size_t p_idx) noexcept
+void playlist_uielement_t::on_item_ensure_visible(size_t playlistIndex, size_t itemIndex) noexcept
 {}
 
 /// <summary>
@@ -795,6 +1073,10 @@ void playlist_uielement_t::on_playlist_created(size_t index, const char * name, 
     _TreeView.AddItem(ParentId, InsertAfterId, Id, Name.c_str(), false, false);
 
     _hPopupItem = NULL;
+
+    // Redraw the tree view. Note: Only required when using custom draw.
+    ::InvalidateRect(_TreeView.Get(), nullptr, FALSE);
+    ::UpdateWindow(_TreeView.Get());
 }
 
 /// <summary>
@@ -906,7 +1188,7 @@ void playlist_uielement_t::FromJSON(json object) noexcept
 {
     FromJSON(object, { });
 
-    // Add all playlists that are missing to the root.
+    // Add all playlists that are missing in the loaded configuration to the root.
     const size_t PlaylistCount = _PlaylistManager->get_playlist_count();
 
     for (size_t PlaylistIndex = 0; PlaylistIndex < PlaylistCount; ++PlaylistIndex)
@@ -1000,7 +1282,16 @@ void playlist_uielement_t::SelectPlaylist(size_t index) const noexcept
 /// </summary>
 DWORD playlist_uielement_t::GetDropEffect(DWORD keyState, const POINT & pt) noexcept
 {
-    _hDropTarget = _TreeView.GetItem(pt);
+    auto hItem = _TreeView.GetItem(pt);
+
+    if (hItem != _hDropTarget)
+    {
+        _TreeView.SetState(_hDropTarget, 0, TVIS_DROPHILITED);
+
+        _hDropTarget = hItem;
+
+        _TreeView.SetState(_hDropTarget, TVIS_DROPHILITED);
+    }
 
     if (keyState & MK_CONTROL)
         return DROPEFFECT_MOVE;
@@ -1045,6 +1336,10 @@ void playlist_uielement_t::DropFiles(const std::vector<std::wstring> & filePaths
         // Add the handles to the playlist and select them.
         _PlaylistManager->playlist_add_items(Index, Handles, bit_array_true());
     }
+
+    // Redraw the tree view. Note: Only required when using custom draw.
+    ::InvalidateRect(_TreeView.Get(), nullptr, FALSE);
+    ::UpdateWindow(_TreeView.Get());
 }
 
 /// <summary>
@@ -1052,7 +1347,10 @@ void playlist_uielement_t::DropFiles(const std::vector<std::wstring> & filePaths
 /// </summary>
 void playlist_uielement_t::Refresh() noexcept
 {
-    InitImageList();
+    HRESULT hResult = InitImageList();
+
+    if (!SUCCEEDED(hResult))
+        Log.Write(STR_COMPONENT_BASENAME " failed to initialize image list: 0x%08", hResult);
 
     _TreeView.RefreshAllItems();
 }
@@ -1102,7 +1400,7 @@ std::string playlist_uielement_t::GetConfiguration() const noexcept
     Object["nodes"] = Nodes;
 
     #ifdef _DEBUG
-    ::OutputDebugStringA(Object.dump(4).c_str());
+    Log.Write(Object.dump(4).c_str());
     #endif
 
     const auto Config = Object.dump(-1);
@@ -1125,7 +1423,7 @@ std::string playlist_uielement_t::GetDefaultConfiguration() noexcept
 /// <summary>
 /// Initializes the image list.
 /// </summary>
-bool playlist_uielement_t::InitImageList() noexcept
+HRESULT playlist_uielement_t::InitImageList() noexcept
 {
     _hImageList.Reset();
 
@@ -1134,23 +1432,27 @@ bool playlist_uielement_t::InitImageList() noexcept
     _hImageList = ::ImageList_Create((int) IconSize, (int) IconSize, ILC_COLOR32 | ILC_MASK, (int) _State._Images.size(), 0);
 
     if (!_hImageList)
-        return false;
+        return HRESULT_FROM_WIN32(::GetLastError());
 
     for (const auto & Image : _State._Images)
     {
         himagelist_t hSrcImageList = image_list_factory_t::Create(Image._FilePath, IconSize);
 
+        if (!hSrcImageList)
+            return HRESULT_FROM_WIN32(::GetLastError());
+
         hicon_t hIcon = ::ImageList_GetIcon(hSrcImageList, (int) Image._IconIndex, ILD_TRANSPARENT);
 
         if (!hIcon)
-            return false;
+            return HRESULT_FROM_WIN32(::GetLastError());
 
         ::ImageList_ReplaceIcon(_hImageList, -1, hIcon);
     }
 
-    _TreeView.SetImageList(_hImageList);
+    _TreeView.SetNormalImageList(_hImageList);
+    _TreeView.SetStateImageList(_hImageList);
 
-    return true;
+    return S_OK;
 }
 
 tracker_t<playlist_uielement_t> _UIElementTracker;

@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.h (2026.07.13) P. Stuer **/
+/** $VER: PlaylistsUIElement.h (2026.07.15) P. Stuer **/
 
 #pragma once
 
@@ -12,6 +12,7 @@
 #include "UIElement.h"
 
 #include <SDK\playlist.h>
+#include <SDK\playlist_loader.h>
 
 /// <summary>
 /// Implements the user interface element base class.
@@ -118,9 +119,11 @@ private:
     void FromJSON(json object, const GUID & parentId) noexcept;
 
     void SelectPlaylist(size_t playlistIndex) const noexcept;
-    bool InitImageList() noexcept;
+
+    HRESULT InitImageList() noexcept;
 
 protected:
+    bool _IsDUI = true;
     playlist_tree_view_t _TreeView;
 
 private:
