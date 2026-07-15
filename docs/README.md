@@ -96,6 +96,18 @@ Removes the highlighted item.
 
 Sorts the contents of the highlighed folder or the siblings of the selected playlist.
 
+`Save playlist...`
+
+Saves the playlist the mouse pointer is hovering over.
+
+`Save all playlists...`
+
+Saves all the playlists.
+
+`Load playlist...`
+
+Loads a playlist.
+
 `Restore`
 
 Allows you to restore a playlist that has been removed during the current session from the foobar200 playlist recycle bin.

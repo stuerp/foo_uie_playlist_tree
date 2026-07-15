@@ -9,7 +9,7 @@ It attempts to recreate the functionality of [foo_plorg](https://wiki.hydrogenau
 
 - Supports the Default User Interface (DUI) and the [Columns User Interface](https://yuo.be/columns-ui) (CUI).
 - Supports dark mode.
-- Supports foobar2000 2.0 and later (Intel 32-bit/64-bit version).
+- Supports foobar2000 2.0 and later (Intel 32-bit/64-bit and ARM64EC version).
 - Custom Title Formatting fields.
 - Configurable tree node images.
 - Drag & drop from foobar2000, Explorer and other applications.
