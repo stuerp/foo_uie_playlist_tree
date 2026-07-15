@@ -12,6 +12,7 @@
 #include "UIElement.h"
 
 #include <SDK\playlist.h>
+#include <SDK\playlist_loader.h>
 
 /// <summary>
 /// Implements the user interface element base class.

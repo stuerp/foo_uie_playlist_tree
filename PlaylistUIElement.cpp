@@ -161,7 +161,7 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
             _FolderManager->CreateFolder(Id, Name);
 
             // Get the data of the item we were hovering over, if any.
-            auto Parent = (const node_t *) _TreeView.GetData(_hPopupItem);
+            const auto Parent = (node_t *) _TreeView.GetData(_hPopupItem);
 
             // Add the item.
             auto ParentId = GUID();
@@ -217,6 +217,78 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
         case IDM_SORT:
         {
             _TreeView.Sort(_hPopupItem);
+            break;
+        }
+
+        // Handles the "Save all playlists..." command.
+        case IDM_SAVE_ALL:
+        {
+            standard_commands::main_save_all_playlists();
+            break;
+        }
+
+        // Handles the "Save playlist..." command.
+        case IDM_SAVE:
+        {
+            const auto Node = (node_t *) _TreeView.GetData(_hPopupItem);
+
+            if (Node == nullptr)
+                break;
+
+            auto Index = _PlaylistManager->find_playlist_by_guid(Node->Id);
+
+            if (Index == SIZE_MAX)
+                break;
+
+            pfc::string FileName;
+
+            if (!_PlaylistManager->playlist_get_name(Index, FileName))
+                break;
+
+            pfc::list_t<metadb_handle_ptr> Items;
+
+            _PlaylistManager->playlist_get_all_items(Index, Items);
+
+            pfc::string_formatter Extensions;
+            uint32_t DefaultExtension = 0;
+
+            {
+                service_enum_t<playlist_loader> LoaderEnumerator;
+                service_ptr_t<playlist_loader> Loader;
+
+                uint32_t i = 0;
+
+                while (LoaderEnumerator.next(Loader))
+                {
+                    if (Loader->can_write())
+                    {
+                        Extensions << Loader->get_extension() << " files|*." << Loader->get_extension() << "|";
+
+                        if (!::stricmp_utf8(Loader->get_extension(), "fpl"))
+                            DefaultExtension = i;
+                        i++;
+                    }
+                }
+            }
+
+            if (::uGetOpenFileName(wnd, Extensions, DefaultExtension, "fpl", "Save playlist...", nullptr, FileName, TRUE))
+            {
+                try
+                {
+                    playlist_loader::g_save_playlist(FileName, Items, fb2k::noAbort);
+                }
+                catch (pfc::exception & e)
+                {
+                    popup_message::g_show(e.what(), "Error writing playlist", popup_message::icon_error);
+                }
+            }
+            break;
+        }
+
+        // Handles the "Load playlist..." command.
+        case IDM_LOAD:
+        {
+            standard_commands::main_load_playlist();
             break;
         }
 
@@ -576,6 +648,10 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
             // Remember the item we're hovering over, if any.
             _hPopupItem = _TreeView.GetItem(pt);
 
+            const auto Node = (node_t *) _TreeView.GetData(_hPopupItem);
+
+            const bool OnPlaylistNode = (Node != nullptr) && (_PlaylistManager->find_playlist_by_guid(Node->Id) != SIZE_MAX);
+
             const HMENU hMenu = ::LoadMenuW(THIS_HINSTANCE, MAKEINTRESOURCE(IDM_CONTEXT_MENU));
 
             if (hMenu == NULL)
@@ -585,42 +661,53 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
 
             if (hPopup != NULL)
             {
-                const UINT State = (_hPopupItem != NULL) ? MF_ENABLED : MF_DISABLED | MF_GRAYED;
+                {
+                    const UINT State = (_hPopupItem != NULL) ? MF_ENABLED : MF_DISABLED | MF_GRAYED;
 
-                ::EnableMenuItem(hPopup, IDM_RENAME, State);
-                ::EnableMenuItem(hPopup, IDM_REMOVE, State);
+                    ::EnableMenuItem(hPopup, IDM_RENAME, State);
+                    ::EnableMenuItem(hPopup, IDM_REMOVE, State);
+                }
+
+                {
+                    ::EnableMenuItem(hPopup, IDM_SAVE,     OnPlaylistNode ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+
+                    ::EnableMenuItem(hPopup, IDM_SAVE_ALL, (_hPopupItem == NULL) ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+                    ::EnableMenuItem(hPopup, IDM_LOAD,     (_hPopupItem == NULL) ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+                }
 
                 // Create and append the Restore submenu.
-                const size_t RecycleCount = _PlaylistManager->recycler_get_count();
-
-                if (RecycleCount != 0)
                 {
-                    HMENU hRestore = ::CreatePopupMenu();
+                    const size_t RecycleCount = _PlaylistManager->recycler_get_count();
 
-                    for (size_t Index = 0; Index < RecycleCount; ++Index)
+                    if (RecycleCount != 0)
                     {
-                        pfc::string Name;
+                        HMENU hRestore = ::CreatePopupMenu();
 
-                        _PlaylistManager->recycler_get_name(Index, Name);
+                        for (size_t Index = 0; Index < RecycleCount; ++Index)
+                        {
+                            pfc::string Name;
 
-                        ::AppendMenuW(hRestore, MF_STRING, IDM_HISTORY + Index, msc::UTF8ToWide(Name.c_str()).c_str());
+                            _PlaylistManager->recycler_get_name(Index, Name);
+
+                            ::AppendMenuW(hRestore, MF_STRING, IDM_HISTORY + Index, msc::UTF8ToWide(Name.c_str()).c_str());
+                        }
+
+                        ::AppendMenuW(hRestore, MF_SEPARATOR, 0, NULL);
+                        ::AppendMenuW(hRestore, MF_STRING, IDM_CLEAR_HISTORY, L"Clear history");
+
+                        // Append the Restore menu to the popup menu.
+                        ::AppendMenuW(hPopup, MF_SEPARATOR, 0, NULL);
+
+                        MENUITEMINFOW mii =
+                        {
+                            .cbSize     = sizeof(mii),
+                            .fMask      = MIIM_STRING | MIIM_SUBMENU,
+                            .hSubMenu   = hRestore,
+                            .dwTypeData = (LPWSTR) L"Restore",
+                        };
+
+                        ::InsertMenuItemW(hPopup, (UINT) ::GetMenuItemCount(hPopup), TRUE, &mii);
                     }
-
-                    ::AppendMenuW(hRestore, MF_SEPARATOR, 0, NULL);
-                    ::AppendMenuW(hRestore, MF_STRING, IDM_CLEAR_HISTORY, L"Clear history");
-
-                    // Append the Restore menu to the popup menu.
-                    ::AppendMenuW(hPopup, MF_SEPARATOR, 0, NULL);
-
-                    MENUITEMINFOW mii =
-                    {
-                        .cbSize     = sizeof(mii),
-                        .fMask      = MIIM_STRING | MIIM_SUBMENU,
-                        .hSubMenu   = hRestore,
-                        .dwTypeData = (LPWSTR) L"Restore",
-                    };
-
-                    ::InsertMenuItemW(hPopup, (UINT) ::GetMenuItemCount(hPopup), TRUE, &mii);
                 }
 
                 ::TrackPopupMenu(hPopup, TPM_RIGHTBUTTON, pt.x, pt.y, 0, m_hWnd, nullptr);

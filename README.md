@@ -80,6 +80,7 @@ To create the component first build the x86 configuration and next the x64 confi
 v1.1.0.0, 2026-07-xx
 
 * New: [User Guide](https://github.com/stuerp/foo_uie_playlist_tree/blob/main/docs/README.md).
+* New: **Load playlist**, **Save playlist** and **Save all playlists** commands.
 * Improved: Usability
 * Improved: DUI and CUI rendering.
 
