@@ -1,5 +1,5 @@
 
-/** $VER: Theme.h (2026.07.14) P. Stuer **/
+/** $VER: Theme.h (2026.07.15) P. Stuer **/
 
 #pragma once
 
@@ -13,18 +13,15 @@
 class theme_t
 {
 public:
-    void Initialize(bool darkMode) noexcept
+    void Initialize(bool isDark) noexcept
     {
-        _DarkMode = darkMode;
+        _IsDark = isDark;
     }
 
     bool IsDark() const noexcept
     {
-        return _DarkMode;
+        return _IsDark;
     }
-
-    void SetColor(int index, COLORREF color) noexcept;
-    COLORREF GetColor(int index) const noexcept;
 
     COLORREF GetWindowColor() const noexcept { return _ColorWindow; }
     COLORREF GetWindowTextColor() const noexcept { return _ColorWindowText; }
@@ -53,7 +50,7 @@ public:
     void SetActiveItemFrameColor(COLORREF color) noexcept { _ColorActiveItemFrame = color; }
 
 private:
-    bool _DarkMode;
+    bool _IsDark;
 
     COLORREF _ColorWindow                = 0x202020;
     COLORREF _ColorWindowText            = 0xC0C0C0;

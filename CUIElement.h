@@ -1,5 +1,5 @@
 
-/** $VER: CUIElement.h (2026.07.14) P. Stuer - Columns User Interface support **/
+/** $VER: CUIElement.h (2026.07.15) P. Stuer - Columns User Interface support **/
 
 #pragma once
 
@@ -18,7 +18,7 @@ class cui_color_client_t;
 class cui_element_t : public playlist_uielement_t, public uie::window
 {
 public:
-    cui_element_t() { }
+    cui_element_t();
 
     cui_element_t(const cui_element_t &) = delete;
     cui_element_t & operator=(const cui_element_t &) = delete;

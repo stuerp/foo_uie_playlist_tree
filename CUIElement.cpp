@@ -1,5 +1,5 @@
 
-/** $VER: CUIElement.cpp (2026.07.14) P. Stuer **/
+/** $VER: CUIElement.cpp (2026.07.15) P. Stuer **/
 
 #include "pch.h"
 
@@ -17,6 +17,14 @@ namespace uie
 static uie::window_factory<cui_element_t> _CUIElementFactory;
 
 static cui::colours::client::factory<cui_color_client_t> _CUIColorClientFactory;
+
+/// <summary>
+/// Initializes a new instance.
+/// </summary>
+cui_element_t::cui_element_t()
+{
+    _IsDUI = false;
+}
 
 /// <summary>
 /// Creates or transfers the window.

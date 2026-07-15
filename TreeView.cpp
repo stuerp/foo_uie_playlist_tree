@@ -297,7 +297,7 @@ void * tree_view_t::GetData(HTREEITEM hItem) const noexcept
 /// </summary>
 void tree_view_t::BeginDrag(const NMTREEVIEW * nmtv) noexcept
 {
-    TreeView_SetInsertMarkColor(_hTreeView, _Theme.GetColor(COLOR_WINDOWTEXT));
+    TreeView_SetInsertMarkColor(_hTreeView, _Theme.GetWindowTextColor());
 
     // Create the drag image.
     _hDragImageList = TreeView_CreateDragImage(_hTreeView, nmtv->itemNew.hItem);

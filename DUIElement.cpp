@@ -1,5 +1,5 @@
 
-/** $VER: DUIElement.cpp (2026.07.12) P. Stuer - Implements Default User Interface support **/
+/** $VER: DUIElement.cpp (2026.07.15) P. Stuer - Implements Default User Interface support **/
 
 #include "pch.h"
 
@@ -11,17 +11,19 @@
 
 #pragma hdrstop
 
-#pragma region ui_element_instance interface
-
 /// <summary>
 /// Initializes a new instance.
 /// </summary>
 dui_element_t::dui_element_t(ui_element_config::ptr data, ui_element_instance_callback::ptr callback) : m_callback(callback)
 {
+    _IsDUI = true;
+
     set_configuration(data);
 
     GetColors();
 }
+
+#pragma region ui_element_instance interface
 
 /// <summary>
 /// Retrieves the name of the element.

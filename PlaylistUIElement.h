@@ -122,6 +122,7 @@ private:
     HRESULT InitImageList() noexcept;
 
 protected:
+    bool _IsDUI = true;
     playlist_tree_view_t _TreeView;
 
 private:

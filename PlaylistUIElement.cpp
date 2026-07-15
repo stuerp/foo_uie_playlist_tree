@@ -52,15 +52,20 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
 
         _DarkMode.AddCtrlAuto(_TreeView.Get());
 
-        HRESULT hResult = ::SetWindowTheme(_TreeView.Get(), L"", L"");
+        if (!_IsDUI)
+        {
+            HRESULT hResult = ::SetWindowTheme(_TreeView.Get(), L"", L"");
 
-        if (!SUCCEEDED(hResult))
-            Log.Write(STR_COMPONENT_BASENAME " failed to disable visual styles for the tree view: 0x%08X", hResult);
+            if (!SUCCEEDED(hResult))
+                Log.Write(STR_COMPONENT_BASENAME " failed to disable visual styles for the tree view: 0x%08X", hResult);
+        }
 
-        hResult = InitImageList();
+        {
+            HRESULT hResult = InitImageList();
 
-        if (!SUCCEEDED(hResult))
-            Log.Write(STR_COMPONENT_BASENAME " failed to initialize image lists: 0x%08X", hResult);
+            if (!SUCCEEDED(hResult))
+                Log.Write(STR_COMPONENT_BASENAME " failed to initialize image lists: 0x%08X", hResult);
+        }
     }
 
     // Deserialize the state.
@@ -243,12 +248,16 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
 
     switch (nmhd->code)
     {
+#ifndef CustomDraw
         case NM_CUSTOMDRAW:
         {
+            if (_IsDUI)
+                break;
+
             auto tvcd = (NMTVCUSTOMDRAW *) nmhd;
 
-            const HWND hTreeView = tvcd->nmcd.hdr.hwndFrom;
-            const HDC hDC        = tvcd->nmcd.hdc;
+            const auto hTreeView = tvcd->nmcd.hdr.hwndFrom;
+            const auto hDC        = tvcd->nmcd.hdc;
 
             switch (tvcd->nmcd.dwDrawStage)
             {
@@ -308,6 +317,7 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
             }
             break;
         }
+#endif
 
 #ifdef FullCustomDraw
         case NM_CUSTOMDRAW:
