@@ -51,15 +51,7 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
             return -1;
 
         _DarkMode.AddCtrlAuto(_TreeView.Get());
-/*
-        if (!_IsDUI)
-        {
-            HRESULT hResult = ::SetWindowTheme(_TreeView.Get(), L"", L"");
 
-            if (!SUCCEEDED(hResult))
-                Log.Write(STR_COMPONENT_BASENAME " failed to disable visual styles for the tree view: 0x%08X", hResult);
-        }
-*/
         {
             HRESULT hResult = InitImageList();
 
@@ -1218,19 +1210,14 @@ void playlist_uielement_t::FromJSON(json object, const GUID & parentId) noexcept
     {
         std::string IdText = Node.value("id", IdText);
         std::string Name   = Node.value("name", Name);
-/*
-        const auto & Image = Node["image"];
 
-        if (!Image.is_null())
-        {
-            std::string ImageFilePath = Image.value("filePath", ImageFilePath);
-            int32_t ImageIndex        = Node.value("index", ImageIndex);
-        }
-*/
         bool IsFolder   = Node.value("isFolder", IsFolder);
         bool IsExpanded = Node.value("isExpanded", IsExpanded);
 
-        GUID Id = msc::GUIDFromUTF8(IdText);
+        GUID Id = pfc::GUID_from_text(IdText.c_str());
+
+        if (Id == GUID())
+            continue; // Should not happen...
 
         if (IsFolder)
         {
@@ -1360,7 +1347,16 @@ void playlist_uielement_t::Refresh() noexcept
 /// </summary>
 void playlist_uielement_t::SetConfiguration(const char * data, size_t size) noexcept
 {
-    _State.FromJSON(data, size);
+    try
+    {
+        _State.FromJSON(data, size);
+    }
+    catch (exception & ex)
+    {
+        Log.AtError().Write(STR_COMPONENT_BASENAME " failed to read configuration: %s", ex.what());
+
+        _State.Reset();
+    }
 }
 
 /// <summary>
@@ -1368,44 +1364,46 @@ void playlist_uielement_t::SetConfiguration(const char * data, size_t size) noex
 /// </summary>
 std::string playlist_uielement_t::GetConfiguration() const noexcept
 {
-    // Save the state to a JSON object.
-    auto Object = _State.ToJSON();
-
-    json::array_t Nodes;
-
-    _TreeView.ToJSON([&](HTREEITEM hItem, json::object_t * node) -> bool
+    try
     {
-        auto Node = (const node_t *) _TreeView.GetData(hItem);
+        // Save the state to a JSON object.
+        auto Object = _State.ToJSON();
 
-        if (Node == nullptr)
-            return true; // Continue enumerating. Should not occur.
+        json::array_t Nodes;
 
-        (*node)["id"]       = msc::GUIDToUTF8(Node->Id);
-        (*node)["name"]     = Node->Name;
-/*
-        (*node)["image"]    =
+        _TreeView.ToJSON([&](HTREEITEM hItem, json::object_t * node) -> bool
         {
-            { "filePath", "test" },
-            { "index", 42 }
-        };
-*/
-        (*node)["isFolder"] = Node->IsFolder;
+            auto Node = (const node_t *) _TreeView.GetData(hItem);
 
-        if (Node->IsFolder)
-            (*node)["isExpanded"] = _TreeView.IsExpanded(Node->Id);
+            if ((Node == nullptr) || ((Node != nullptr) && (Node->Id == GUID())))
+                return true; // Continue enumerating. Should not occur.
 
-        return true; // Continue enumerating.
-    }, &Nodes);
+            (*node)["id"]       = pfc::print_guid(Node->Id).c_str();
+            (*node)["name"]     = Node->Name;
+            (*node)["isFolder"] = Node->IsFolder;
 
-    Object["nodes"] = Nodes;
+            if (Node->IsFolder)
+                (*node)["isExpanded"] = _TreeView.IsExpanded(Node->Id);
 
-    #ifdef _DEBUG
-    Log.Write(Object.dump(4).c_str());
-    #endif
+            return true; // Continue enumerating.
+        }, &Nodes);
 
-    const auto Config = Object.dump(-1);
+        Object["nodes"] = Nodes;
 
-    return Config;
+        #ifdef _DEBUG
+        console::print(Object.dump(4).c_str());
+        #endif
+
+        const auto Config = Object.dump(-1);
+
+        return Config;
+    }
+    catch (exception & ex)
+    {
+        Log.AtError().Write(STR_COMPONENT_BASENAME " failed to write configuration: %s", ex.what());
+
+        return std::string();
+    }
 }
 
 /// <summary>
