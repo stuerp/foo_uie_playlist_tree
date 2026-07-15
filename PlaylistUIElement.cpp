@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.cpp (2026.07.13) P. Stuer **/
+/** $VER: PlaylistsUIElement.cpp (2026.07.15) P. Stuer **/
 
 #include "pch.h"
 
@@ -51,7 +51,7 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
             return -1;
 
         _DarkMode.AddCtrlAuto(_TreeView.Get());
-
+/*
         if (!_IsDUI)
         {
             HRESULT hResult = ::SetWindowTheme(_TreeView.Get(), L"", L"");
@@ -59,7 +59,7 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
             if (!SUCCEEDED(hResult))
                 Log.Write(STR_COMPONENT_BASENAME " failed to disable visual styles for the tree view: 0x%08X", hResult);
         }
-
+*/
         {
             HRESULT hResult = InitImageList();
 
@@ -178,6 +178,10 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
             _TreeView.AddItem(ParentId, InsertAfterId, Id, Name, true, false);
 
             _hPopupItem = NULL;
+
+            // Redraw the tree view. Note: Only required when using custom draw.
+            ::InvalidateRect(_TreeView.Get(), nullptr, FALSE);
+            ::UpdateWindow(_TreeView.Get());
             break;
         }
 
@@ -248,7 +252,7 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
 
     switch (nmhd->code)
     {
-#ifndef CustomDraw
+#ifdef SimpleCustomDraw
         case NM_CUSTOMDRAW:
         {
             if (_IsDUI)
@@ -319,30 +323,49 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
         }
 #endif
 
-#ifdef FullCustomDraw
+#ifndef FullCustomDraw
         case NM_CUSTOMDRAW:
         {
-            auto tvcd = (const NMTVCUSTOMDRAW *) nmhd;
+            const auto tvcd = (NMTVCUSTOMDRAW *) nmhd;
 
-            const HWND hTreeView = tvcd->nmcd.hdr.hwndFrom;
-            const HDC hDC        = tvcd->nmcd.hdc;
+            const auto hTreeView = tvcd->nmcd.hdr.hwndFrom;
+            const auto hDC       = tvcd->nmcd.hdc;
 
             switch (tvcd->nmcd.dwDrawStage)
             {
                 case CDDS_PREPAINT:
                 {
+                    // Draw the control background. Note: Only required when using custom draw.
+                    {
+                        RECT rc;
+
+                        ::GetClientRect(hTreeView, &rc);
+
+                        auto hBrush = ::CreateSolidBrush(_Theme.GetWindowColor());
+
+                        ::FillRect(hDC, &rc, hBrush);
+
+                        ::DeleteObject(hBrush);
+                    }
+
                     return CDRF_NOTIFYITEMDRAW; // Request item-specific notifications.
                 }
 
                 case CDDS_ITEMPREPAINT:
                 {
+                    const RECT & rcItem = tvcd->nmcd.rc;
+
+                    if ((rcItem.right - rcItem.left) == 0)
+                        return CDRF_SKIPDEFAULT;
+
                     const auto hItem = (HTREEITEM) tvcd->nmcd.dwItemSpec;
 
+                    // Get information about the item.
                     wchar_t Text[512];
 
                     const TVITEMEX tvi
                     {
-                        .mask       = TVIF_TEXT | TVIF_IMAGE | TVIF_STATE,
+                        .mask       = TVIF_TEXT | TVIF_IMAGE | TVIF_STATE | TVIF_CHILDREN,
                         .hItem      = hItem,
                         .stateMask  = 0xFF,
                         .pszText    = Text,
@@ -351,55 +374,30 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
 
                     TreeView_GetItem(hTreeView, &tvi);
 
-                    const RECT & rcItem = tvcd->nmcd.rc;
+                    const auto HasFocus      = (::GetFocus() == hTreeView);
+                    const auto HasChildren   = (tvi.cChildren != 0);
+                    const auto IsSelected    = ((tvi.state & TVIS_SELECTED) != 0);
+                    const auto IsHighlighted = ((tvi.state & TVIS_DROPHILITED) != 0);
+                    const auto IsHot         = ((tvcd->nmcd.uItemState & CDIS_HOT) != 0);
 
-                    // Draw the background.
-                    if (tvi.state & TVIS_SELECTED)
+                    // Get bounding rectangle of the item text.
+                    RECT rcText;
+
+                    TreeView_GetItemRect(hTreeView, hItem, &rcText, TRUE);
+
+                    const LONG ImageSize = rcText.bottom - rcText.top;
+
+                    RECT rc = rcItem;
+
+                    rc.left += ImageSize * tvcd->iLevel;
+
+                    // Draw a chevron for a Folder node.
                     {
-                        HBRUSH hBrush = ::CreateSolidBrush(_Theme.GetColor(COLOR_HIGHLIGHT));
-
-                        ::FillRect(hDC, &rcItem, hBrush);
-
-                        ::DeleteObject(hBrush);
-                    }
-                    else
-                    if (tvi.state & TVIS_DROPHILITED)
-                    {
-                        auto c1 = (int32_t) _Theme.GetColor(COLOR_WINDOW);
-                        auto c2 = (int32_t) _Theme.GetColor(COLOR_HIGHLIGHT);
-
-                        auto v1 = c1 & 0xFF;
-                        auto v2 = c2 & 0xFF;
-
-                        auto r = v1 + ::MulDiv(v2 - v1, 50, 100); c1 >>= 8; c2 >>= 8;
-
-                        v1 = c1 & 0xFF;
-                        v2 = c2 & 0xFF;
-
-                        auto g = v1 + ::MulDiv(v2 - v1, 50, 100); c1 >>= 8; c2 >>= 8;
-
-                        v1 = c1 & 0xFF;
-                        v2 = c2 & 0xFF;
-
-                        auto b = v1 + ::MulDiv(v2 - v1, 50, 100);
-
-                        HBRUSH hBrush = ::CreateSolidBrush(RGB(r, g, b));
-
-                        ::FillRect(hDC, &rcItem, hBrush);
-
-                        ::DeleteObject(hBrush);
-                    }
-
-                    {
-                        RECT rc = rcItem;
-
-                        rc.left += 16 * tvcd->iLevel;
-
-                        if (tvi.iImage == NodeType::Folder)
+                        if (HasChildren)
                         {
                             RECT rcChev = rc;
 
-                            rcChev.right = rcChev.left + 16;
+                            rcChev.right = rcChev.left + ImageSize;
 
                             // Get the font height.
                             NONCLIENTMETRICSW ncm { sizeof(ncm) };
@@ -424,7 +422,7 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
                             {
                                 .dwSize = sizeof(Options),
                                 .dwFlags = DTT_TEXTCOLOR,
-                                .crText = _Theme.GetColor(COLOR_WINDOWTEXT)
+                                .crText = _Theme.GetWindowTextColor()
                             };
 
                             ::DrawThemeTextEx(hTheme, hDC, 0, 0, (tvi.state & TVIS_EXPANDED) ? ChevronDown : ChevronRight, -1, DT_CENTER | DT_VCENTER | DT_SINGLELINE, &rcChev, &Options);
@@ -436,31 +434,130 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
                             ::DeleteObject(hFont);
                         }
 
-                        rc.left += 16;          // Skip past the chevron.
-
-                        // Draw the image.
-                        ::ImageList_Draw(_hImageList, tvi.iImage, hDC, rc.left, rcItem.top, ILD_NORMAL);
-
-                        rc.left += 1 + 16 + 1;  // Skip past the icon.
-
-                        // Draw the text.
-                        const HTHEME hTheme = ::OpenThemeData(nullptr, L"TEXTSTYLE");
-
-                        const DTTOPTS Options =
-                        {
-                            .dwSize = sizeof(Options),
-                            .dwFlags = DTT_TEXTCOLOR,
-                            .crText = (tvi.state & TVIS_SELECTED) ? _Theme.GetColor(COLOR_HIGHLIGHTTEXT) : _Theme.GetColor(COLOR_WINDOWTEXT)
-                        };
-
-                        ::DrawThemeTextEx(hTheme, hDC, 0, 0, Text, -1, DT_LEFT | DT_SINGLELINE, &rc, &Options);
-
-                        ::CloseThemeData(hTheme);
+                        rc.left += ImageSize;
                     }
 
-                    // Draw the focus rectangle.
-                    if (tvcd->nmcd.uItemState & CDIS_FOCUS)
-                        ::DrawFocusRect(hDC, &rcItem);
+                    // Draw background.
+                    {
+                        rc.right = rc.left + 1 + ImageSize + 1 + 3 + (rcText.right - rcText.left);
+
+                        if (IsSelected)
+                        {
+                            COLORREF Color = HasFocus ? _Theme.GetSelectionColor() : _Theme.GetInactiveSelectionColor();
+
+                            if (_IsDUI)
+                            {
+                                const int Mix = _DarkMode ? 80 : 20;
+
+                                auto c1 = (int32_t) _Theme.GetWindowColor();
+                                auto c2 = (int32_t) Color;
+
+                                auto v1 = c1 & 0xFF;
+                                auto v2 = c2 & 0xFF;
+
+                                auto r = v1 + ::MulDiv(v2 - v1, Mix, 100); c1 >>= 8; c2 >>= 8;
+
+                                v1 = c1 & 0xFF;
+                                v2 = c2 & 0xFF;
+
+                                auto g = v1 + ::MulDiv(v2 - v1, Mix, 100); c1 >>= 8; c2 >>= 8;
+
+                                v1 = c1 & 0xFF;
+                                v2 = c2 & 0xFF;
+
+                                auto b = v1 + ::MulDiv(v2 - v1, Mix, 100);
+
+                                Color = RGB(r, g, b);
+                            }
+
+                            HBRUSH hBrush = ::CreateSolidBrush(Color);
+
+                            ::FillRect(hDC, &rc, hBrush);
+
+                            // Draw the focus rectangle.
+                            auto hPen = ::CreatePen(PS_SOLID, 1, _Theme.GetWindowTextColor());
+
+                            auto hOldBrush = ::SelectObject(hDC, hBrush);
+                            auto hOldPen = ::SelectObject(hDC, hPen);
+
+                            ::RoundRect(hDC, rc.left, rc.top, rc.right, rc.bottom, 1, 1);
+
+                            ::SelectObject(hDC, hOldPen);
+                            ::SelectObject(hDC, hOldBrush);
+
+                            ::DeleteObject(hPen);
+                            ::DeleteObject(hBrush);
+                        }
+                        else
+                        if (IsHot || IsHighlighted)
+                        {
+                            COLORREF Color = _Theme.GetHighlightColor();
+
+                            if (_IsDUI)
+                            {
+                                const int Mix = _DarkMode ? 80 : 20;
+
+                                auto c1 = (int32_t) _Theme.GetWindowColor();
+                                auto c2 = (int32_t) Color;
+
+                                auto v1 = c1 & 0xFF;
+                                auto v2 = c2 & 0xFF;
+
+                                auto r = v1 + ::MulDiv(v2 - v1, Mix, 100); c1 >>= 8; c2 >>= 8;
+
+                                v1 = c1 & 0xFF;
+                                v2 = c2 & 0xFF;
+
+                                auto g = v1 + ::MulDiv(v2 - v1, Mix, 100); c1 >>= 8; c2 >>= 8;
+
+                                v1 = c1 & 0xFF;
+                                v2 = c2 & 0xFF;
+
+                                auto b = v1 + ::MulDiv(v2 - v1, Mix, 100);
+
+                                Color = RGB(r, g, b);
+                            }
+
+                            HBRUSH hBrush = ::CreateSolidBrush(Color);
+
+                            ::FillRect(hDC, &rc, hBrush);
+
+                            ::DeleteObject(hBrush);
+                        }
+                    }
+
+                    // Draw the image.
+                    {
+                        const LONG dx = ((1 + ImageSize + 1) - 16) / 2;
+                        const LONG dy = (ImageSize           - 16) / 2;
+
+                        ::ImageList_Draw(_hImageList, tvi.iImage, hDC, rc.left + dx, rc.top + dy, ILD_NORMAL);
+
+                        rc.left += 1 + ImageSize + 1 + 3;
+                    }
+
+                    // Draw the text.
+                    {
+                        const COLORREF Color = IsSelected ? (HasFocus ? _Theme.GetSelectionTextColor() : _Theme.GetInactiveSelectionTextColor()) : ((IsHot || IsHighlighted) ? _Theme.GetHighlightTextColor() : _Theme.GetWindowTextColor());
+
+                        const HTHEME hTheme = ::OpenThemeData(nullptr, L"TEXTSTYLE");
+
+                        if (hTheme != NULL)
+                        {
+                            const DTTOPTS Options =
+                            {
+                                .dwSize = sizeof(Options),
+                                .dwFlags = DTT_TEXTCOLOR,
+                                .crText = Color
+                            };
+
+                            rc.right = rc.left + (rcText.right - rcText.left);
+
+                            ::DrawThemeTextEx(hTheme, hDC, 0, 0, Text, -1, DT_LEFT | DT_SINGLELINE, &rc, &Options);
+
+                            ::CloseThemeData(hTheme);
+                        }
+                    }
 
                     return CDRF_SKIPDEFAULT; // Skip all other stages because we've drawn the complete item.
                 }
@@ -736,7 +833,7 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
         // Handles a parent item's list of child items has expanded or collapsed. Note: This is only required when using Custom Draw.
         case TVN_ITEMEXPANDED:
         {
-            ::InvalidateRect(_TreeView.Get(), nullptr, TRUE);
+            ::InvalidateRect(_TreeView.Get(), nullptr, FALSE);
             ::UpdateWindow(_TreeView.Get());
 
             return TRUE;
@@ -780,6 +877,10 @@ void playlist_uielement_t::on_items_added(size_t playlistIndex, size_t start, co
     auto Id = _PlaylistManager->playlist_get_guid(playlistIndex);
 
     _TreeView.RefreshItem(Id);
+
+    // Redraw the tree view. Note: Only required when using custom draw.
+    ::InvalidateRect(_TreeView.Get(), nullptr, FALSE);
+    ::UpdateWindow(_TreeView.Get());
 }
 
 /// <summary>
@@ -803,6 +904,10 @@ void playlist_uielement_t::on_items_removed(size_t playlistIndex, const bit_arra
     auto Id = _PlaylistManager->playlist_get_guid(playlistIndex);
 
     _TreeView.RefreshItem(Id);
+
+    // Redraw the tree view. Note: Only required when using custom draw.
+    ::InvalidateRect(_TreeView.Get(), nullptr, FALSE);
+    ::UpdateWindow(_TreeView.Get());
 }
 
 /// <summary>
@@ -881,6 +986,10 @@ void playlist_uielement_t::on_playlist_created(size_t index, const char * name, 
     _TreeView.AddItem(ParentId, InsertAfterId, Id, Name.c_str(), false, false);
 
     _hPopupItem = NULL;
+
+    // Redraw the tree view. Note: Only required when using custom draw.
+    ::InvalidateRect(_TreeView.Get(), nullptr, FALSE);
+    ::UpdateWindow(_TreeView.Get());
 }
 
 /// <summary>
@@ -1086,7 +1195,16 @@ void playlist_uielement_t::SelectPlaylist(size_t index) const noexcept
 /// </summary>
 DWORD playlist_uielement_t::GetDropEffect(DWORD keyState, const POINT & pt) noexcept
 {
-    _hDropTarget = _TreeView.GetItem(pt);
+    auto hItem = _TreeView.GetItem(pt);
+
+    if (hItem != _hDropTarget)
+    {
+        _TreeView.SetState(_hDropTarget, 0, TVIS_DROPHILITED);
+
+        _hDropTarget = hItem;
+
+        _TreeView.SetState(_hDropTarget, TVIS_DROPHILITED);
+    }
 
     if (keyState & MK_CONTROL)
         return DROPEFFECT_MOVE;
@@ -1131,6 +1249,10 @@ void playlist_uielement_t::DropFiles(const std::vector<std::wstring> & filePaths
         // Add the handles to the playlist and select them.
         _PlaylistManager->playlist_add_items(Index, Handles, bit_array_true());
     }
+
+    // Redraw the tree view. Note: Only required when using custom draw.
+    ::InvalidateRect(_TreeView.Get(), nullptr, FALSE);
+    ::UpdateWindow(_TreeView.Get());
 }
 
 /// <summary>
@@ -1191,7 +1313,7 @@ std::string playlist_uielement_t::GetConfiguration() const noexcept
     Object["nodes"] = Nodes;
 
     #ifdef _DEBUG
-    ::OutputDebugStringA(Object.dump(4).c_str());
+    Log.Write(Object.dump(4).c_str());
     #endif
 
     const auto Config = Object.dump(-1);

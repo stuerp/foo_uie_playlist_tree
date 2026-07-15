@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.h (2026.07.13) P. Stuer **/
+/** $VER: PlaylistsUIElement.h (2026.07.15) P. Stuer **/
 
 #pragma once
 

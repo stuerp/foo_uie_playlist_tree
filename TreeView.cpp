@@ -1,5 +1,5 @@
 
-/** $VER: TreeView.cpp (2026.07.13) P. Stuer **/
+/** $VER: TreeView.cpp (2026.07.15) P. Stuer **/
 
 #include "pch.h"
 
@@ -68,9 +68,7 @@ bool tree_view_t::RedrawItem(HTREEITEM hItem) const noexcept
     if (!TreeView_GetItemRect(_hTreeView, hItem, &r, FALSE))
         return false;
 
-    ::InvalidateRect(Get(), &r, TRUE);
-
-    return true;
+    return (::InvalidateRect(Get(), &r, TRUE) != 0);
 }
 
 /// <summary>
@@ -271,6 +269,25 @@ bool tree_view_t::GetState(HTREEITEM hItem, UINT & state) const noexcept
         return false;
 
     state = tvi.state; 
+
+    return true;
+}
+
+/// <summary>
+/// Sets the state of the specified item.
+/// </summary>
+bool tree_view_t::SetState(HTREEITEM hItem, UINT state, UINT stateMask) const noexcept
+{
+    TVITEMEXW tvi =
+    {
+        .mask      = TVIF_STATE,
+        .hItem     = hItem,
+        .state     = state,
+        .stateMask = stateMask,
+    };
+
+    if (!TreeView_SetItem(_hTreeView, &tvi))
+        return false;
 
     return true;
 }

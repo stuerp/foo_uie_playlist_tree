@@ -112,7 +112,8 @@ void cui_element_t::GetColors() noexcept
     _Theme.SetInactiveSelectionColor    (Helper.get_colour(cui::colours::colour_inactive_selection_background));
     _Theme.SetInactiveSelectionTextColor(Helper.get_colour(cui::colours::colour_inactive_selection_text));
 
-    _Theme.SetActiveItemFrameColor      (Helper.get_colour(cui::colours::colour_active_item_frame));
+    _Theme.SetHighlightColor            (Helper.get_colour(cui::colours::colour_selection_background));
+    _Theme.SetHighlightTextColor        (Helper.get_colour(cui::colours::colour_selection_text));
 
     TreeView_SetBkColor  (_TreeView.Get(), _Theme.GetWindowColor());
     TreeView_SetTextColor(_TreeView.Get(), _Theme.GetWindowTextColor());
