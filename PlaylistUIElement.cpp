@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.cpp (2026.07.15) P. Stuer **/
+/** $VER: PlaylistsUIElement.cpp (2026.07.16) P. Stuer **/
 
 #include "pch.h"
 
@@ -870,6 +870,10 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
                 _PlaylistManager->playlist_rename(Index, Node->Name.c_str(), Node->Name.size());
             }
 
+            // Redraw the tree view. Note: Only required when using custom draw.
+            ::InvalidateRect(_TreeView.Get(), nullptr, FALSE);
+            ::UpdateWindow(_TreeView.Get());
+
             return TRUE; // Keep the text.
         }
 
@@ -909,9 +913,10 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
             break;
         }
 
-        // Handles a parent item's list of child items has expanded or collapsed. Note: This is only required when using Custom Draw.
+        // Handles a parent item's list of child items has expanded or collapsed.
         case TVN_ITEMEXPANDED:
         {
+            // Redraw the tree view. Note: Only required when using custom draw.
             ::InvalidateRect(_TreeView.Get(), nullptr, FALSE);
             ::UpdateWindow(_TreeView.Get());
 
@@ -1214,7 +1219,8 @@ void playlist_uielement_t::FromJSON(json object, const GUID & parentId) noexcept
         bool IsFolder   = Node.value("isFolder", IsFolder);
         bool IsExpanded = Node.value("isExpanded", IsExpanded);
 
-        GUID Id = pfc::GUID_from_text(IdText.c_str());
+        const GUID Id = msc::UTF8ToGUID(IdText);
+//      Id = pfc::GUID_from_text(IdText.c_str());
 
         if (Id == GUID())
             continue; // Should not happen...
@@ -1378,7 +1384,8 @@ std::string playlist_uielement_t::GetConfiguration() const noexcept
             if ((Node == nullptr) || ((Node != nullptr) && (Node->Id == GUID())))
                 return true; // Continue enumerating. Should not occur.
 
-            (*node)["id"]       = pfc::print_guid(Node->Id).c_str();
+//          (*node)["id"]       = pfc::print_guid(Node->Id).c_str();
+            (*node)["id"]       = msc::GUIDToUTF8(Node->Id);
             (*node)["name"]     = Node->Name;
             (*node)["isFolder"] = Node->IsFolder;
 

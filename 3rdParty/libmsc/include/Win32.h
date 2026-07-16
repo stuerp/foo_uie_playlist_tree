@@ -1,5 +1,5 @@
 
-/** $VER: Win32.h (2026.07.08) P. Stuer **/
+/** $VER: Win32.h (2026.07.16) P. Stuer **/
 
 #pragma once
 
@@ -100,11 +100,11 @@ namespace msc
         return WideToUTF8(GUIDToWide(id));
     }
 
-    GUID GUIDFromWide(const std::wstring & text) noexcept;
+    GUID WideToGUID(const std::wstring & text) noexcept;
 
-    inline GUID GUIDFromUTF8(const std::string & text) noexcept
+    inline GUID UTF8ToGUID(const std::string & text) noexcept
     {
-        return GUIDFromWide(UTF8ToWide(text));
+        return WideToGUID(UTF8ToWide(text));
     }
 }
 

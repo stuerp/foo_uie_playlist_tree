@@ -15,24 +15,24 @@ std::wstring GUIDToWide(const GUID & id) noexcept
 {
     OLECHAR Text[39] = { }; // {00000000-0000-0000-0000-000000000000}\0
 
-    assert(::StringFromGUID2(id, Text, (int) _countof(Text)) == _countof(Text));
+    (void) ::StringFromGUID2(id, Text, (int) _countof(Text));
 
-    return std::wstring(Text, 38);
+    return std::wstring(Text);
 }
 
 /// <summary>
 /// Converts a wide string to a GUID.
 /// </summary>
-GUID GUIDFromWide(const std::wstring & text) noexcept
+GUID WideToGUID(const std::wstring & text) noexcept
 {
-    GUID id;
+    GUID Id;
 
-    HRESULT hResult = ::IIDFromString(text.c_str(), &id);
+    HRESULT hResult = ::IIDFromString(text.c_str(), &Id);
 
     if (!SUCCEEDED(hResult))
-        return GUID{};
+        return GUID();
 
-    return id;
+    return Id;
 }
 
 }
