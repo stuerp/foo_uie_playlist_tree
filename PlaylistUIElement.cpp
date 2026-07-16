@@ -870,6 +870,9 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
                 _PlaylistManager->playlist_rename(Index, Node->Name.c_str(), Node->Name.size());
             }
 
+            // Recalculate the item rectangle.
+            _TreeView.RefreshItem(Node->Id);
+
             // Redraw the tree view. Note: Only required when using custom draw.
             ::InvalidateRect(_TreeView.Get(), nullptr, FALSE);
             ::UpdateWindow(_TreeView.Get());
