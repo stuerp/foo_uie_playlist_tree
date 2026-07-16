@@ -190,7 +190,7 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
         // Handles the "Rename" command.
         case IDM_RENAME:
         {
-            _TreeView.EditSelectedItem();
+            _TreeView.EditItem(_hPopupItem);
             break;
         }
 
@@ -199,7 +199,7 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
         {
             _IsUser = true;
 
-            _TreeView.RemoveSelectedItem();
+            _TreeView.RemoveItem(_hPopupItem);
 
             _IsUser = false;
             break;

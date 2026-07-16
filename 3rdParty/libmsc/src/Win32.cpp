@@ -1,5 +1,5 @@
 
-/** $VER: Win32.cpp (2026.07.15) P. Stuer - Win32 routines **/
+/** $VER: Win32.cpp (2026.07.16) P. Stuer - Win32 routines **/
 
 #include "pch.h"
 
@@ -13,9 +13,9 @@ namespace msc
 /// </summary>
 std::wstring GUIDToWide(const GUID & id) noexcept
 {
-    OLECHAR Text[39]; // {00000000-0000-0000-0000-000000000000}\0
+    OLECHAR Text[39] = { }; // {00000000-0000-0000-0000-000000000000}\0
 
-    assert(::StringFromGUID2(id, (LPOLESTR) Text, (int) _countof(Text)) == _countof(Text));
+    assert(::StringFromGUID2(id, Text, (int) _countof(Text)) == _countof(Text));
 
     return std::wstring(Text, 38);
 }
@@ -30,7 +30,7 @@ GUID GUIDFromWide(const std::wstring & text) noexcept
     HRESULT hResult = ::IIDFromString(text.c_str(), &id);
 
     if (!SUCCEEDED(hResult))
-        return { };
+        return GUID{};
 
     return id;
 }

@@ -44,6 +44,11 @@ public:
 
     bool IsExpanded(const GUID & id) const noexcept;
 
+    bool RemoveItem(HTREEITEM hItem) const noexcept
+    {
+        return tree_view_t::RemoveItem(hItem);
+    }
+
     /// <summary>
     /// Serializes this instance to JSON.
     /// </summary>
