@@ -214,6 +214,4 @@ private:
 
     HIMAGELIST _hDragImageList = NULL;
     DropZone _DropZone = DropZone::Unknown;
-
-    const UINT Mask =  TVIF_STATE | TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_PARAM;
 };

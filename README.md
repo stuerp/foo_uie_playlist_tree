@@ -77,7 +77,7 @@ To create the component first build the x86 configuration and next the x64 confi
 
 ## Change Log
 
-v1.1.0.0, 2026-07-17
+v1.1.0.0, 2026-07-16
 
 * New: [User Guide](https://github.com/stuerp/foo_uie_playlist_tree/blob/main/docs/README.md).
 * New: **Load playlist**, **Save playlist** and **Save all playlists** commands.

@@ -1280,6 +1280,7 @@ DWORD playlist_uielement_t::GetDropEffect(DWORD keyState, const POINT & pt) noex
 {
     auto hItem = _TreeView.GetItem(pt);
 
+    // Highlight the drop target.
     if (hItem != _hDropTarget)
     {
         _TreeView.SetState(_hDropTarget, 0, TVIS_DROPHILITED);
