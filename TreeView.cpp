@@ -1,5 +1,5 @@
 
-/** $VER: TreeView.cpp (2026.07.15) P. Stuer **/
+/** $VER: TreeView.cpp (2026.07.16) P. Stuer **/
 
 #include "pch.h"
 
@@ -43,7 +43,7 @@ HTREEITEM tree_view_t::AddItem(HTREEITEM hParent, HTREEITEM hInsertAfter, UINT s
         .hInsertAfter = hInsertAfter,
         .item         =
         {
-            .mask           = Mask,
+            .mask           = TVIF_STATE | TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_PARAM,
             .state          = state,
             .stateMask      = 0xFF,
             .pszText        = LPSTR_TEXTCALLBACKW,
@@ -78,7 +78,7 @@ bool tree_view_t::RefreshItem(HTREEITEM hItem) const noexcept
 {
     const TVITEMEXW tvi =
     {
-        .mask           = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE,// | TVIF_CHILDREN,
+        .mask           = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE, // | TVIF_CHILDREN,
         .hItem          = hItem,
         .pszText        = LPSTR_TEXTCALLBACK,
         .iImage         = I_IMAGECALLBACK,
@@ -136,8 +136,9 @@ void tree_view_t::MoveItem(HTREEITEM hPivotItem, HTREEITEM hChildItem, DropZone 
     {
         .item =
         {
-            .mask       = Mask,
+            .mask       = TVIF_STATE | TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_PARAM,
             .hItem      = hChildItem,
+            .stateMask  = TVIS_EXPANDED | TVIS_EXPANDEDONCE | TVIS_EXPANDPARTIAL,
             .pszText    = Text,
             .cchTextMax = _countof(Text),
         }

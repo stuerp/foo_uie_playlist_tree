@@ -9,7 +9,7 @@ It attempts to recreate the functionality of [foo_plorg](https://wiki.hydrogenau
 
 - Supports the Default User Interface (DUI) and the [Columns User Interface](https://yuo.be/columns-ui) (CUI).
 - Supports dark mode.
-- Supports foobar2000 2.0 and later (Intel 32-bit/64-bit version).
+- Supports foobar2000 2.0 and later (Intel 32-bit/64-bit and ARM64EC version).
 - Custom Title Formatting fields.
 - Configurable tree node images.
 - Drag & drop from foobar2000, Explorer and other applications.
@@ -77,13 +77,14 @@ To create the component first build the x86 configuration and next the x64 confi
 
 ## Change Log
 
-v1.1.0.0, 2026-07-15
+v1.1.0.0, 2026-07-16
 
 * New: [User Guide](https://github.com/stuerp/foo_uie_playlist_tree/blob/main/docs/README.md).
 * New: **Load playlist**, **Save playlist** and **Save all playlists** commands.
 * New: ARM64EC version.
 * Improved: Usability
 * Improved: DUI and CUI rendering.
+* Fixed: A nasty bug in the serialization/deserialization of the component state that occurred only in the Release build. As a result this version will reset the state to its default.
 
 ## Acknowledgements / Credits
 

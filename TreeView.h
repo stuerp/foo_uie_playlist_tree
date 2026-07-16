@@ -1,5 +1,5 @@
 
-/** $VER: TreeView.h (2026.07.15) P. Stuer **/
+/** $VER: TreeView.h (2026.07.16) P. Stuer **/
 
 #pragma once
 
@@ -74,23 +74,23 @@ public:
 
     HTREEITEM AddItem(HTREEITEM hParent, HTREEITEM hInsertAfter, UINT state, const void * data) const noexcept;
 
-    bool RemoveItem(HTREEITEM hItem) const noexcept
-    {
-        return (TreeView_DeleteItem(_hTreeView, hItem) == TRUE);
-    }
-
     bool RemoveSelectedItem() const noexcept
     {
         return RemoveItem(GetSelectedItem());
     }
 
+    bool RemoveItem(HTREEITEM hItem) const noexcept
+    {
+        return (TreeView_DeleteItem(_hTreeView, hItem) == TRUE);
+    }
+
     HWND EditSelectedItem() const noexcept
     {
-        auto hItem = GetSelectedItem();
+        return EditItem(GetSelectedItem());
+    }
 
-        if (hItem == NULL)
-            return NULL;
-
+    HWND EditItem(HTREEITEM hItem) const noexcept
+    {
         return TreeView_EditLabel(_hTreeView, hItem);
     }
 
@@ -214,6 +214,4 @@ private:
 
     HIMAGELIST _hDragImageList = NULL;
     DropZone _DropZone = DropZone::Unknown;
-
-    const UINT Mask =  TVIF_STATE | TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_PARAM;
 };

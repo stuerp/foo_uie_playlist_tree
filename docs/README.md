@@ -96,6 +96,18 @@ Removes the highlighted item.
 
 Sorts the contents of the highlighed folder or the siblings of the selected playlist.
 
+`Save playlist...`
+
+Saves the playlist the mouse pointer is hovering over.
+
+`Save all playlists...`
+
+Saves all the playlists.
+
+`Load playlist...`
+
+Loads a playlist.
+
 `Restore`
 
 Allows you to restore a playlist that has been removed during the current session from the foobar200 playlist recycle bin.
@@ -248,7 +260,10 @@ This chapter contains some reference material I consulted during the development
 - [Windows Controls](https://learn.microsoft.com/en-us/windows/win32/controls/window-controls)
 - [Control Library](https://learn.microsoft.com/en-us/windows/win32/controls/individual-control-info)
 - [Resource-Definition Statements](https://learn.microsoft.com/en-us/windows/win32/menurc/resource-definition-statements)
+- [About Custom Draw](https://learn.microsoft.com/en-us/windows/win32/controls/about-custom-draw)
+- [Control Parts and States](https://learn.microsoft.com/en-us/windows/win32/controls/parts-and-states)
 - [Visuals, Layout](https://learn.microsoft.com/en-us/windows/win32/uxguide/vis-layout)
+- [The Old New Thing](https://devblogs.microsoft.com/oldnewthing/tag/what-a-drag)
 
 ### Various
 
