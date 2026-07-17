@@ -1,5 +1,5 @@
 
-/** $VER: Theme.h (2026.07.15) P. Stuer **/
+/** $VER: Theme.h (2026.07.17) P. Stuer **/
 
 #pragma once
 
@@ -10,18 +10,17 @@
 #include <SDKDDKVer.h>
 #include <Windows.h>
 
+#include <SDK\coreDarkMode.h>
+
 class theme_t
 {
 public:
-    void Initialize(bool isDark) noexcept
-    {
-        _IsDark = isDark;
-    }
+    ~theme_t() noexcept;
 
-    bool IsDark() const noexcept
-    {
-        return _IsDark;
-    }
+    HRESULT Initialize() noexcept;
+
+    HFONT GetFont() const noexcept { return _hFont; }
+    HTHEME GetTextStyle() const noexcept { return _hTextStyle; }
 
     COLORREF GetWindowColor() const noexcept { return _ColorWindow; }
     COLORREF GetWindowTextColor() const noexcept { return _ColorWindowText; }
@@ -32,25 +31,54 @@ public:
     COLORREF GetInactiveSelectionColor() const noexcept { return _ColorInactiveSelection; }
     COLORREF GetInactiveSelectionTextColor() const noexcept { return _ColorInactiveSelectionText; }
 
-    COLORREF GetHighlightColor() const noexcept { return _ColorHighLight; }
-    COLORREF GetHighlightTextColor() const noexcept { return _ColorHighLightText; }
+    COLORREF GetHighlightColor() const noexcept { return _ColorHighlight; }
+    COLORREF GetHighlightTextColor() const noexcept { return _ColorHighlightText; }
 
-    void SetWindowColor(COLORREF color) noexcept { _ColorWindow = color; }
-    void SetWindowTextColor(COLORREF color) noexcept { _ColorWindowText = color; }
+    void SetWindowColor(COLORREF color) noexcept
+    {
+        if (_hWindowBrush != NULL)
+            ::DeleteObject(_hWindowBrush);
 
-    void SetSelectionColor(COLORREF color) noexcept { _ColorSelection = color; }
+        _ColorWindow = color;
+
+        _hWindowBrush = ::CreateSolidBrush(color);
+    }
+
+    void SetWindowTextColor(COLORREF color) noexcept
+    {
+        if (_hWindowTextPen != NULL)
+            ::DeleteObject(_hWindowTextPen);
+
+        _ColorWindowText = color;
+
+        _hWindowTextPen = ::CreatePen(PS_SOLID, 1, color);
+    }
+
+    void SetSelectionColor(COLORREF color) noexcept;
     void SetSelectionTextColor(COLORREF color) noexcept { _ColorSelectionText = color; }
 
-    void SetInactiveSelectionColor(COLORREF color) noexcept { _ColorInactiveSelection = color; }
+    void SetInactiveSelectionColor(COLORREF color) noexcept;
     void SetInactiveSelectionTextColor(COLORREF color) noexcept { _ColorInactiveSelectionText = color; }
 
-    void SetHighlightColor(COLORREF color) noexcept { _ColorHighLight = color; }
-    void SetHighlightTextColor(COLORREF color) noexcept { _ColorHighLightText = color; }
+    void SetHighlightColor(COLORREF color) noexcept;
+    void SetHighlightTextColor(COLORREF color) noexcept { _ColorHighlightText = color; }
 
     void SetActiveItemFrameColor(COLORREF color) noexcept { _ColorActiveItemFrame = color; }
 
+    HBRUSH GetWindowBrush() const noexcept { return _hWindowBrush; }
+    HPEN GetWindowTextPen() const noexcept { return _hWindowTextPen; }
+
 private:
-    bool _IsDark;
+    void Dispose() noexcept;
+
+    COLORREF Blend(COLORREF a, COLORREF b) noexcept;
+
+public:
+    bool _IsDUI = true; // Ugly but I don't know any API to detect if DUI or CUI is active, independent from a panel.
+
+private:
+    HFONT _hFont = NULL;
+    HTHEME _hTextStyle = NULL;
 
     COLORREF _ColorWindow                = 0x202020;
     COLORREF _ColorWindowText            = 0xC0C0C0;
@@ -61,12 +89,15 @@ private:
     COLORREF _ColorInactiveSelection     = 0x747474;
     COLORREF _ColorInactiveSelectionText = 0xFFFFFF;
 
-    COLORREF _ColorHighLight             = 0x747474;
-    COLORREF _ColorHighLightText         = 0xFFFFFF;
+    COLORREF _ColorHighlight             = 0x747474;
+    COLORREF _ColorHighlightText         = 0xFFFFFF;
 
     COLORREF _ColorActiveItemFrame       = 0xFFFFFF;
 
     COLORREF _ColorHotLight              = 0xD69C56;
+
+    HBRUSH _hWindowBrush = NULL;
+    HPEN _hWindowTextPen = NULL;
 };
 
 extern theme_t _Theme;

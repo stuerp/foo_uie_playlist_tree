@@ -1,5 +1,5 @@
 
-/** $VER: DUIElement.cpp (2026.07.15) P. Stuer - Implements Default User Interface support **/
+/** $VER: DUIElement.cpp (2026.07.17) P. Stuer - Implements Default User Interface support **/
 
 #include "pch.h"
 
@@ -16,9 +16,12 @@
 /// </summary>
 dui_element_t::dui_element_t(ui_element_config::ptr data, ui_element_instance_callback::ptr callback) : m_callback(callback)
 {
-    _IsDUI = true;
+    _Theme._IsDUI = true;
 
     set_configuration(data);
+
+    // Call here before the colors have been initialized.
+    _Theme.Initialize();
 
     GetColors();
 }

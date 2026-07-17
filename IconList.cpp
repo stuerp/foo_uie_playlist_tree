@@ -1,5 +1,5 @@
 
-/** $VER: IconList.cpp (2026.07.12) P. Stuer **/
+/** $VER: IconList.cpp (2026.07.17) P. Stuer **/
 
 #include "pch.h"
 
@@ -69,7 +69,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 if (Instance->hListView == NULL)
                     return -1;
 
-                ::SetWindowTheme(Instance->hListView, _Theme.IsDark() ? L"DarkMode_Explorer" : nullptr, nullptr);
+                ::SetWindowTheme(Instance->hListView, ui_config_manager::get()->is_dark_mode() ? L"DarkMode_Explorer" : nullptr, nullptr);
             }
 
             return 0;

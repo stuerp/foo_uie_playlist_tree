@@ -1,5 +1,5 @@
 
-/** $VER: UIElement.cpp (2026.07.12) P. Stuer **/
+/** $VER: UIElement.cpp (2026.07.17) P. Stuer **/
 
 #include "pch.h"
 
@@ -14,7 +14,6 @@
 /// </summary>
 uielement_t::uielement_t() : m_bMsgHandled(FALSE)
 {
-    _Theme.Initialize(_DarkMode);
 }
 
 /// <summary>

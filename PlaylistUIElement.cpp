@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.cpp (2026.07.16) P. Stuer **/
+/** $VER: PlaylistsUIElement.cpp (2026.07.17) P. Stuer **/
 
 #include "pch.h"
 
@@ -399,17 +399,13 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
             {
                 case CDDS_PREPAINT:
                 {
-                    // Draw the control background. Note: Only required when using custom draw.
+                    // Draw the control background.
                     {
                         RECT rc;
 
                         ::GetClientRect(hTreeView, &rc);
 
-                        auto hBrush = ::CreateSolidBrush(_Theme.GetWindowColor());
-
-                        ::FillRect(hDC, &rc, hBrush);
-
-                        ::DeleteObject(hBrush);
+                        ::FillRect(hDC, &rc, _Theme.GetWindowBrush());
                     }
 
                     return CDRF_NOTIFYITEMDRAW; // Request item-specific notifications.
@@ -463,24 +459,12 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
 
                             rcChev.right = rcChev.left + ImageSize;
 
-                            // Get the font height.
-                            NONCLIENTMETRICSW ncm { sizeof(ncm) };
-
-                            ::SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(ncm), &ncm, 0);
-
-                            const LOGFONTW & lf = ncm.lfMessageFont;
-
-                            // Create the font.
-                            const HFONT hFont = ::CreateFontW(lf.lfHeight, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH, L"Segoe Fluent Icons");
-
-                            const auto hOldFont = (HFONT) ::SelectObject(hDC, hFont);
+                            const auto hOldFont = (HFONT) ::SelectObject(hDC, _Theme.GetFont());
 
                         //  const wchar_t * ChevronLeft  = L"\uE76B";
                             const wchar_t * ChevronRight = L"\uE76C";
                             const wchar_t * ChevronDown  = L"\uE70D";
                         //  const wchar_t * ChevronUp    = L"\uE70E";
-
-                            const HTHEME hTheme = ::OpenThemeData(nullptr, L"TEXTSTYLE");
 
                             const DTTOPTS Options =
                             {
@@ -489,13 +473,9 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
                                 .crText = _Theme.GetWindowTextColor()
                             };
 
-                            ::DrawThemeTextEx(hTheme, hDC, 0, 0, (tvi.state & TVIS_EXPANDED) ? ChevronDown : ChevronRight, -1, DT_CENTER | DT_VCENTER | DT_SINGLELINE, &rcChev, &Options);
-
-                            ::CloseThemeData(hTheme);
+                            ::DrawThemeTextEx(_Theme.GetTextStyle(), hDC, 0, 0, (tvi.state & TVIS_EXPANDED) ? ChevronDown : ChevronRight, -1, DT_CENTER | DT_VCENTER | DT_SINGLELINE, &rcChev, &Options);
 
                             ::SelectObject(hDC, hOldFont);
-
-                            ::DeleteObject(hFont);
                         }
 
                         rc.left += ImageSize;
@@ -509,37 +489,12 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
                         {
                             COLORREF Color = HasFocus ? _Theme.GetSelectionColor() : _Theme.GetInactiveSelectionColor();
 
-                            if (_IsDUI)
-                            {
-                                const int Mix = _DarkMode ? 80 : 20;
-
-                                auto c1 = (int32_t) _Theme.GetWindowColor();
-                                auto c2 = (int32_t) Color;
-
-                                auto v1 = c1 & 0xFF;
-                                auto v2 = c2 & 0xFF;
-
-                                auto r = v1 + ::MulDiv(v2 - v1, Mix, 100); c1 >>= 8; c2 >>= 8;
-
-                                v1 = c1 & 0xFF;
-                                v2 = c2 & 0xFF;
-
-                                auto g = v1 + ::MulDiv(v2 - v1, Mix, 100); c1 >>= 8; c2 >>= 8;
-
-                                v1 = c1 & 0xFF;
-                                v2 = c2 & 0xFF;
-
-                                auto b = v1 + ::MulDiv(v2 - v1, Mix, 100);
-
-                                Color = RGB(r, g, b);
-                            }
-
                             HBRUSH hBrush = ::CreateSolidBrush(Color);
 
                             ::FillRect(hDC, &rc, hBrush);
 
                             // Draw the focus rectangle.
-                            auto hPen = ::CreatePen(PS_SOLID, 1, _Theme.GetWindowTextColor());
+                            auto hPen = _Theme.GetWindowTextPen();
 
                             auto hOldBrush = ::SelectObject(hDC, hBrush);
                             auto hOldPen = ::SelectObject(hDC, hPen);
@@ -549,38 +504,12 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
                             ::SelectObject(hDC, hOldPen);
                             ::SelectObject(hDC, hOldBrush);
 
-                            ::DeleteObject(hPen);
                             ::DeleteObject(hBrush);
                         }
                         else
                         if (IsHot || IsHighlighted)
                         {
                             COLORREF Color = _Theme.GetHighlightColor();
-
-                            if (_IsDUI)
-                            {
-                                const int Mix = _DarkMode ? 80 : 20;
-
-                                auto c1 = (int32_t) _Theme.GetWindowColor();
-                                auto c2 = (int32_t) Color;
-
-                                auto v1 = c1 & 0xFF;
-                                auto v2 = c2 & 0xFF;
-
-                                auto r = v1 + ::MulDiv(v2 - v1, Mix, 100); c1 >>= 8; c2 >>= 8;
-
-                                v1 = c1 & 0xFF;
-                                v2 = c2 & 0xFF;
-
-                                auto g = v1 + ::MulDiv(v2 - v1, Mix, 100); c1 >>= 8; c2 >>= 8;
-
-                                v1 = c1 & 0xFF;
-                                v2 = c2 & 0xFF;
-
-                                auto b = v1 + ::MulDiv(v2 - v1, Mix, 100);
-
-                                Color = RGB(r, g, b);
-                            }
 
                             HBRUSH hBrush = ::CreateSolidBrush(Color);
 
@@ -604,23 +533,16 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
                     {
                         const COLORREF Color = IsSelected ? (HasFocus ? _Theme.GetSelectionTextColor() : _Theme.GetInactiveSelectionTextColor()) : ((IsHot || IsHighlighted) ? _Theme.GetHighlightTextColor() : _Theme.GetWindowTextColor());
 
-                        const HTHEME hTheme = ::OpenThemeData(nullptr, L"TEXTSTYLE");
-
-                        if (hTheme != NULL)
+                        const DTTOPTS Options =
                         {
-                            const DTTOPTS Options =
-                            {
-                                .dwSize = sizeof(Options),
-                                .dwFlags = DTT_TEXTCOLOR,
-                                .crText = Color
-                            };
+                            .dwSize = sizeof(Options),
+                            .dwFlags = DTT_TEXTCOLOR,
+                            .crText = Color
+                        };
 
-                            rc.right = rc.left + (rcText.right - rcText.left);
+                        rc.right = rc.left + (rcText.right - rcText.left);
 
-                            ::DrawThemeTextEx(hTheme, hDC, 0, 0, Text, -1, DT_LEFT | DT_SINGLELINE, &rc, &Options);
-
-                            ::CloseThemeData(hTheme);
-                        }
+                        ::DrawThemeTextEx(_Theme.GetTextStyle(), hDC, 0, 0, Text, -1, DT_LEFT | DT_SINGLELINE, &rc, &Options);
                     }
 
                     return CDRF_SKIPDEFAULT; // Skip all other stages because we've drawn the complete item.
@@ -1344,6 +1266,8 @@ void playlist_uielement_t::DropFiles(const std::vector<std::wstring> & filePaths
 /// </summary>
 void playlist_uielement_t::Refresh() noexcept
 {
+    _Theme.Initialize();
+
     HRESULT hResult = InitImageList();
 
     if (!SUCCEEDED(hResult))

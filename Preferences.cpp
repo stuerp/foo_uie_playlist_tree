@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.cpp (2026.07.13) P. Stuer **/
+/** $VER: Preferences.cpp (2026.07.17) P. Stuer **/
 
 #include "pch.h"
 
@@ -24,12 +24,12 @@
 /// <summary>
 /// Implements the preferences page for the component.
 /// </summary>
-class preferences_t : public CDialogImpl<preferences_t>, public preferences_page_instance
+class preferences_t : public CDialogImpl<preferences_t>, public preferences_page_instance, public ui_config_callback
 {
 public:
     preferences_t(preferences_page_callback::ptr callback) : m_bMsgHandled(FALSE), _Callback(callback)
     {
-        _Theme.Initialize(_DarkMode);
+        _Theme.Initialize();
 
         icon_list_t::Register(THIS_HINSTANCE);
     }
@@ -40,6 +40,14 @@ public:
     {
         IDD = IDD_PREFERENCES
     };
+
+	//! Called when user changes configuration of fonts.
+	virtual void ui_fonts_changed() {}
+
+	//! Called when user changes configuration of colors (also as a result of toggling dark mode). \n
+	virtual void ui_colors_changed()
+    {
+    }
 
     #pragma region preferences_page_instance
 
@@ -112,7 +120,7 @@ public:
         COMMAND_HANDLER_EX(IDC_TEXT_FORMAT, EN_CHANGE,      OnEditChange)
         COMMAND_HANDLER_EX(IDC_FILE_PATH,   EN_CHANGE,      OnEditChange)
 
-        COMMAND_HANDLER_EX(IDC_NODE_TYPE,  CBN_SELCHANGE,  OnSelectionChange)
+        COMMAND_HANDLER_EX(IDC_NODE_TYPE,   CBN_SELCHANGE,  OnSelectionChange)
 
         MSG_WM_NOTIFY(OnNotify);
     END_MSG_MAP()

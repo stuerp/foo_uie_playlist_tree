@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.h (2026.07.15) P. Stuer **/
+/** $VER: PlaylistsUIElement.h (2026.07.17) P. Stuer **/
 
 #pragma once
 
@@ -123,7 +123,6 @@ private:
     HRESULT InitImageList() noexcept;
 
 protected:
-    bool _IsDUI = true;
     playlist_tree_view_t _TreeView;
 
 private:
