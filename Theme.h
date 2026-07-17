@@ -34,25 +34,8 @@ public:
     COLORREF GetHighlightColor() const noexcept { return _ColorHighlight; }
     COLORREF GetHighlightTextColor() const noexcept { return _ColorHighlightText; }
 
-    void SetWindowColor(COLORREF color) noexcept
-    {
-        if (_hWindowBrush != NULL)
-            ::DeleteObject(_hWindowBrush);
-
-        _ColorWindow = color;
-
-        _hWindowBrush = ::CreateSolidBrush(color);
-    }
-
-    void SetWindowTextColor(COLORREF color) noexcept
-    {
-        if (_hWindowTextPen != NULL)
-            ::DeleteObject(_hWindowTextPen);
-
-        _ColorWindowText = color;
-
-        _hWindowTextPen = ::CreatePen(PS_SOLID, 1, color);
-    }
+    void SetWindowColor(COLORREF color) noexcept;
+    void SetWindowTextColor(COLORREF color) noexcept;
 
     void SetSelectionColor(COLORREF color) noexcept;
     void SetSelectionTextColor(COLORREF color) noexcept { _ColorSelectionText = color; }
@@ -67,6 +50,11 @@ public:
 
     HBRUSH GetWindowBrush() const noexcept { return _hWindowBrush; }
     HPEN GetWindowTextPen() const noexcept { return _hWindowTextPen; }
+
+    HBRUSH GetSelectionBrush() const noexcept { return _hSelectionBrush; }
+    HBRUSH GetInactiveSelectionBrush() const noexcept { return _hInactiveSelectionBrush; }
+
+    HBRUSH GetHighlightBrush() const noexcept { return _hHighlightBrush; }
 
 private:
     void Dispose() noexcept;
@@ -98,6 +86,11 @@ private:
 
     HBRUSH _hWindowBrush = NULL;
     HPEN _hWindowTextPen = NULL;
+
+    HBRUSH _hSelectionBrush = NULL;
+    HBRUSH _hInactiveSelectionBrush = NULL;
+
+    HBRUSH _hHighlightBrush = NULL;
 };
 
 extern theme_t _Theme;

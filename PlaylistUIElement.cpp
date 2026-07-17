@@ -487,14 +487,12 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
 
                         if (IsSelected)
                         {
-                            COLORREF Color = HasFocus ? _Theme.GetSelectionColor() : _Theme.GetInactiveSelectionColor();
-
-                            HBRUSH hBrush = ::CreateSolidBrush(Color);
+                            HBRUSH hBrush = HasFocus ? _Theme.GetSelectionBrush() : _Theme.GetInactiveSelectionBrush();
 
                             ::FillRect(hDC, &rc, hBrush);
 
                             // Draw the focus rectangle.
-                            auto hPen = _Theme.GetWindowTextPen();
+                            HPEN hPen = _Theme.GetWindowTextPen();
 
                             auto hOldBrush = ::SelectObject(hDC, hBrush);
                             auto hOldPen = ::SelectObject(hDC, hPen);
@@ -503,19 +501,13 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
 
                             ::SelectObject(hDC, hOldPen);
                             ::SelectObject(hDC, hOldBrush);
-
-                            ::DeleteObject(hBrush);
                         }
                         else
                         if (IsHot || IsHighlighted)
                         {
-                            COLORREF Color = _Theme.GetHighlightColor();
-
-                            HBRUSH hBrush = ::CreateSolidBrush(Color);
+                            HBRUSH hBrush = _Theme.GetHighlightBrush();
 
                             ::FillRect(hDC, &rc, hBrush);
-
-                            ::DeleteObject(hBrush);
                         }
                     }
 
