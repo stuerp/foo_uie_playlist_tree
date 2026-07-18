@@ -42,6 +42,7 @@
     <ClInclude Include="Tracker.h" />
     <ClInclude Include="DropTarget.h" />
     <ClInclude Include="CUIColorClient.h" />
+    <ClInclude Include="TreeViewSubclass.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />

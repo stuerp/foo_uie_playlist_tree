@@ -77,9 +77,15 @@ To create the component first build the x86 configuration and next the x64 confi
 
 ## Change Log
 
-v1.1.1.0, 2026-xx-xx
+v1.1.1.0-beta1, 2026-07-18
 
-* Improved: Minor code tweaks to better support light/dark mode switches.
+* New: You can use the middle mouse button to remove a folder or playlist.
+* Improved: Major optimization of drop operations.
+* Improved: Minor code tweaks to better support switching between light and dark mode.
+
+## Known Bugs
+
+* A drop operation from an external source causes an expanded tree node to collapse without redrawing correctly.
 
 ## Acknowledgements / Credits
 

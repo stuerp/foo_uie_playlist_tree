@@ -48,6 +48,9 @@ public:
         return true;
     }
 
+    /// <summary>
+    /// Gets the selected item.
+    /// </summary>
     HTREEITEM GetSelectedItem() const noexcept
     {
         return TreeView_GetSelection(_hTreeView);

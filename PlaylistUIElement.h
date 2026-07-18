@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.h (2026.07.17) P. Stuer **/
+/** $VER: PlaylistsUIElement.h (2026.07.18) P. Stuer **/
 
 #pragma once
 
@@ -9,10 +9,10 @@
 #include "FolderManager.h"
 #include "PlaylistTreeView.h"
 #include "Tracker.h"
+#include "TreeViewSubclass.h"
 #include "UIElement.h"
 
 #include <SDK\playlist.h>
-#include <SDK\playlist_loader.h>
 
 /// <summary>
 /// Implements the user interface element base class.
@@ -30,7 +30,7 @@ public:
     virtual ~playlist_uielement_t();
 
     DWORD GetDropEffect(DWORD keyState, const POINT & pt) noexcept;
-    void DropFiles(const std::vector<std::wstring> & filePaths) noexcept;
+    void DropFiles(IDataObject * dataObject) noexcept;
 
     void Refresh() noexcept;
 
@@ -62,6 +62,7 @@ private:
         MSG_WM_DESTROY(OnDestroy);
 
         MSG_WM_COMMAND(OnCommand);
+
         MSG_WM_NOTIFY(OnNotify);
 
         MSG_WM_MOUSEMOVE(OnMouseMove);
@@ -134,6 +135,7 @@ private:
     HTREEITEM _hDropTarget = NULL;
     HTREEITEM _hPopupItem = NULL;
 
+    treeview_subclass_t _TreeViewSubclass;
     edit_subclass_t _EditSubclass;
 
     bool _IsPlaying = false;
@@ -141,6 +143,35 @@ private:
     bool _IsUser = false;
 
     IDropTarget * _DropTarget = nullptr;
+};
+
+/// <summary>
+/// Implements a notification handler for process_dropped_files_async().
+/// </summary>
+class drop_notification_handler_t : public process_locations_notify
+{
+public:
+    drop_notification_handler_t(size_t playlistIndex, bool selectDroppedItems) : _PlaylistIndex(playlistIndex), _SelectDroppedItems(selectDroppedItems) { }
+
+    drop_notification_handler_t(const drop_notification_handler_t &) = delete;
+    drop_notification_handler_t & operator=(const drop_notification_handler_t &) = delete;
+    drop_notification_handler_t(drop_notification_handler_t &&) = delete;
+    drop_notification_handler_t & operator=(drop_notification_handler_t &&) = delete;
+
+    virtual ~drop_notification_handler_t() = default;
+
+    void on_completion(const pfc::list_base_const_t<metadb_handle_ptr> & items)
+    {
+        static_api_ptr_t<playlist_manager> PlaylistManager;
+
+        PlaylistManager->playlist_add_items(_PlaylistIndex, items, (_SelectDroppedItems ? (const bit_array &) bit_array_true() : (const bit_array &) bit_array_false()));
+    }
+
+    void on_aborted() { }
+
+private:
+    size_t _PlaylistIndex;
+    bool _SelectDroppedItems;
 };
 
 extern tracker_t<playlist_uielement_t> _UIElementTracker;

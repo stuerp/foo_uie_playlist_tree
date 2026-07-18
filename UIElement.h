@@ -48,7 +48,7 @@ protected:
 protected:
     #pragma region CWindowImpl
 
-    virtual LRESULT OnCreate(LPCREATESTRUCT cs) noexcept;
+    virtual LRESULT OnCreate(CREATESTRUCT * cs) noexcept;
     virtual void OnDestroy() noexcept;
     virtual void OnSize(UINT nType, CSize size) noexcept;
 

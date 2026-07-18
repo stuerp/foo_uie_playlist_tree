@@ -22,17 +22,17 @@ public:
     }
 
 private:
-    static LRESULT CALLBACK EditProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+    static LRESULT CALLBACK EditProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
-        auto self = (edit_subclass_t *) ::GetWindowLongPtrW(hwnd, GWLP_USERDATA);
+        auto self = (edit_subclass_t *) ::GetWindowLongPtrW(hWnd, GWLP_USERDATA);
 
         if ((self == nullptr) || (self->_OldWndProc == nullptr))
-            return ::DefWindowProcW(hwnd, msg, wParam, lParam);
+            return ::DefWindowProcW(hWnd, msg, wParam, lParam);
 
         if (msg == WM_GETDLGCODE)
-            return DLGC_WANTALLKEYS | CallWindowProc(self->_OldWndProc, hwnd, msg, wParam, lParam); // Request all keys so the Edit control doesn't swallow Enter/Escape.
+            return DLGC_WANTALLKEYS | CallWindowProc(self->_OldWndProc, hWnd, msg, wParam, lParam); // Request all keys so the Edit control doesn't swallow Enter/Escape.
 
-        return ::CallWindowProcW(self->_OldWndProc, hwnd, msg, wParam, lParam);
+        return ::CallWindowProcW(self->_OldWndProc, hWnd, msg, wParam, lParam);
     }
 
 private:

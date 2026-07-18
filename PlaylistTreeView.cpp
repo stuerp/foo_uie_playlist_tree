@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsTreeView.cpp (2026.07.14) P. Stuer **/
+/** $VER: PlaylistsTreeView.cpp (2026.07.18) P. Stuer **/
 
 #include "pch.h"
 
@@ -128,6 +128,21 @@ HTREEITEM playlist_tree_view_t::GetItem(const POINT & pt) const noexcept
     auto hItem = tree_view_t::GetItem(pt);
 
     return hItem;
+}
+
+/// <summary>
+/// Gets the selected item.
+/// </summary>
+node_t * playlist_tree_view_t::GetSelectedItem() const noexcept
+{
+    auto hItem = tree_view_t::GetSelectedItem();
+
+    if (hItem == NULL)
+        return nullptr;
+
+    auto Node = (node_t *) GetData(hItem);
+
+    return Node;
 }
 
 /// <summary>

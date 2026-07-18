@@ -368,6 +368,7 @@
     <ClInclude Include="Resources.h" />
     <ClInclude Include="State.h" />
     <ClInclude Include="TreeView.h" />
+    <ClInclude Include="TreeViewSubclass.h" />
     <ClInclude Include="UIElement.h" />
     <ClInclude Include="Tracker.h" />
   </ItemGroup>

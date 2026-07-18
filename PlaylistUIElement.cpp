@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.cpp (2026.07.17) P. Stuer **/
+/** $VER: PlaylistsUIElement.cpp (2026.07.18) P. Stuer **/
 
 #include "pch.h"
 
@@ -50,6 +50,8 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
         if (!_TreeView.Create(m_hWnd, IDC_TREEVIEW))
             return -1;
 
+        _TreeViewSubclass.Attach(_TreeView.Get());
+
         _DarkMode.AddCtrlAuto(_TreeView.Get());
 
         {
@@ -77,7 +79,7 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
     {
         HRESULT hResult = ::OleInitialize(nullptr);
 
-        _DropTarget = new drop_target_t(m_hWnd, this);
+        _DropTarget = new drop_target_t(_TreeView.Get(), this);
 
         hResult = ::RegisterDragDrop(m_hWnd, _DropTarget);
 
@@ -316,80 +318,10 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
 
     switch (nmhd->code)
     {
-#ifdef SimpleCustomDraw
+        // Handles a right mouse button click within the control.
         case NM_CUSTOMDRAW:
         {
-            if (_IsDUI)
-                break;
-
-            auto tvcd = (NMTVCUSTOMDRAW *) nmhd;
-
-            const auto hTreeView = tvcd->nmcd.hdr.hwndFrom;
-            const auto hDC        = tvcd->nmcd.hdc;
-
-            switch (tvcd->nmcd.dwDrawStage)
-            {
-                case CDDS_PREPAINT:
-                {
-                    // Draw the control background.
-                    RECT rc;
-
-                    ::GetClientRect(hTreeView, &rc);
-
-                    HBRUSH hBrush = ::CreateSolidBrush(_Theme.GetWindowColor());
-
-                    ::FillRect(hDC, &rc, hBrush);
-
-                    ::DeleteObject(hBrush);
-
-                    return CDRF_NOTIFYITEMDRAW; // Request item-specific notifications.
-                }
-
-                case CDDS_ITEMPREPAINT:
-                {
-                    const auto hItem = (HTREEITEM) tvcd->nmcd.dwItemSpec;
-
-                    const TVITEMEX tvi
-                    {
-                        .mask       = TVIF_STATE,
-                        .hItem      = hItem,
-                        .stateMask = 0xFF,
-                    };
-
-                    TreeView_GetItem(hTreeView, &tvi);
-
-                    const auto HasFocus      = (::GetFocus() == hTreeView);
-                    const auto IsSelected    = ((tvi.state & TVIS_SELECTED) != 0);
-                    const auto IsHighlighted = ((tvi.state & TVIS_DROPHILITED) != 0);
-                    const auto IsHot         = ((tvcd->nmcd.uItemState & CDIS_HOT) != 0);
-
-                    if (IsSelected || IsHighlighted)
-                    {
-                        tvcd->clrText   = HasFocus ? _Theme.GetSelectionTextColor() : _Theme.GetInactiveSelectionTextColor();
-                        tvcd->clrTextBk = HasFocus ? _Theme.GetSelectionColor()     : _Theme.GetInactiveSelectionColor();
-                    }
-                    else
-                    if (IsHot)
-                    {
-                        tvcd->clrText   = _Theme.GetHighlightTextColor();
-                        tvcd->clrTextBk = _Theme.GetHighlightColor();
-                    }
-                    else
-                    {
-                        tvcd->clrText   = _Theme.GetWindowTextColor();
-                        tvcd->clrTextBk = _Theme.GetWindowColor();
-                    }
-
-                    return CDRF_NEWFONT; // Tell the control we've changed colors.
-                }
-            }
-            break;
-        }
-#endif
-
-#ifndef FullCustomDraw
-        case NM_CUSTOMDRAW:
-        {
+        #ifndef FullCustomDraw
             const auto tvcd = (NMTVCUSTOMDRAW *) nmhd;
 
             const auto hTreeView = tvcd->nmcd.hdr.hwndFrom;
@@ -399,6 +331,7 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
             {
                 case CDDS_PREPAINT:
                 {
+        /*
                     // Draw the control background.
                     {
                         RECT rc;
@@ -407,6 +340,8 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
 
                         ::FillRect(hDC, &rc, _Theme.GetWindowBrush());
                     }
+        */
+                    SetMsgHandled(TRUE);
 
                     return CDRF_NOTIFYITEMDRAW; // Request item-specific notifications.
                 }
@@ -416,7 +351,7 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
                     const RECT & rcItem = tvcd->nmcd.rc;
 
                     if ((rcItem.right - rcItem.left) == 0)
-                        return CDRF_SKIPDEFAULT;
+                        return CDRF_DODEFAULT;
 
                     const auto hItem = (HTREEITEM) tvcd->nmcd.dwItemSpec;
 
@@ -446,6 +381,13 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
                     TreeView_GetItemRect(hTreeView, hItem, &rcText, TRUE);
 
                     const LONG ImageSize = rcText.bottom - rcText.top;
+
+                    // Clear the background of the full item.
+                    {
+                        HBRUSH hBrush = _Theme.GetWindowBrush();
+
+                        ::FillRect(hDC, &rcItem, hBrush);
+                    }
 
                     RECT rc = rcItem;
 
@@ -537,13 +479,89 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
                         ::DrawThemeTextEx(_Theme.GetTextStyle(), hDC, 0, 0, Text, -1, DT_LEFT | DT_SINGLELINE, &rc, &Options);
                     }
 
+                    SetMsgHandled(TRUE);
+
                     return CDRF_SKIPDEFAULT; // Skip all other stages because we've drawn the complete item.
                 }
-            }
 
+                default:
+                {
+                    SetMsgHandled(FALSE);
+
+                    return CDRF_DODEFAULT;
+                }
+            }
+        #endif
+
+        #ifdef SimpleCustomDraw
+            if (_IsDUI)
+                break;
+
+            auto tvcd = (NMTVCUSTOMDRAW *) nmhd;
+
+            const auto hTreeView = tvcd->nmcd.hdr.hwndFrom;
+            const auto hDC        = tvcd->nmcd.hdc;
+
+            switch (tvcd->nmcd.dwDrawStage)
+            {
+                case CDDS_PREPAINT:
+                {
+                    // Draw the control background.
+                    RECT rc;
+
+                    ::GetClientRect(hTreeView, &rc);
+
+                    HBRUSH hBrush = ::CreateSolidBrush(_Theme.GetWindowColor());
+
+                    ::FillRect(hDC, &rc, hBrush);
+
+                    ::DeleteObject(hBrush);
+
+                    return CDRF_NOTIFYITEMDRAW; // Request item-specific notifications.
+                }
+
+                case CDDS_ITEMPREPAINT:
+                {
+                    const auto hItem = (HTREEITEM) tvcd->nmcd.dwItemSpec;
+
+                    const TVITEMEX tvi
+                    {
+                        .mask       = TVIF_STATE,
+                        .hItem      = hItem,
+                        .stateMask = 0xFF,
+                    };
+
+                    TreeView_GetItem(hTreeView, &tvi);
+
+                    const auto HasFocus      = (::GetFocus() == hTreeView);
+                    const auto IsSelected    = ((tvi.state & TVIS_SELECTED) != 0);
+                    const auto IsHighlighted = ((tvi.state & TVIS_DROPHILITED) != 0);
+                    const auto IsHot         = ((tvcd->nmcd.uItemState & CDIS_HOT) != 0);
+
+                    if (IsSelected || IsHighlighted)
+                    {
+                        tvcd->clrText   = HasFocus ? _Theme.GetSelectionTextColor() : _Theme.GetInactiveSelectionTextColor();
+                        tvcd->clrTextBk = HasFocus ? _Theme.GetSelectionColor()     : _Theme.GetInactiveSelectionColor();
+                    }
+                    else
+                    if (IsHot)
+                    {
+                        tvcd->clrText   = _Theme.GetHighlightTextColor();
+                        tvcd->clrTextBk = _Theme.GetHighlightColor();
+                    }
+                    else
+                    {
+                        tvcd->clrText   = _Theme.GetWindowTextColor();
+                        tvcd->clrTextBk = _Theme.GetWindowColor();
+                    }
+
+                    return CDRF_NEWFONT; // Tell the control we've changed colors.
+                }
+            }
+        #endif
             break;
         }
-#endif
+
         // Handles a right mouse button click within the control.
         case NM_RCLICK:
         {
@@ -622,7 +640,10 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
             }
 
             ::DestroyMenu(hMenu);
-            break;
+
+            SetMsgHandled(FALSE);
+
+            return FALSE;
         }
 
         // Handles a need for display or sort info.
@@ -671,7 +692,10 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
                     tvi.iImage = tvi.iSelectedImage = Image;
                 }
             }
-            break;
+
+            SetMsgHandled(FALSE);
+
+            return FALSE;
         }
 
         // Handles a change of the selected item.
@@ -690,6 +714,8 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
                 break;
 
             _PlaylistManager->set_active_playlist(Index);
+
+            SetMsgHandled(FALSE);
             break;
         }
 
@@ -730,6 +756,8 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
             }
 
             delete Node;
+
+            SetMsgHandled(FALSE);
             break;
         }
 
@@ -753,6 +781,8 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
             ::SetWindowTextW(hEdit, (LPCWSTR) msc::UTF8ToWide(Node->Name).c_str());
 
             ::SetFocus(hEdit);
+
+            SetMsgHandled(FALSE);
 
             return FALSE;
         }
@@ -791,6 +821,8 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
             ::InvalidateRect(_TreeView.Get(), nullptr, FALSE);
             ::UpdateWindow(_TreeView.Get());
 
+            SetMsgHandled(FALSE);
+
             return TRUE; // Keep the text.
         }
 
@@ -818,7 +850,9 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
                 }
             }
 
-            break;
+            SetMsgHandled(FALSE);
+
+            return FALSE;
         }
 
         // Handles the initiation of a drag-and-drop operation involving the left mouse button.
@@ -827,9 +861,24 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
             const auto nmtv = (NMTREEVIEWW *) nmhd;
 
             _TreeView.BeginDrag(nmtv);
-            break;
-        }
 
+            SetMsgHandled(FALSE);
+
+            return FALSE;
+        }
+/*
+        // Handles a parent item's list of child itemss is about to expand or collapse.
+        case TVN_ITEMEXPANDING:
+        {
+            const auto nmtv = (NMTREEVIEWW *) nmhd;
+
+            // Redraw the tree view. Note: Only required when using custom draw.
+            ::InvalidateRect(_TreeView.Get(), nullptr, FALSE);
+            ::UpdateWindow(_TreeView.Get());
+
+            return FALSE; // Allow expand.
+        }
+*/
         // Handles a parent item's list of child items has expanded or collapsed.
         case TVN_ITEMEXPANDED:
         {
@@ -837,7 +886,22 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
             ::InvalidateRect(_TreeView.Get(), nullptr, FALSE);
             ::UpdateWindow(_TreeView.Get());
 
+            SetMsgHandled(FALSE);
+
             return TRUE;
+        }
+
+        // Handles a middle button up (custom) notification.
+        case TVN_MBUTTONUP:
+        {
+            _IsUser = true;
+
+            const auto nmtv = (NMTREEVIEWW *) nmhd;
+
+            _TreeView.RemoveItem(nmtv->itemOld.hItem);
+
+            _IsUser = false;
+            break;
         }
     }
 
@@ -922,7 +986,7 @@ void playlist_uielement_t::on_items_selection_change(size_t playlistIndex, const
 /// </summary>
 void playlist_uielement_t::on_item_focus_change(size_t playlistIndex, size_t from, size_t to) noexcept
 {}
-	
+    
 /// <summary>
 /// 
 /// </summary>
@@ -1213,7 +1277,7 @@ DWORD playlist_uielement_t::GetDropEffect(DWORD keyState, const POINT & pt) noex
 /// <summary>
 /// Drops the specified files an the tree view.
 /// </summary>
-void playlist_uielement_t::DropFiles(const std::vector<std::wstring> & filePaths) noexcept
+void playlist_uielement_t::DropFiles(IDataObject * dataObject) noexcept
 {
     auto Node = (const node_t *) _TreeView.GetData(_hDropTarget);
 
@@ -1229,24 +1293,21 @@ void playlist_uielement_t::DropFiles(const std::vector<std::wstring> & filePaths
             return;
     }
 
-    {
-        metadb_handle_list Handles;
+    #pragma warning(disable: 4302) // 'type cast': truncation from 'LPWSTR' to 'WORD'
+    ::SetCursor(::LoadCursorW(NULL, MAKEINTRESOURCE(IDC_APPSTARTING)));
 
-        static_api_ptr_t<metadb_io> IO;
+    static_api_ptr_t<playlist_incoming_item_filter_v2>()->process_dropped_files_async
+    (
+        dataObject,
+        playlist_incoming_item_filter_v2::op_flag_delay_ui,
+        core_api::get_main_window(),
+        new service_impl_t<drop_notification_handler_t>(Index, true)
+    );
 
-        for (const auto & FilePath : filePaths)
-        {
-            metadb_handle_list Temp;
+    _PlaylistManager->set_active_playlist(Index);
 
-            // Properly resolve paths (including archive subsongs, canonicalization, etc.)
-            IO->path_to_handles_simple(msc::WideToUTF8(FilePath).c_str(), Temp);
-
-            Handles.add_items(Temp);
-        }
-
-        // Add the handles to the playlist and select them.
-        _PlaylistManager->playlist_add_items(Index, Handles, bit_array_true());
-    }
+    ::SetCursor(::LoadCursorW(NULL, MAKEINTRESOURCE(IDC_ARROW)));
+    #pragma warning(default: 4302)
 
     // Redraw the tree view. Note: Only required when using custom draw.
     ::InvalidateRect(_TreeView.Get(), nullptr, FALSE);

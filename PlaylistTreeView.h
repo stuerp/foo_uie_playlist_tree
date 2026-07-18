@@ -40,6 +40,8 @@ public:
 
     HTREEITEM GetItem(const POINT & pt) const noexcept;
 
+    node_t * GetSelectedItem() const noexcept;
+
     bool RefreshItem(const GUID & id) const noexcept;
 
     bool IsExpanded(const GUID & id) const noexcept;
