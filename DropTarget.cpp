@@ -191,7 +191,7 @@ void drop_target_t::ExamineDataObject(IDataObject * dataObject) const noexcept
                 FormatName = "<Unknown format>";
         }
 
-        Log.Write("Format: 0x%04X %s", fmt.cfFormat, FormatName.c_str());
+        Log.AtDebug().Write("Format: 0x%04X %s", fmt.cfFormat, FormatName.c_str());
     }
 
     EnumFORMATETC->Release();

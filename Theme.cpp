@@ -8,8 +8,6 @@
 #include "Resources.h"
 #include "Log.h"
 
-#include <ui_extension.h>
-
 #pragma hdrstop
 
 theme_t _Theme;

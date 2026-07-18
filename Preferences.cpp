@@ -17,7 +17,6 @@
 #include "ImageList.h"
 #include "Theme.h"
 #include "TitleFormat.h"
-#include "Log.h"
 
 #pragma hdrstop
 
@@ -41,11 +40,11 @@ public:
         IDD = IDD_PREFERENCES
     };
 
-	//! Called when user changes configuration of fonts.
-	virtual void ui_fonts_changed() {}
+    //! Called when user changes configuration of fonts.
+    virtual void ui_fonts_changed() {}
 
-	//! Called when user changes configuration of colors (also as a result of toggling dark mode). \n
-	virtual void ui_colors_changed()
+    //! Called when user changes configuration of colors (also as a result of toggling dark mode). \n
+    virtual void ui_colors_changed()
     {
     }
 

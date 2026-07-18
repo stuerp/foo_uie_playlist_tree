@@ -202,6 +202,15 @@ public:
         return true;
     }
 
+    /// <summary>
+    /// Updates the control window.
+    /// </summary>
+    void Update() const noexcept
+    {
+        ::InvalidateRect(_hTreeView, nullptr, FALSE);
+        ::UpdateWindow(_hTreeView);
+    }
+
 protected:
     virtual bool AllowDrop(DropZone dropZone) noexcept = 0;
 

@@ -13,7 +13,6 @@
 #include "Log.h"
 
 #include <SDK\playlist.h>
-#include <SDK\metadb.h>
 
 #pragma hdrstop
 
@@ -58,7 +57,7 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
             HRESULT hResult = InitImageList();
 
             if (!SUCCEEDED(hResult))
-                Log.Write(STR_COMPONENT_BASENAME " failed to initialize image lists: 0x%08X", hResult);
+                Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to initialize image lists: 0x%08X", hResult);
         }
     }
 
@@ -84,7 +83,7 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
         hResult = ::RegisterDragDrop(m_hWnd, _DropTarget);
 
         if (!SUCCEEDED(hResult))
-            Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to register drop target: 0x08X", hResult);
+            Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to register a drop target: 0x08X", hResult);
     }
 
    _UIElementTracker.Add(this);
@@ -174,8 +173,7 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
             _hPopupItem = NULL;
 
             // Redraw the tree view. Note: Only required when using custom draw.
-            ::InvalidateRect(_TreeView.Get(), nullptr, FALSE);
-            ::UpdateWindow(_TreeView.Get());
+        //  _TreeView.Update();
             break;
         }
 
@@ -818,8 +816,7 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
             _TreeView.RefreshItem(Node->Id);
 
             // Redraw the tree view. Note: Only required when using custom draw.
-            ::InvalidateRect(_TreeView.Get(), nullptr, FALSE);
-            ::UpdateWindow(_TreeView.Get());
+        //  _TreeView.Update();
 
             SetMsgHandled(FALSE);
 
@@ -866,25 +863,12 @@ LRESULT playlist_uielement_t::OnNotify(int id, NMHDR * nmhd) noexcept
 
             return FALSE;
         }
-/*
-        // Handles a parent item's list of child itemss is about to expand or collapse.
-        case TVN_ITEMEXPANDING:
-        {
-            const auto nmtv = (NMTREEVIEWW *) nmhd;
 
-            // Redraw the tree view. Note: Only required when using custom draw.
-            ::InvalidateRect(_TreeView.Get(), nullptr, FALSE);
-            ::UpdateWindow(_TreeView.Get());
-
-            return FALSE; // Allow expand.
-        }
-*/
         // Handles a parent item's list of child items has expanded or collapsed.
         case TVN_ITEMEXPANDED:
         {
             // Redraw the tree view. Note: Only required when using custom draw.
-            ::InvalidateRect(_TreeView.Get(), nullptr, FALSE);
-            ::UpdateWindow(_TreeView.Get());
+        //  _TreeView.Update();
 
             SetMsgHandled(FALSE);
 
@@ -944,8 +928,7 @@ void playlist_uielement_t::on_items_added(size_t playlistIndex, size_t start, co
     _TreeView.RefreshItem(Id);
 
     // Redraw the tree view. Note: Only required when using custom draw.
-    ::InvalidateRect(_TreeView.Get(), nullptr, FALSE);
-    ::UpdateWindow(_TreeView.Get());
+//  _TreeView.Update();
 }
 
 /// <summary>
@@ -971,8 +954,7 @@ void playlist_uielement_t::on_items_removed(size_t playlistIndex, const bit_arra
     _TreeView.RefreshItem(Id);
 
     // Redraw the tree view. Note: Only required when using custom draw.
-    ::InvalidateRect(_TreeView.Get(), nullptr, FALSE);
-    ::UpdateWindow(_TreeView.Get());
+//  _TreeView.Update();
 }
 
 /// <summary>
@@ -1050,11 +1032,13 @@ void playlist_uielement_t::on_playlist_created(size_t index, const char * name, 
 
     _TreeView.AddItem(ParentId, InsertAfterId, Id, Name.c_str(), false, false);
 
+    // Activate the newly created playlist.
+    _PlaylistManager->set_active_playlist(index);
+
     _hPopupItem = NULL;
 
     // Redraw the tree view. Note: Only required when using custom draw.
-    ::InvalidateRect(_TreeView.Get(), nullptr, FALSE);
-    ::UpdateWindow(_TreeView.Get());
+//  _TreeView.Update();
 }
 
 /// <summary>
@@ -1310,8 +1294,7 @@ void playlist_uielement_t::DropFiles(IDataObject * dataObject) noexcept
     #pragma warning(default: 4302)
 
     // Redraw the tree view. Note: Only required when using custom draw.
-    ::InvalidateRect(_TreeView.Get(), nullptr, FALSE);
-    ::UpdateWindow(_TreeView.Get());
+    _TreeView.Update();
 }
 
 /// <summary>
@@ -1324,7 +1307,7 @@ void playlist_uielement_t::Refresh() noexcept
     HRESULT hResult = InitImageList();
 
     if (!SUCCEEDED(hResult))
-        Log.Write(STR_COMPONENT_BASENAME " failed to initialize image list: 0x%08", hResult);
+        Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to initialize image list: 0x%08", hResult);
 
     _TreeView.RefreshAllItems();
 }

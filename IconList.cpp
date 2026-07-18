@@ -6,7 +6,6 @@
 #include "IconList.h"
 
 #include "Theme.h"
-#include "Log.h"
 
 #pragma hdrstop
 
