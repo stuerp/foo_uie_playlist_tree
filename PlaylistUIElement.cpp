@@ -700,8 +700,8 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
 
             // Draw the image.
             {
-                const LONG dx = ((1 + ItemHeight + 1) - _State._IconSize) / 2;
-                const LONG dy = (     ItemHeight      - _State._IconSize) / 2;
+                const LONG dx = ((1 + ItemHeight + 1) - (LONG) _State._IconSize) / 2;
+                const LONG dy = (     ItemHeight      - (LONG) _State._IconSize) / 2;
 
                 ::ImageList_Draw(_hImageList, tvi.iImage, hDC, rc.left + dx, rc.top + dy, ILD_NORMAL);
 

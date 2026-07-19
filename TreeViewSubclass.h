@@ -7,7 +7,6 @@
 
 #include <SDKDDKVer.h>
 #include <Windows.h>
-#include <CommCtrl.h>
 
 #define NM_MCLICK   ((0U-9999U))
 
@@ -43,7 +42,7 @@ private:
         if ((self == nullptr) || (self->_OldWndProc == nullptr))
             return ::DefWindowProcW(hWnd, msg, wParam, lParam);
 
-        // Send a middle mouse button up notification.
+        // Send a middle mouse button click notification.
         if (msg == WM_MBUTTONUP)
         {
             const NMHDR nmhd

@@ -3,6 +3,11 @@
 
 #pragma once
 
+#define NOMINMAX
+
+#include <SDKDDKVer.h>
+#include <Windows.h>
+
 /// <summary>
 /// Subclasses an Edit control.
 /// </summary>

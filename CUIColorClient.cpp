@@ -5,9 +5,6 @@
 
 #include "CUIElement.h"
 #include "CUIColorClient.h"
-#include "Resources.h"
-#include "State.h"
-#include "Theme.h"
 
 #pragma hdrstop
 
