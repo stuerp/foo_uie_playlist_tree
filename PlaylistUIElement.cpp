@@ -665,7 +665,7 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
                 rc.left += ItemHeight;
             }
 
-            // Draw background.
+            // Draw the background.
             {
                 rc.right = rc.left + (1 + ItemHeight + 1) + 3 + (rcText.right - rcText.left);
 
