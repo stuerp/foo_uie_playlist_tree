@@ -1,5 +1,5 @@
 
-/** $VER: TreeView.cpp (2026.07.16) P. Stuer **/
+/** $VER: TreeView.cpp (2026.07.19) P. Stuer **/
 
 #include "pch.h"
 
@@ -13,6 +13,8 @@
 /// </summary>
 bool tree_view_t::Create(HWND hWndParent, size_t id) noexcept
 {
+    _Id = id;
+
     const DWORD Styles = WS_CHILD | WS_VISIBLE | WS_VSCROLL | TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | TVS_EDITLABELS | TVS_SHOWSELALWAYS | TVS_TRACKSELECT; // | TVS_SINGLEEXPAND | TVS_INFOTIP | TVS_FULLROWSELECT;
 
     _hTreeView = ::CreateWindowExW(0, WC_TREEVIEW, L"", Styles, 0, 0, 0, 0, hWndParent, (HMENU) id, THIS_HINSTANCE, nullptr);
@@ -30,6 +32,19 @@ void tree_view_t::Destroy() noexcept
 
     ::DestroyWindow(_hTreeView);
     _hTreeView = NULL;
+}
+
+/// <summary>
+/// Attaches an existing tree view control to this instance.
+/// </summary>
+void tree_view_t::Attach(HWND hTreeView) noexcept
+{
+    Destroy();
+
+    _hTreeView = hTreeView;
+    _Id = (size_t) ::GetWindowLongPtrW(_hTreeView, GWLP_ID);
+
+    _IsAttached = false;
 }
 
 /// <summary>
@@ -59,7 +74,16 @@ HTREEITEM tree_view_t::AddItem(HTREEITEM hParent, HTREEITEM hInsertAfter, UINT s
 }
 
 /// <summary>
-/// Forces an item to redraw.
+/// Redraws the control.
+/// </summary>
+void tree_view_t::Redraw() const noexcept
+{
+    ::InvalidateRect(_hTreeView, nullptr, FALSE);
+    ::UpdateWindow(_hTreeView);
+}
+
+/// <summary>
+/// Redraws an item.
 /// </summary>
 bool tree_view_t::RedrawItem(HTREEITEM hItem) const noexcept
 {
@@ -201,7 +225,7 @@ void tree_view_t::MoveItem(HTREEITEM hPivotItem, HTREEITEM hChildItem, DropZone 
 /// <summary>
 /// Gets the item at the specified point.
 /// </summary>
-HTREEITEM tree_view_t::GetItem(const POINT & pt) const noexcept
+HTREEITEM tree_view_t::GetHighlightedItem(const POINT & pt) const noexcept
 {
     TVHITTESTINFO ht = { .pt = pt };
 
@@ -240,7 +264,7 @@ bool tree_view_t::GetText(HTREEITEM hItem, std::string & text) const noexcept
 /// <summary>
 /// Sets the text of the specified item.
 /// </summary>
-void tree_view_t::SetText(HTREEITEM hItem, const std::string & text) const noexcept
+bool tree_view_t::SetText(HTREEITEM hItem, const std::string & text) const noexcept
 {
     std::wstring Text = msc::UTF8ToWide(text.c_str());
 
@@ -251,7 +275,7 @@ void tree_view_t::SetText(HTREEITEM hItem, const std::string & text) const noexc
         .pszText = (LPWSTR) Text.c_str(),
     };
 
-    TreeView_SetItem(_hTreeView, &tvi);
+    return (TreeView_SetItem(_hTreeView, &tvi) != 0);
 }
 
 /// <summary>

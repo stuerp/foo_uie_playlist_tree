@@ -305,9 +305,7 @@ private:
 
         auto FilePath = (SUCCEEDED(hResult)) ? Text.c_str() : filePath;
 
-        const auto IconSize = (uint32_t) ::GetSystemMetrics(SM_CXSMICON);
-
-        HIMAGELIST hImageList = image_list_factory_t::Create(filePath, IconSize);
+        HIMAGELIST hImageList = image_list_factory_t::Create(filePath, _State._IconSize);
 
         if (hImageList == NULL)
         {

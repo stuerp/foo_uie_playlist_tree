@@ -1,5 +1,5 @@
 
-/** $VER: EditSubclass.h (2026.07.11) P. Stuer **/
+/** $VER: EditSubclass.h (2026.07.19) P. Stuer **/
 
 #pragma once
 
@@ -11,18 +11,21 @@ class edit_subclass_t
 public:
     edit_subclass_t() : _OldWndProc(nullptr) { }
 
-    void Attach(HWND hEdit)
+    /// <summary>
+    /// Attaches an existing edit control.
+    /// </summary>
+    void Attach(HWND hWnd)
     {
-        if (hEdit == NULL)
+        if (hWnd == NULL)
             return;
 
-        ::SetWindowLongPtrW(hEdit, GWLP_USERDATA, (LONG_PTR) this);
+        ::SetWindowLongPtrW(hWnd, GWLP_USERDATA, (LONG_PTR) this);
 
-        _OldWndProc = (WNDPROC) ::SetWindowLongPtrW(hEdit, GWLP_WNDPROC, (LONG_PTR) &edit_subclass_t::EditProc);
+        _OldWndProc = (WNDPROC) ::SetWindowLongPtrW(hWnd, GWLP_WNDPROC, (LONG_PTR) &edit_subclass_t::WndProc);
     }
 
 private:
-    static LRESULT CALLBACK EditProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+    static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
         auto self = (edit_subclass_t *) ::GetWindowLongPtrW(hWnd, GWLP_USERDATA);
 

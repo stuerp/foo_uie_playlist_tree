@@ -18,7 +18,7 @@ bool playlist_tree_view_t::GetText(const GUID & id, std::string & text) const no
     if (hItem == NULL)
         return false;
 
-    return tree_view_t::GetText(hItem, text);
+    return __super::GetText(hItem, text);
 }
 
 /// <summary>
@@ -46,7 +46,7 @@ bool playlist_tree_view_t::SetName(const GUID & id, const std::string & name) co
 /// <summary>
 /// Adds an item.
 /// </summary>
-node_t * playlist_tree_view_t::AddItem(const GUID & parentId, const GUID & insertAfterId, const GUID & id, const std::string & name, bool isFolder, bool isExpanded) const noexcept
+node_t * playlist_tree_view_t::AddItem(const GUID & parentId, const GUID & insertAfterId, const GUID & id, const std::string & name, bool isFolder, bool isExpanded, bool select) const noexcept
 {
     auto Node = new node_t(id, name, isFolder);
 
@@ -62,7 +62,7 @@ node_t * playlist_tree_view_t::AddItem(const GUID & parentId, const GUID & inser
 
     const UINT State = isExpanded ? TVIS_EXPANDED : 0;
 
-    auto hNewItem = tree_view_t::AddItem(hParent, hInsertAfter, State, Node);
+    auto hNewItem = __super::AddItem(hParent, hInsertAfter, State, Node);
 
     if (hNewItem == NULL)
     {
@@ -72,10 +72,11 @@ node_t * playlist_tree_view_t::AddItem(const GUID & parentId, const GUID & inser
     }
 
     // Expand the parent.
-    tree_view_t::ExpandItem(hParent);
+    __super::ExpandItem(hParent);
 
     // Select the added item.
-    tree_view_t::SelectItem(hNewItem);
+    if (select)
+        __super::SelectItem(hNewItem);
 
     return Node;
 }
@@ -90,7 +91,7 @@ bool playlist_tree_view_t::RemoveItem(const GUID & id) const noexcept
     if (hItem == NULL)
         return false;
 
-    return tree_view_t::RemoveItem(hItem);
+    return __super::RemoveItem(hItem);
 }
 
 /// <summary>
@@ -103,7 +104,7 @@ HTREEITEM playlist_tree_view_t::FindItem(const GUID & id) const noexcept
 
     HTREEITEM hFoundItem = NULL;
 
-    tree_view_t::Walk([&](HTREEITEM hItem, void * context) -> bool
+    __super::Walk([&](HTREEITEM hItem, void * context) -> bool
     {
         auto Node = (const node_t *) GetData(hItem);
 
@@ -123,9 +124,9 @@ HTREEITEM playlist_tree_view_t::FindItem(const GUID & id) const noexcept
 /// <summary>
 /// Gets the item at the specified point.
 /// </summary>
-HTREEITEM playlist_tree_view_t::GetItem(const POINT & pt) const noexcept
+HTREEITEM playlist_tree_view_t::GetHighlightedItem(const POINT & pt) const noexcept
 {
-    auto hItem = tree_view_t::GetItem(pt);
+    auto hItem = __super::GetHighlightedItem(pt);
 
     return hItem;
 }
@@ -135,7 +136,7 @@ HTREEITEM playlist_tree_view_t::GetItem(const POINT & pt) const noexcept
 /// </summary>
 node_t * playlist_tree_view_t::GetSelectedItem() const noexcept
 {
-    auto hItem = tree_view_t::GetSelectedItem();
+    auto hItem = __super::GetSelectedItem();
 
     if (hItem == NULL)
         return nullptr;
@@ -155,7 +156,7 @@ bool playlist_tree_view_t::RefreshItem(const GUID & id) const noexcept
     if (hItem == NULL)
         return false;
 
-    tree_view_t::RefreshItem(hItem);
+    __super::RefreshItem(hItem);
 
     return true;
 }

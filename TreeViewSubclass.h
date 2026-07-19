@@ -1,5 +1,5 @@
 
-/** $VER: TreeViewSubClass.h (2026.07.18) P. Stuer **/
+/** $VER: TreeViewSubClass.h (2026.07.19) P. Stuer **/
 
 #pragma once
 
@@ -9,7 +9,7 @@
 #include <Windows.h>
 #include <CommCtrl.h>
 
-#define TVN_MBUTTONUP   (TVN_LAST + 1)
+#define NM_MCLICK   ((0U-9999U))
 
 /// <summary>
 /// Subclasses a TreeView control.
@@ -19,18 +19,24 @@ class treeview_subclass_t
 public:
     treeview_subclass_t() : _OldWndProc(nullptr) { }
 
-    void Attach(HWND hEdit)
+    /// <summary>
+    /// Attaches an existing tree view control.
+    /// </summary>
+    void Attach(HWND hWnd)
     {
-        if (hEdit == NULL)
+        if (hWnd == NULL)
             return;
 
-        ::SetWindowLongPtrW(hEdit, GWLP_USERDATA, (LONG_PTR) this);
+        ::SetWindowLongPtrW(hWnd, GWLP_USERDATA, (LONG_PTR) this);
 
-        _OldWndProc = (WNDPROC) ::SetWindowLongPtrW(hEdit, GWLP_WNDPROC, (LONG_PTR) &treeview_subclass_t::EditProc);
+        _OldWndProc = (WNDPROC) ::SetWindowLongPtrW(hWnd, GWLP_WNDPROC, (LONG_PTR) &treeview_subclass_t::WndProc);
     }
 
 private:
-    static LRESULT CALLBACK EditProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+    /// <summary>
+    /// Handles Windows messages.
+    /// </summary>
+    static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
         auto self = (treeview_subclass_t *) ::GetWindowLongPtrW(hWnd, GWLP_USERDATA);
 
@@ -40,35 +46,14 @@ private:
         // Send a middle mouse button up notification.
         if (msg == WM_MBUTTONUP)
         {
-            TVHITTESTINFO ht = { .pt = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) } };
-
-            auto hItem = TreeView_HitTest(hWnd, &ht);
-
-            if (hItem == NULL)
-                return -1;
-
-            const NMTREEVIEWW nmtv =
+            const NMHDR nmhd
             {
-                .hdr =
-                {
-                    .hwndFrom = hWnd,
-                    .idFrom   = (UINT_PTR) ::GetWindowLongPtrW(hWnd, GWLP_ID),
-                    .code     = TVN_MBUTTONUP
-                },
-            //  .action,
-                .itemOld =
-                {
-                    .mask  = TVIF_PARAM,
-                    .hItem = hItem,
-                },
-            //  .itemNew,
-            //  .ptDrag
+                .hwndFrom = hWnd,
+                .idFrom   = (UINT_PTR) ::GetWindowLongPtrW(hWnd, GWLP_ID),
+                .code     = NM_MCLICK
             };
 
-            if (TreeView_GetItem(hWnd, &nmtv.itemOld) == FALSE)
-                return -1;
-
-            ::SendMessageW(::GetParent(hWnd), WM_NOTIFY, (WPARAM) nmtv.hdr.idFrom, (LPARAM) &nmtv);
+            ::SendMessageW(::GetParent(hWnd), WM_NOTIFY, (WPARAM) nmhd.idFrom, (LPARAM) &nmhd);
 
             return 0;
         }

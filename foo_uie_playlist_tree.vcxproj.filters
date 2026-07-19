@@ -43,6 +43,8 @@
     <ClInclude Include="DropTarget.h" />
     <ClInclude Include="CUIColorClient.h" />
     <ClInclude Include="TreeViewSubclass.h" />
+    <ClInclude Include="Toggle.h" />
+    <ClInclude Include="MultiSelectTreeView.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />
