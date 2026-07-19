@@ -152,7 +152,7 @@ You can drag items from Windows Explorer or other applications that process file
 
 ## Configuring
 
-The configuration dialog is used to change all parameters used by the component. All changes are applied immediately to the component without the need to close it.
+A preferences page is used to change all parameters used by the component. You can find it by selecting the **File / Preferences** menu item and then selecting **Display / Playlist Tree** in the dialog.
 
 `Apply`
 
