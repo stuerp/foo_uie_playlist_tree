@@ -429,8 +429,8 @@ void tree_view_t::EndDrag(bool cancel) noexcept
     // Remove the insertion marker.
     TreeView_SetInsertMark(_hTreeView, NULL, FALSE);
 
-    // Move the item and its children.
-    if ((_hDropTarget != NULL) && (_hDropTarget != _hDragSource) && AllowDrop(_DropZone) && !cancel)
+    // Move the item and its children. If hDropTarget is NULL the node gets added to the end of the tree.
+    if (((_hDropTarget == NULL) || ((_hDropTarget != NULL) && (_hDropTarget != _hDragSource) && AllowDrop(_DropZone))) && !cancel)
     {
         MoveItem(_hDropTarget, _hDragSource, _DropZone);
 
