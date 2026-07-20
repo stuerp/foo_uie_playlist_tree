@@ -23,6 +23,7 @@
 playlist_uielement_t::playlist_uielement_t() : multi_select_tree_view_t(IDC_TREEVIEW)
 {
     _PlaylistManager->register_callback(this, (t_uint32) flag_all);
+    _FolderManager->RegisterCallback(this);
 }
 
 /// <summary>
@@ -30,6 +31,7 @@ playlist_uielement_t::playlist_uielement_t() : multi_select_tree_view_t(IDC_TREE
 /// </summary>
 playlist_uielement_t::~playlist_uielement_t()
 {
+    _FolderManager->UnregisterCallback(this);
     _PlaylistManager->unregister_callback(this);
 
     OnDestroy();
@@ -556,6 +558,31 @@ void playlist_uielement_t::on_playback_pause(bool isPaused)
 
     _TreeView.RefreshAllItems();
 }
+
+#pragma endregion
+
+#pragma region folder_manager_callback_t
+
+/// <summary>
+/// Called after a folder has been created.
+/// </summary>
+void playlist_uielement_t::OnFolderCreated(const GUID & id, const std::string & name) noexcept
+{
+};
+
+/// <summary>
+/// Called after a folder has been removed.
+/// </summary>
+void playlist_uielement_t::OnFolderRemoved(const GUID & id) noexcept
+{
+};
+
+/// <summary>
+/// Called after a folder has been renamed.
+/// </summary>
+void playlist_uielement_t::OnFolderRenamed(const GUID & id, const std::string & oldName, const std::string & newName) noexcept
+{
+};
 
 #pragma endregion
 

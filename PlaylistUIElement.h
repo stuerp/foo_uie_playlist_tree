@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.h (2026.07.19) P. Stuer **/
+/** $VER: PlaylistsUIElement.h (2026.07.20) P. Stuer **/
 
 #pragma once
 
@@ -19,7 +19,7 @@
 /// <summary>
 /// Implements the user interface element base class.
 /// </summary>
-class playlist_uielement_t : public uielement_t, public playlist_callback, private play_callback_impl_base, public multi_select_tree_view_t
+class playlist_uielement_t : public uielement_t, public playlist_callback, private play_callback_impl_base, public multi_select_tree_view_t, public folder_manager_callback_t
 {
 public:
     playlist_uielement_t();
@@ -139,6 +139,14 @@ private:
     void on_playback_dynamic_info_track(const file_info & info) { }
     void on_playback_time(double time) { }
     void on_volume_change(float newValue) { }
+
+    #pragma endregion
+
+    #pragma region folder_callback_t
+
+	void OnFolderCreated(const GUID & id, const std::string & name) noexcept override;
+	void OnFolderRemoved(const GUID & id) noexcept override;
+	void OnFolderRenamed(const GUID & id, const std::string & oldName, const std::string & newName) noexcept override;
 
     #pragma endregion
 

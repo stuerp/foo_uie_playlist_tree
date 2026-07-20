@@ -1,11 +1,12 @@
 
-/** $VER: FolderManager.cpp (2026.07.12) P. Stuer **/
+/** $VER: FolderManager.cpp (2026.07.20) P. Stuer **/
 
 #include "pch.h"
 
 #include "FolderManager.h"
 
 #include <map>
+#include <unordered_set>
 
 #pragma hdrstop
 
@@ -37,15 +38,15 @@ public:
     /// <summary>
     /// Creates a new folder.
     /// </summary>
-    virtual void CreateFolder(const GUID & id, const std::string & name) noexcept
+    virtual void CreateFolder(const GUID & id, const std::string & name) noexcept override
     {
-        _Items.emplace(id, folder_t(name));
+        _Items.try_emplace(id, folder_t(name));
     }
 
     /// <summary>
     /// Gets the name of the specified folder.
     /// </summary>
-    virtual void GetFolderName(const GUID & id, std::string & text) const noexcept
+    virtual void GetFolderName(const GUID & id, std::string & text) const noexcept override
     {
         auto Iter = _Items.find(id);
 
@@ -62,7 +63,7 @@ public:
     /// <summary>
     /// Sets the name of the specified folder.
     /// </summary>
-    virtual void SetFolderName(const GUID & id, const std::string & text) noexcept
+    virtual void SetFolderName(const GUID & id, const std::string & text) noexcept override
     {
         auto Iter = _Items.find(id);
 
@@ -75,13 +76,30 @@ public:
     /// <summary>
     /// Removes the specified folder.
     /// </summary>
-    virtual void RemoveFolder(const GUID & id) noexcept
+    virtual void RemoveFolder(const GUID & id) noexcept override
     {
         _Items.erase(id);
     }
 
+	/// <summary>
+	/// Registers a callback.
+	/// </summary>
+	virtual void RegisterCallback(folder_manager_callback_t * callback) noexcept override
+    {
+        _Callbacks.insert(callback);
+    }
+
+	/// <summary>
+	/// Unregisters a callback.
+	/// </summary>
+	virtual void UnregisterCallback(folder_manager_callback_t * callback) noexcept override
+    {
+        _Callbacks.erase(callback);
+    }
+
 private:
     std::map<GUID, folder_t, GUIDLess> _Items;
+    std::unordered_set<folder_manager_callback_t *> _Callbacks;
 };
 
 static service_factory_single_t<folder_manager_impl> _FolderManagerFactory;
