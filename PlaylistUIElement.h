@@ -165,7 +165,7 @@ private:
     edit_subclass_t _EditSubclass;
 
     bool _IsPlaying = false;
-    bool _IsNotification = false;
+    bool _IgnoreNotifications = false;
     bool _IsUser = false;
 
     IDropTarget * _DropTarget = nullptr;

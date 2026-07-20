@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.cpp (2026.07.19) P. Stuer **/
+/** $VER: PlaylistsUIElement.cpp (2026.07.20) P. Stuer **/
 
 #include "pch.h"
 
@@ -10,6 +10,7 @@
 #include "Node.h"
 #include "State.h"
 #include "Theme.h"
+#include "Toggle.h"
 #include "Log.h"
 
 #include <SDK\playlist.h>
@@ -197,11 +198,10 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
         // Handles the "Remove" command.
         case IDM_REMOVE:
         {
-            _IsUser = true;
-
-            _TreeView.RemoveItem(_hHighlightedtem);
-
-            _IsUser = false;
+            auto Scope = toggle_t(_IsUser, true);
+            {
+                _TreeView.RemoveItem(_hHighlightedtem);
+            }
             break;
         }
 
@@ -467,12 +467,14 @@ void playlist_uielement_t::on_playlists_reorder(const size_t * order, size_t cou
 /// </summary>
 void playlist_uielement_t::on_playlists_removing(const bit_array & mask, size_t oldCount, size_t newCount) noexcept
 {
+    if (_IgnoreNotifications)
+        return;
+
     for (size_t Index = mask.find_first(true, 0, oldCount); Index < oldCount; Index = mask.find_next(true, Index, oldCount))
     {
         auto Id = _PlaylistManager->playlist_get_guid(Index);
 
-        if (!_IsNotification)
-            _TreeView.RemoveItem(Id);
+        _TreeView.RemoveItem(Id);
     }
 }
 
@@ -906,11 +908,10 @@ LRESULT playlist_uielement_t::OnMiddleClick(NMHDR * nmhd) noexcept
     if (_hHighlightedtem == NULL)
         return -1;
 
-    _IsUser = true;
-
-    _TreeView.RemoveItem(_hHighlightedtem);
-
-    _IsUser = false;
+    auto Scope = toggle_t(_IsUser, true);
+    {
+        _TreeView.RemoveItem(_hHighlightedtem);
+    }
 
     SetMsgHandled(TRUE);
 
@@ -1017,7 +1018,7 @@ LRESULT playlist_uielement_t::OnDeleteItem(NMHDR * nmhd) noexcept
     }
     else
     {
-        // Remove ths playlist only by a user action.
+        // Remove the playlist only if triggered by a user action.
         if (_IsUser)
         {
             const size_t Index = _PlaylistManager->find_playlist_by_guid(Node->Id);
@@ -1025,11 +1026,10 @@ LRESULT playlist_uielement_t::OnDeleteItem(NMHDR * nmhd) noexcept
             if (Index == SIZE_MAX)
                 return FALSE;
 
-            _IsNotification = true;
-
-            _PlaylistManager->remove_playlist(Index);
-
-            _IsNotification = false;
+            auto Scope = toggle_t(_IgnoreNotifications, true);
+            {
+                _PlaylistManager->remove_playlist(Index);
+            }
         }
     }
 
@@ -1125,11 +1125,10 @@ LRESULT playlist_uielement_t::OnKeyDown(NMHDR * nmhd) noexcept
 
         case VK_DELETE:
         {
-            _IsUser = true;
-
-            _TreeView.RemoveSelectedItem();
-
-            _IsUser = false;
+            auto Scope = toggle_t(_IsUser, true);
+            {
+                _TreeView.RemoveSelectedItem();
+            }
             break;
         }
     }

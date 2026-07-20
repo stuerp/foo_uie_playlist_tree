@@ -444,8 +444,9 @@ private:
         };
 
         auto Scope = toggle_t(_OwnSelectionChangeNotification, true);
-
-        tree.GetParent().SendMessage(WM_NOTIFY, _Id, (LPARAM) &nmtv);
+        {
+            tree.GetParent().SendMessage(WM_NOTIFY, _Id, (LPARAM) &nmtv);
+        }
     }
 
     /// <summary>
