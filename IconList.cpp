@@ -1,12 +1,11 @@
 
-/** $VER: IconList.cpp (2026.07.12) P. Stuer **/
+/** $VER: IconList.cpp (2026.07.19) P. Stuer **/
 
 #include "pch.h"
 
 #include "IconList.h"
 
 #include "Theme.h"
-#include "Log.h"
 
 #pragma hdrstop
 
@@ -43,6 +42,8 @@ struct instance_t
 
     HWND hListView;
     HIMAGELIST hImageList;
+
+    int IconSize = 16;
 };
 
 const int xPadding = 2;
@@ -69,7 +70,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 if (Instance->hListView == NULL)
                     return -1;
 
-                ::SetWindowTheme(Instance->hListView, _Theme.IsDark() ? L"DarkMode_Explorer" : nullptr, nullptr);
+                ::SetWindowTheme(Instance->hListView, ui_config_manager::get()->is_dark_mode() ? L"DarkMode_Explorer" : nullptr, nullptr);
             }
 
             return 0;
@@ -122,7 +123,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 {
                     auto lvcd = (NMLVCUSTOMDRAW *) lParam;
 
-                    HDC & hDC = lvcd->nmcd.hdc;
+                    const auto hListView = lvcd->nmcd.hdr.hwndFrom;
+                    const auto hDC       = lvcd->nmcd.hdc;
 
                     switch (lvcd->nmcd.dwDrawStage)
                     {
@@ -130,14 +132,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
                         {
                             RECT rc;
 
-                            ::GetClientRect(lvcd->nmcd.hdr.hwndFrom, &rc);
+                            ::GetClientRect(hListView, &rc);
 
                             // Draw the control background.
-                            HBRUSH hBrush = ::CreateSolidBrush(_Theme.GetWindowColor());
-
-                            ::FillRect(hDC, &rc, hBrush);
-
-                            ::DeleteObject(hBrush);
+                            ::FillRect(hDC, &rc, _Theme.GetWindowBrush());
 
                             return CDRF_NOTIFYITEMDRAW; // Request item-specific notifications.
                         }
@@ -150,14 +148,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
                             RECT & rc = lvcd->nmcd.rc;
 
                             // Don't use CDIS_SELECTED (see https://learn.microsoft.com/en-us/windows/win32/api/commctrl/ns-commctrl-nmcustomdraw)
-                            if (ListView_GetItemState(Instance->hListView, (int) lvcd->nmcd.dwItemSpec, LVIS_SELECTED))
-                            {
-                                HBRUSH hBrush = ::CreateSolidBrush(_Theme.GetHighlightColor());
-
-                                ::FillRect(hDC, &rc, hBrush);
-
-                                ::DeleteObject(hBrush);
-                            }
+                            if (ListView_GetItemState(hListView, (int) lvcd->nmcd.dwItemSpec, LVIS_SELECTED))
+                                ::FillRect(hDC, &rc, _Theme.GetHighlightBrush());
 
                             ::ImageList_Draw(Instance->hImageList, (int) lvcd->nmcd.dwItemSpec, hDC, rc.left + xPadding, rc.top + yPadding, ILD_NORMAL);
 
@@ -265,7 +257,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             if (!::ImageList_GetIconSize(Instance->hImageList, &cx, &cy))
                 return FALSE;
 
-            ListView_SetIconSpacing(Instance->hListView, cx + (xPadding * 2), (cy + yPadding * 2));
+            Instance->IconSize = std::max(cx, cy);
+
+            ListView_SetIconSpacing(Instance->hListView, Instance->IconSize + (xPadding * 2), Instance->IconSize + (yPadding * 2));
 
             const int ImageCount = ::ImageList_GetImageCount(Instance->hImageList);
 

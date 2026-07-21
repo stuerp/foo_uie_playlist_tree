@@ -357,6 +357,7 @@
     <ClInclude Include="IconList.h" />
     <ClInclude Include="ImageList.h" />
     <ClInclude Include="Log.h" />
+    <ClInclude Include="MultiSelectTreeView.h" />
     <ClInclude Include="Node.h" />
     <ClInclude Include="PlaylistTreeView.h" />
     <ClInclude Include="Preferences.h" />
@@ -367,7 +368,9 @@
     <ClInclude Include="PlaylistUIElement.h" />
     <ClInclude Include="Resources.h" />
     <ClInclude Include="State.h" />
+    <ClInclude Include="Toggle.h" />
     <ClInclude Include="TreeView.h" />
+    <ClInclude Include="TreeViewSubclass.h" />
     <ClInclude Include="UIElement.h" />
     <ClInclude Include="Tracker.h" />
   </ItemGroup>

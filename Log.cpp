@@ -32,7 +32,7 @@ public:
     ILog & Write(const char * format, va_list args) noexcept override final { return *this; }
 };
 
-ILog & Null = *new NullLog();
+ILog & Null = * new NullLog();
 
 class log_impl_t : public ILog
 {
@@ -115,6 +115,6 @@ private:
     LogLevel _Level;
 };
 
-ILog & Log = *new log_impl_t();
+ILog & Log = * new log_impl_t();
 
-cfg_var_modern::cfg_int CfgLogLevel({ 0x1ead47d9, 0xc4aa, 0x4079, { 0x95, 0xfa, 0xaf, 0x51, 0x6a, 0xaf, 0xd8, 0xb6 } }, LogLevel::Debug);
+cfg_var_modern::cfg_int CfgLogLevel({ 0x69c81c2e, 0xcb50, 0x4bd7, { 0x96, 0xde, 0xe8, 0x9f, 0x59, 0xc6, 0x11, 0x22 } }, LogLevel::Debug);

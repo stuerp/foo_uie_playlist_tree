@@ -1,5 +1,5 @@
 
-/** $VER: CUIElement.cpp (2026.07.15) P. Stuer **/
+/** $VER: CUIElement.cpp (2026.07.17) P. Stuer **/
 
 #include "pch.h"
 
@@ -23,7 +23,7 @@ static cui::colours::client::factory<cui_color_client_t> _CUIColorClientFactory;
 /// </summary>
 cui_element_t::cui_element_t()
 {
-    _IsDUI = false;
+    _Theme._IsDUI = false;
 }
 
 /// <summary>
@@ -58,6 +58,8 @@ HWND cui_element_t::create_or_transfer_window(HWND hParent, const window_host_pt
 
     if (Client != nullptr)
         Client->_Element = this;
+
+    _Theme.Initialize();
 
     GetColors();
 

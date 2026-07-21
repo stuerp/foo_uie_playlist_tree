@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.h (2026.07.15) P. Stuer **/
+/** $VER: PlaylistsUIElement.h (2026.07.20) P. Stuer **/
 
 #pragma once
 
@@ -7,17 +7,19 @@
 
 #include "EditSubclass.h"
 #include "FolderManager.h"
+#include "MultiSelectTreeView.h"
 #include "PlaylistTreeView.h"
+#include "Resources.h"
 #include "Tracker.h"
+#include "TreeViewSubclass.h"
 #include "UIElement.h"
 
 #include <SDK\playlist.h>
-#include <SDK\playlist_loader.h>
 
 /// <summary>
 /// Implements the user interface element base class.
 /// </summary>
-class playlist_uielement_t : public uielement_t, public playlist_callback, private play_callback_impl_base
+class playlist_uielement_t : public uielement_t, public playlist_callback, private play_callback_impl_base, public multi_select_tree_view_t, public folder_manager_callback_t
 {
 public:
     playlist_uielement_t();
@@ -30,7 +32,7 @@ public:
     virtual ~playlist_uielement_t();
 
     DWORD GetDropEffect(DWORD keyState, const POINT & pt) noexcept;
-    void DropFiles(const std::vector<std::wstring> & filePaths) noexcept;
+    void DropFiles(IDataObject * dataObject) noexcept;
 
     void Refresh() noexcept;
 
@@ -47,27 +49,52 @@ private:
     virtual void OnDestroy() noexcept override;
     virtual void OnSize(UINT nType, CSize size) noexcept override;
 
-    #pragma endregion
-
     void OnCommand(UINT notifyCode, int id, CWindow wnd) noexcept;
-    LRESULT OnNotify(int id, NMHDR * nmhd) noexcept;
+
+    LRESULT OnCustomDraw(NMHDR * nmhd) noexcept;
+    LRESULT OnRightClick(NMHDR * nmhd) noexcept;
+    LRESULT OnMiddleClick(NMHDR * nmhd) noexcept;
+
+    LRESULT OnGetDisplayInfo(NMHDR * nmhd) noexcept;
+    LRESULT OnSelectionChanged(NMHDR * nmhd) noexcept;
+    LRESULT OnDeleteItem(NMHDR * nmhd) noexcept;
+    LRESULT OnBeginLabelEdit(NMHDR * nmhd) noexcept;
+    LRESULT OnEndLabelEdit(NMHDR * nmhd) noexcept;
+    LRESULT OnKeyDown(NMHDR * nmhd) noexcept;
+    LRESULT OnBeginDrag(NMHDR * nmhd) noexcept;
+    LRESULT OnItemExpanded(NMHDR * nmhd) noexcept;
 
     void OnMouseMove(UINT flags, CPoint point) noexcept;
     void OnMouseLeave() noexcept;
     void OnLButtonUp(UINT flags, CPoint point) noexcept;
 
-    BEGIN_MSG_MAP(playlist_uielement_t)
+    BEGIN_MSG_MAP_EX(playlist_uielement_t)
         CHAIN_MSG_MAP(uielement_t)
+//      CHAIN_MSG_MAP(multi_select_tree_view_t)
 
         MSG_WM_DESTROY(OnDestroy);
 
         MSG_WM_COMMAND(OnCommand);
-        MSG_WM_NOTIFY(OnNotify);
+
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, NM_CUSTOMDRAW, OnCustomDraw);
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, NM_RCLICK, OnRightClick);
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, NM_MCLICK, OnMiddleClick);
+
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_KEYDOWN, OnKeyDown);
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_SELCHANGED, OnSelectionChanged);
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_GETDISPINFO, OnGetDisplayInfo);
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_ITEMEXPANDED, OnItemExpanded);
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_BEGINDRAG, OnBeginDrag);
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_DELETEITEM, OnDeleteItem);
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_BEGINLABELEDIT, OnBeginLabelEdit);
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_ENDLABELEDIT, OnEndLabelEdit);
 
         MSG_WM_MOUSEMOVE(OnMouseMove);
         MSG_WM_MOUSELEAVE(OnMouseLeave);
         MSG_WM_LBUTTONUP(OnLButtonUp);
     END_MSG_MAP()
+
+    #pragma endregion
 
     #pragma region playlist_callback
 
@@ -115,6 +142,14 @@ private:
 
     #pragma endregion
 
+    #pragma region folder_callback_t
+
+	void OnFolderCreated(const GUID & id, const std::string & name) noexcept override;
+	void OnFolderRemoved(const GUID & id) noexcept override;
+	void OnFolderRenamed(const GUID & id, const std::string & oldName, const std::string & newName) noexcept override;
+
+    #pragma endregion
+
     void FromJSON(json object) noexcept;
     void FromJSON(json object, const GUID & parentId) noexcept;
 
@@ -123,7 +158,6 @@ private:
     HRESULT InitImageList() noexcept;
 
 protected:
-    bool _IsDUI = true;
     playlist_tree_view_t _TreeView;
 
 private:
@@ -133,15 +167,45 @@ private:
     static_api_ptr_t<folder_manager_t> _FolderManager;
 
     HTREEITEM _hDropTarget = NULL;
-    HTREEITEM _hPopupItem = NULL;
+    HTREEITEM _hHighlightedtem = NULL;
 
+    treeview_subclass_t _TreeViewSubclass;
     edit_subclass_t _EditSubclass;
 
     bool _IsPlaying = false;
-    bool _IsNotification = false;
+    bool _IgnoreNotifications = false;
     bool _IsUser = false;
 
     IDropTarget * _DropTarget = nullptr;
+};
+
+/// <summary>
+/// Implements a notification handler for process_dropped_files_async().
+/// </summary>
+class drop_notification_handler_t : public process_locations_notify
+{
+public:
+    drop_notification_handler_t(size_t playlistIndex, bool selectDroppedItems) : _PlaylistIndex(playlistIndex), _SelectDroppedItems(selectDroppedItems) { }
+
+    drop_notification_handler_t(const drop_notification_handler_t &) = delete;
+    drop_notification_handler_t & operator=(const drop_notification_handler_t &) = delete;
+    drop_notification_handler_t(drop_notification_handler_t &&) = delete;
+    drop_notification_handler_t & operator=(drop_notification_handler_t &&) = delete;
+
+    virtual ~drop_notification_handler_t() = default;
+
+    void on_completion(const pfc::list_base_const_t<metadb_handle_ptr> & items)
+    {
+        static_api_ptr_t<playlist_manager> PlaylistManager;
+
+        PlaylistManager->playlist_add_items(_PlaylistIndex, items, (_SelectDroppedItems ? (const bit_array &) bit_array_true() : (const bit_array &) bit_array_false()));
+    }
+
+    void on_aborted() { }
+
+private:
+    size_t _PlaylistIndex;
+    bool _SelectDroppedItems;
 };
 
 extern tracker_t<playlist_uielement_t> _UIElementTracker;

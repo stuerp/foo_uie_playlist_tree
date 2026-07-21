@@ -1,5 +1,5 @@
 
-/** $VER: State.cpp (2026.07.12) P. Stuer **/
+/** $VER: State.cpp (2026.07.19) P. Stuer **/
 
 #include "pch.h"
 
@@ -25,6 +25,8 @@ void state_t::Reset() noexcept
     _Images.push_back({ "imageres.dll",   4 }); // Folder
     _Images.push_back({ "imageres.dll", 126 }); // Playlist
     _Images.push_back({ "imageres.dll", 125 }); // Playlist Playing
+
+    _IconSize = (uint32_t) ::GetSystemMetrics(SM_CXSMICON);
 
     _Object.clear();
 }
@@ -55,7 +57,11 @@ void state_t::FromJSON(const char * data, size_t size) noexcept
 
         for (const auto & Image : Object["images"])
         {
-            _Images.push_back({ Image["filePath"], Image["iconIndex"] });
+            _Images.push_back(
+            {
+                Image["filePath"],
+                Image["iconIndex"]
+            });
         }
     }
 

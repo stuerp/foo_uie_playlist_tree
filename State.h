@@ -46,6 +46,7 @@ public:
     std::string _NameFormat;
 
     std::vector<image_t> _Images;
+    uint32_t _IconSize;
 
     const uint32_t _SchemaVersion = 1; // v0.1.0.0
 

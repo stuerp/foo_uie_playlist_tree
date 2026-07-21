@@ -1,5 +1,5 @@
 
-/** $VER: DropTarget.cpp (2026.07.13) P. Stuer - Implements an OLE2 drop target **/
+/** $VER: DropTarget.cpp (2026.07.17) P. Stuer - Implements an OLE2 drop target **/
 
 #include "pch.h"
 
@@ -7,6 +7,7 @@
 
 #pragma hdrstop
 
+// IUnknown
 STDMETHODIMP drop_target_t::QueryInterface(REFIID riid, void ** ppv)
 {
     if (riid == IID_IUnknown || riid == IID_IDropTarget)
@@ -47,6 +48,8 @@ STDMETHODIMP drop_target_t::DragEnter(IDataObject * dataObject, DWORD keyState, 
 
     (void) _DragDropHelper->DragEnter(_hWnd, dataObject, &Point, *effect);
 
+    static_api_ptr_t<playlist_incoming_item_filter>()->process_dropped_files_check_ex(dataObject, effect);
+
     return S_OK;
 }
 
@@ -79,10 +82,15 @@ STDMETHODIMP drop_target_t::Drop(IDataObject * dataObject, DWORD keyState, POINT
 
     HRESULT hResult = _DragDropHelper->Drop(dataObject, &Point, *effect);
 
+    if (!SUCCEEDED(hResult))
+        return hResult;
+
 #ifdef _DEBUG
     ExamineDataObject(dataObject);
 #endif
 
+    _UIElement->DropFiles(dataObject);
+/*
     FORMATETC FormatEtc =
     {
         .cfFormat = CF_HDROP,
@@ -105,6 +113,13 @@ STDMETHODIMP drop_target_t::Drop(IDataObject * dataObject, DWORD keyState, POINT
 
         const UINT DropCount = ::DragQueryFileW(hDrop, 0xFFFFFFFF, nullptr, 0);
 
+    }
+
+    {
+        const auto hDrop = (HDROP) StgMedium.hGlobal;
+
+        const UINT DropCount = ::DragQueryFileW(hDrop, 0xFFFFFFFF, nullptr, 0);
+
         std::vector<std::wstring> FilePaths;
 
         FilePaths.reserve(DropCount);
@@ -122,7 +137,7 @@ STDMETHODIMP drop_target_t::Drop(IDataObject * dataObject, DWORD keyState, POINT
     }
 
     ::ReleaseStgMedium(&StgMedium);
-
+*/
     return S_OK;
 }
 
@@ -176,7 +191,7 @@ void drop_target_t::ExamineDataObject(IDataObject * dataObject) const noexcept
                 FormatName = "<Unknown format>";
         }
 
-        Log.Write("Format: 0x%04X %s", fmt.cfFormat, FormatName.c_str());
+        Log.AtDebug().Write("Format: 0x%04X %s", fmt.cfFormat, FormatName.c_str());
     }
 
     EnumFORMATETC->Release();

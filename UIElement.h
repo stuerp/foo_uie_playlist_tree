@@ -1,5 +1,5 @@
 
-/** $VER: UIElement.h (2026.07.12) P. Stuer **/
+/** $VER: UIElement.h (2026.07.17) P. Stuer **/
 
 #pragma once
 
@@ -48,7 +48,7 @@ protected:
 protected:
     #pragma region CWindowImpl
 
-    virtual LRESULT OnCreate(LPCREATESTRUCT cs) noexcept;
+    virtual LRESULT OnCreate(CREATESTRUCT * cs) noexcept;
     virtual void OnDestroy() noexcept;
     virtual void OnSize(UINT nType, CSize size) noexcept;
 

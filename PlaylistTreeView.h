@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsTreeView.h (2026.07.14) P. Stuer **/
+/** $VER: PlaylistsTreeView.h (2026.07.19) P. Stuer **/
 
 #pragma once
 
@@ -33,12 +33,14 @@ public:
     bool GetText(const GUID & id, std::string & text) const noexcept;
     bool SetName(const GUID & id, const std::string & name) const noexcept;
 
-    node_t * AddItem(const GUID & parentId, const GUID & insertAfterId, const GUID & id, const std::string & name, bool isFolder, bool isExpanded) const noexcept;
+    node_t * AddItem(const GUID & parentId, const GUID & insertAfterId, const GUID & id, const std::string & name, bool isFolder, bool isExpanded, bool select) const noexcept;
     bool RemoveItem(const GUID & id) const noexcept;
 
     HTREEITEM FindItem(const GUID & id) const noexcept;
 
-    HTREEITEM GetItem(const POINT & pt) const noexcept;
+    HTREEITEM GetHighlightedItem(const POINT & pt) const noexcept;
+
+    node_t * GetSelectedItem() const noexcept;
 
     bool RefreshItem(const GUID & id) const noexcept;
 
@@ -46,7 +48,7 @@ public:
 
     bool RemoveItem(HTREEITEM hItem) const noexcept
     {
-        return tree_view_t::RemoveItem(hItem);
+        return __super::RemoveItem(hItem);
     }
 
     /// <summary>
@@ -61,7 +63,7 @@ protected:
     /// <summary>
     /// Returns true if a drop is allowed on the target.
     /// </summary>
-    virtual bool AllowDrop(DropZone dropZone) noexcept
+    virtual bool AllowDrop(DropZone dropZone) noexcept override
     {
         if (_hDropTarget == NULL)
             return false;

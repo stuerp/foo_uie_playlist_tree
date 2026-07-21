@@ -1,10 +1,9 @@
 
-/** $VER: DUIElement.cpp (2026.07.15) P. Stuer - Implements Default User Interface support **/
+/** $VER: DUIElement.cpp (2026.07.17) P. Stuer - Implements Default User Interface support **/
 
 #include "pch.h"
 
 #include "DUIElement.h"
-//#include "State.h"
 #include "Theme.h"
 
 #include <helpers\BumpableElem.h>
@@ -16,9 +15,12 @@
 /// </summary>
 dui_element_t::dui_element_t(ui_element_config::ptr data, ui_element_instance_callback::ptr callback) : m_callback(callback)
 {
-    _IsDUI = true;
+    _Theme._IsDUI = true;
 
     set_configuration(data);
+
+    // Call here before the colors have been initialized.
+    _Theme.Initialize();
 
     GetColors();
 }
@@ -118,26 +120,14 @@ void dui_element_t::GetColors() noexcept
     _Theme.SetWindowTextColor           ((COLORREF) m_callback->query_std_color(ui_color_text));
 
     _Theme.SetSelectionColor            ((COLORREF) m_callback->query_std_color(ui_color_selection));
-    _Theme.SetSelectionTextColor        ((COLORREF) m_callback->query_std_color(ui_color_text));
+    _Theme.SetSelectionTextColor        (_DarkMode ? RGB(255, 255, 255) : (COLORREF) m_callback->query_std_color(ui_color_text));
 
     _Theme.SetInactiveSelectionColor    ((COLORREF) m_callback->query_std_color(ui_color_selection));
     _Theme.SetInactiveSelectionTextColor((COLORREF) m_callback->query_std_color(ui_color_text));
 
     _Theme.SetHighlightColor            ((COLORREF) m_callback->query_std_color(ui_color_highlight));
-    _Theme.SetHighlightTextColor        ((COLORREF) m_callback->query_std_color(ui_color_text));
-/*
-    _Theme.SetWindowColor               ((COLORREF) _DarkMode ? m_callback->query_std_color(ui_color_background): ::GetSysColor(COLOR_WINDOW));
-    _Theme.SetWindowTextColor           ((COLORREF) _DarkMode ? m_callback->query_std_color(ui_color_text)      : ::GetSysColor(COLOR_WINDOWTEXT));
+    _Theme.SetHighlightTextColor        (_DarkMode ? RGB(255, 255, 255) : (COLORREF) m_callback->query_std_color(ui_color_text));
 
-    _Theme.SetSelectionColor            ((COLORREF) _DarkMode ? m_callback->query_std_color(ui_color_selection) : ::GetSysColor(COLOR_HIGHLIGHT));
-    _Theme.SetSelectionTextColor        ((COLORREF) _DarkMode ? m_callback->query_std_color(ui_color_text)      : ::GetSysColor(COLOR_HIGHLIGHTTEXT));
-
-    _Theme.SetInactiveSelectionColor    ((COLORREF) _DarkMode ? m_callback->query_std_color(ui_color_selection) : ::GetSysColor(COLOR_BTNFACE));
-    _Theme.SetInactiveSelectionTextColor((COLORREF) _DarkMode ? m_callback->query_std_color(ui_color_text)      : ::GetSysColor(COLOR_BTNTEXT));
-
-    _Theme.SetHighlightColor            ((COLORREF) _DarkMode ? m_callback->query_std_color(ui_color_highlight) : ::GetSysColor(COLOR_HIGHLIGHT));
-    _Theme.SetHighlightTextColor        ((COLORREF) _DarkMode ? m_callback->query_std_color(ui_color_text)      : ::GetSysColor(COLOR_HIGHLIGHTTEXT));
-*/
     TreeView_SetBkColor  (_TreeView.Get(), _Theme.GetWindowColor());
     TreeView_SetTextColor(_TreeView.Get(), _Theme.GetWindowTextColor());
 
