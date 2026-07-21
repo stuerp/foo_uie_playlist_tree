@@ -179,7 +179,7 @@ private:
 
         CTreeViewCtrl Tree(nmhd->hwndFrom);
 
-        CPoint pt(GetMessagePos());
+        CPoint pt((LPARAM) ::GetMessagePos());
 
         Tree.ScreenToClient(&pt);
 

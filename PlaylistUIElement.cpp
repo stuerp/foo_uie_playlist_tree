@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.cpp (2026.07.20) P. Stuer **/
+/** $VER: PlaylistsUIElement.cpp (2026.07.21) P. Stuer **/
 
 #include "pch.h"
 
@@ -432,7 +432,7 @@ void playlist_uielement_t::on_playlist_created(size_t index, const char * name, 
     const auto Id = _PlaylistManager->playlist_get_guid(index);
 
     // Get the data of the item we were hovering over, if any.
-    auto Parent = (const node_t *) _TreeView.GetData(_hHighlightedtem);
+    const auto Parent = (node_t *) _TreeView.GetData(_hHighlightedtem);
 
     // Add the item.
     auto ParentId = GUID();
@@ -774,7 +774,7 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
     auto tvcd = (NMTVCUSTOMDRAW *) nmhd;
 
     const auto hTreeView = tvcd->nmcd.hdr.hwndFrom;
-    const auto hDC        = tvcd->nmcd.hdc;
+    const auto hDC       = tvcd->nmcd.hdc;
 
     switch (tvcd->nmcd.dwDrawStage)
     {
@@ -952,7 +952,7 @@ LRESULT playlist_uielement_t::OnGetDisplayInfo(NMHDR * nmhd) noexcept
 {
     auto & tvi = ((NMTVDISPINFOW *) nmhd)->item;
 
-    auto Node = (const node_t *) tvi.lParam;
+    const auto Node = (node_t *) tvi.lParam;
 
     if (Node == nullptr)
         return FALSE;
@@ -1074,7 +1074,7 @@ LRESULT playlist_uielement_t::OnBeginLabelEdit(NMHDR * nmhd) noexcept
 {
     const auto nmdi = (NMTVDISPINFOW *) nmhd;
 
-    auto Node = (const node_t *) nmdi->item.lParam;
+    const auto Node = (node_t *) nmdi->item.lParam;
 
     if (Node == nullptr)
         return TRUE;
@@ -1312,7 +1312,7 @@ DWORD playlist_uielement_t::GetDropEffect(DWORD keyState, const POINT & pt) noex
 /// </summary>
 void playlist_uielement_t::DropFiles(IDataObject * dataObject) noexcept
 {
-    auto Node = (const node_t *) _TreeView.GetData(_hDropTarget);
+    const auto Node = (node_t *) _TreeView.GetData(_hDropTarget);
 
     size_t Index = SIZE_MAX;
 
@@ -1390,7 +1390,7 @@ std::string playlist_uielement_t::GetConfiguration() const noexcept
 
         _TreeView.ToJSON([&](HTREEITEM hItem, json::object_t * node) -> bool
         {
-            auto Node = (const node_t *) _TreeView.GetData(hItem);
+            const auto Node = (node_t *) _TreeView.GetData(hItem);
 
             if ((Node == nullptr) || ((Node != nullptr) && (Node->Id == GUID())))
                 return true; // Continue enumerating. Should not occur.

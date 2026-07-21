@@ -120,13 +120,13 @@ void dui_element_t::GetColors() noexcept
     _Theme.SetWindowTextColor           ((COLORREF) m_callback->query_std_color(ui_color_text));
 
     _Theme.SetSelectionColor            ((COLORREF) m_callback->query_std_color(ui_color_selection));
-    _Theme.SetSelectionTextColor        ((COLORREF) m_callback->query_std_color(ui_color_text));
+    _Theme.SetSelectionTextColor        (_DarkMode ? RGB(255, 255, 255) : (COLORREF) m_callback->query_std_color(ui_color_text));
 
     _Theme.SetInactiveSelectionColor    ((COLORREF) m_callback->query_std_color(ui_color_selection));
     _Theme.SetInactiveSelectionTextColor((COLORREF) m_callback->query_std_color(ui_color_text));
 
     _Theme.SetHighlightColor            ((COLORREF) m_callback->query_std_color(ui_color_highlight));
-    _Theme.SetHighlightTextColor        ((COLORREF) m_callback->query_std_color(ui_color_text));
+    _Theme.SetHighlightTextColor        (_DarkMode ? RGB(255, 255, 255) : (COLORREF) m_callback->query_std_color(ui_color_text));
 
     TreeView_SetBkColor  (_TreeView.Get(), _Theme.GetWindowColor());
     TreeView_SetTextColor(_TreeView.Get(), _Theme.GetWindowTextColor());

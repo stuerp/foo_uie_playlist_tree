@@ -77,7 +77,7 @@ To create the component first build the x86 configuration and next the x64 confi
 
 ## Change Log
 
-v1.1.1.0, 2026-07-xx
+v1.1.1.0, 2026-07-21
 
 * New: You can use the middle mouse button to remove a folder or playlist.
 * Improved: Major optimization of drop operations from playlists or the media library.
