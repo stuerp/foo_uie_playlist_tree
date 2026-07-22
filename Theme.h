@@ -72,11 +72,11 @@ private:
     COLORREF _ColorWindow                = 0x202020;
     COLORREF _ColorWindowText            = 0xC0C0C0;
 
-    COLORREF _ColorSelection             = 0x747474;
+    COLORREF _ColorSelection             = 0x7A7A7A;
     COLORREF _ColorSelectionText         = 0xFFFFFF;
 
-    COLORREF _ColorInactiveSelection     = 0x747474;
-    COLORREF _ColorInactiveSelectionText = 0xFFFFFF;
+    COLORREF _ColorInactiveSelection     = 0x7A7A7A;
+    COLORREF _ColorInactiveSelectionText = 0xCACACA;
 
     COLORREF _ColorHighlight             = 0x747474;
     COLORREF _ColorHighlightText         = 0xFFFFFF;

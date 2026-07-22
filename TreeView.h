@@ -1,5 +1,5 @@
 
-/** $VER: TreeView.h (2026.07.19) P. Stuer **/
+/** $VER: TreeView.h (2026.07.22) P. Stuer **/
 
 #pragma once
 
@@ -235,6 +235,14 @@ public:
         };
 
         ::SendMessageW(::GetParent(_hTreeView), WM_NOTIFY, 0, (LPARAM) &nmhd);
+    }
+
+    /// <summary>
+    /// Sets the focus to the tree view.
+    /// </summary>
+    void SetFocus() const noexcept
+    {
+        ::SetFocus(_hTreeView);
     }
 
 protected:

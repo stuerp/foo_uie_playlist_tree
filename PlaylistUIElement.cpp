@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.cpp (2026.07.21) P. Stuer **/
+/** $VER: PlaylistsUIElement.cpp (2026.07.22) P. Stuer **/
 
 #include "pch.h"
 
@@ -279,6 +279,14 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
             }
         }
     }
+}
+
+/// <summary>
+/// Handles the WM_SETFOCUS message.
+/// </summary>
+void playlist_uielement_t::OnSetFocus(CWindow wndOld) noexcept
+{
+    _TreeView.SetFocus(); // Forward the focus.
 }
 
 /// <summary>
@@ -602,16 +610,6 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
     {
         case CDDS_PREPAINT:
         {
-/*
-            // Draw the control background.
-            {
-                RECT rc;
-
-                ::GetClientRect(hTreeView, &rc);
-
-                ::FillRect(hDC, &rc, _Theme.GetWindowBrush());
-            }
-*/
             SetMsgHandled(TRUE);
 
             return CDRF_NOTIFYITEMDRAW; // Request item-specific notifications.
@@ -656,7 +654,7 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
 
             // Clear the background of the full item.
             {
-                HBRUSH hBrush = _Theme.GetWindowBrush();
+                auto & hBrush = _Theme.GetWindowBrush();
 
                 ::FillRect(hDC, &rcItem, hBrush);
             }
@@ -701,7 +699,7 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
 
                 if (IsSelected)
                 {
-                    HBRUSH hBrush = HasFocus ? _Theme.GetSelectionBrush() : _Theme.GetInactiveSelectionBrush();
+                    auto & hBrush = HasFocus ? _Theme.GetSelectionBrush() : _Theme.GetInactiveSelectionBrush();
 
                     ::FillRect(hDC, &rc, hBrush);
 

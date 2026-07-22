@@ -50,6 +50,7 @@ private:
     virtual void OnSize(UINT nType, CSize size) noexcept override;
 
     void OnCommand(UINT notifyCode, int id, CWindow wnd) noexcept;
+    void OnSetFocus(CWindow wndOld) noexcept;
 
     LRESULT OnCustomDraw(NMHDR * nmhd) noexcept;
     LRESULT OnRightClick(NMHDR * nmhd) noexcept;
@@ -75,6 +76,7 @@ private:
         MSG_WM_DESTROY(OnDestroy);
 
         MSG_WM_COMMAND(OnCommand);
+        MSG_WM_SETFOCUS(OnSetFocus);
 
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, NM_CUSTOMDRAW, OnCustomDraw);
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, NM_RCLICK, OnRightClick);
