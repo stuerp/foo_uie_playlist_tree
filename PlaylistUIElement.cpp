@@ -722,7 +722,7 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
                 else
                 if (IsHot || IsHighlighted)
                 {
-                    HBRUSH hBrush = _Theme.GetHighlightBrush();
+                    auto & hBrush = _Theme.GetHighlightBrush();
 
                     ::FillRect(hDC, &rc, hBrush);
                 }

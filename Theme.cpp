@@ -18,30 +18,6 @@ theme_t _Theme;
 theme_t::~theme_t() noexcept
 {
     Dispose();
-
-    if (_hWindowBrush != NULL)
-    {
-        ::DeleteObject(_hWindowBrush);
-        _hWindowBrush = NULL;
-    }
-
-    if (_hWindowTextPen != NULL)
-    {
-        ::DeleteObject(_hWindowTextPen);
-        _hWindowTextPen = NULL;
-    }
-
-    if (_hSelectionBrush != NULL)
-    {
-        ::DeleteObject(_hSelectionBrush);
-        _hSelectionBrush = NULL;
-    }
-
-    if (_hInactiveSelectionBrush != NULL)
-    {
-        ::DeleteObject(_hInactiveSelectionBrush);
-        _hInactiveSelectionBrush = NULL;
-    }
 }
 
 /// <summary>
@@ -91,53 +67,38 @@ void theme_t::Dispose() noexcept
 
 void theme_t::SetWindowColor(COLORREF color) noexcept
 {
-    if (_hWindowBrush != NULL)
-        ::DeleteObject(_hWindowBrush);
-
     _ColorWindow = color;
 
-    _hWindowBrush = ::CreateSolidBrush(color);
+    _hWindowBrush = msc::brush_t(color);
 }
 
 void theme_t::SetWindowTextColor(COLORREF color) noexcept
 {
-    if (_hWindowTextPen != NULL)
-        ::DeleteObject(_hWindowTextPen);
-
     _ColorWindowText = color;
 
-    _hWindowTextPen = ::CreatePen(PS_SOLID, 1, color);
+    _hWindowTextPen = msc::pen_t(1, color);
 }
 
 void theme_t::SetSelectionColor(COLORREF color) noexcept
 {
-    if (_hSelectionBrush != NULL)
-        ::DeleteObject(_hSelectionBrush);
-
     _ColorSelection = _IsDUI ? Blend(GetWindowColor(), color) : color;
 
-    _hSelectionBrush = ::CreateSolidBrush(_ColorSelection);
+    _hSelectionBrush = msc::brush_t(_ColorSelection);
 }
 
 void theme_t::SetInactiveSelectionColor(COLORREF color) noexcept
 {
-    if (_hInactiveSelectionBrush != NULL)
-        ::DeleteObject(_hInactiveSelectionBrush);
-
     _ColorInactiveSelection = _IsDUI ? Blend(GetWindowColor(), color) : color;
 
-    _hInactiveSelectionBrush = ::CreateSolidBrush(_ColorInactiveSelection);
+    _hInactiveSelectionBrush = msc::brush_t(_ColorInactiveSelection);
 }
 
 void theme_t::SetHighlightColor(COLORREF color) noexcept
 {
-    if (_hHighlightBrush != NULL)
-        ::DeleteObject(_hHighlightBrush);
-
     _ColorHighlight = _IsDUI ? Blend(GetWindowColor(), color) : color;
 
-    _hHighlightBrush = ::CreateSolidBrush(_ColorHighlight);
-    _hHighlightPen = msc::hpen_t(1, color);
+    _hHighlightBrush = msc::brush_t(_ColorHighlight);
+    _hHighlightPen = msc::pen_t(1, color);
 }
 
 /// <summary>

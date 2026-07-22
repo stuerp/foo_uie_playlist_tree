@@ -48,14 +48,14 @@ public:
 
     void SetActiveItemFrameColor(COLORREF color) noexcept { _ColorActiveItemFrame = color; }
 
-    HBRUSH GetWindowBrush() const noexcept { return _hWindowBrush; }
-    HPEN GetWindowTextPen() const noexcept { return _hWindowTextPen; }
+    msc::brush_t & GetWindowBrush() noexcept { return _hWindowBrush; }
+    msc::pen_t & GetWindowTextPen() noexcept { return _hWindowTextPen; }
 
-    HBRUSH GetSelectionBrush() const noexcept { return _hSelectionBrush; }
-    HBRUSH GetInactiveSelectionBrush() const noexcept { return _hInactiveSelectionBrush; }
+    msc::brush_t & GetSelectionBrush() noexcept { return _hSelectionBrush; }
+    msc::brush_t & GetInactiveSelectionBrush() noexcept { return _hInactiveSelectionBrush; }
 
-    HBRUSH GetHighlightBrush() const noexcept { return _hHighlightBrush; }
-    msc::hpen_t & GetHighlightPen() noexcept { return _hHighlightPen; }
+    msc::brush_t & GetHighlightBrush() noexcept { return _hHighlightBrush; }
+    msc::pen_t & GetHighlightPen() noexcept { return _hHighlightPen; }
 
 private:
     void Dispose() noexcept;
@@ -85,14 +85,14 @@ private:
 
     COLORREF _ColorHotLight              = 0xD69C56;
 
-    HBRUSH _hWindowBrush = NULL;
-    HPEN _hWindowTextPen = NULL;
+    msc::brush_t _hWindowBrush;
+    msc::pen_t _hWindowTextPen;
 
-    HBRUSH _hSelectionBrush = NULL;
-    HBRUSH _hInactiveSelectionBrush = NULL;
+    msc::brush_t _hSelectionBrush;
+    msc::brush_t _hInactiveSelectionBrush;
 
-    HBRUSH _hHighlightBrush = NULL;
-    msc::hpen_t _hHighlightPen;
+    msc::brush_t _hHighlightBrush;
+    msc::pen_t _hHighlightPen;
 };
 
 extern theme_t _Theme;
