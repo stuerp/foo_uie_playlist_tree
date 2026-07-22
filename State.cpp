@@ -1,5 +1,5 @@
 
-/** $VER: State.cpp (2026.07.19) P. Stuer **/
+/** $VER: State.cpp (2026.07.22) P. Stuer **/
 
 #include "pch.h"
 
@@ -20,13 +20,15 @@ state_t::state_t() noexcept
 /// </summary>
 void state_t::Reset() noexcept
 {
-    _NameFormat = "%node_name%$if(%node_is_folder%,,' ('%node_item_count%')')";
+    _TextFormat = "%node_name%$if(%node_is_folder%,,' ('%node_item_count%')')";
+
+    _Images.clear();
 
     _Images.push_back({ "imageres.dll",   4 }); // Folder
     _Images.push_back({ "imageres.dll", 126 }); // Playlist
     _Images.push_back({ "imageres.dll", 125 }); // Playlist Playing
 
-    _IconSize = (uint32_t) ::GetSystemMetrics(SM_CXSMICON);
+    _ImageSize = (uint32_t) ::GetSystemMetrics(SM_CXSMICON);
 
     _Object.clear();
 }
@@ -36,6 +38,10 @@ void state_t::Reset() noexcept
 /// </summary>
 state_t & state_t::operator=(const state_t & other) noexcept
 {
+    _TextFormat = other._TextFormat;
+    _Images     = other._Images;
+    _ImageSize  = other._ImageSize;
+
     return *this;
 }
 
@@ -49,7 +55,8 @@ void state_t::FromJSON(const char * data, size_t size) noexcept
 
     const json Object = json::parse(data, data + size, nullptr, true);
 
-    _NameFormat = Object.value("nameFormat", _NameFormat).c_str();
+    _TextFormat = Object.value("nameFormat", _TextFormat).c_str();
+    _ImageSize  = Object.value("imageSize", _ImageSize);
 
     if (_Images.size() == Object["images"].size())
     {
@@ -77,7 +84,8 @@ json state_t::ToJSON() const noexcept
     {
         { "schemaVersion", _SchemaVersion },
 
-        { "nameFormat", _NameFormat },
+        { "nameFormat", _TextFormat },
+        { "imageSize", _ImageSize },
     };
 
     json::array_t Images;

@@ -80,6 +80,7 @@ To create the component first build the x86 configuration and next the x64 confi
 v1.2.0.0, 2026-xx-xx
 
 * New: You can select the image file path using a standard file dialog.
+* New: The image size can be configured.
 * Improved: Minor cosmetic changes.
 
 ## Known Bugs

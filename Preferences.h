@@ -5,9 +5,10 @@
 
 #define IDC_TEXT_FORMAT         1000
 #define IDC_NODE_TYPE           1001
-#define IDC_FILE_PATH           1002
-#define IDC_FILE_PATH_SELECT    1003
-#define IDC_IMAGE_LIST          1004
+#define IDC_IMAGE_SIZE          1002
+#define IDC_FILE_PATH           1003
+#define IDC_FILE_PATH_SELECT    1004
+#define IDC_IMAGE_LIST          1005
 
 #define W_A00   332 // Dialog width as set by foobar2000, in dialog units
 #define H_A00   288 // Dialog height as set by foobar2000, in dialog units
@@ -43,7 +44,7 @@
 #define W_A12   (W_A00 - (W_A11) - IX)
 #define H_A12   H_EBX
 
-/** Image **/
+/** Node Type **/
 
 // Label
 #define X_A13   0
@@ -56,6 +57,20 @@
 #define Y_A14   Y_A13
 #define W_A14   70
 #define H_A14   H_CBX
+
+/** Image Size **/
+
+// Label
+#define X_A19   X_A14 + W_A14 + IX
+#define Y_A19   Y_A13
+#define W_A19   W_A11
+#define H_A19   H_LBL
+
+// EditBox
+#define X_A20   X_A19 + W_A19 + IX
+#define Y_A20   Y_A19
+#define W_A20   24
+#define H_A20   H_EBX
 
 /** File Path **/
 

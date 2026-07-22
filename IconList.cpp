@@ -144,11 +144,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
                         {
                             // Draw the control background ourselves because a light/dark switch is not handled by fb2k::CCoreDarkModeHooks.
                             {
-                                RECT rc;
+                                const RECT & rcItem = lvcd->nmcd.rc;
 
-                                ::GetClientRect(hListView, &rc);
-
-                                ::FillRect(hDC, &rc, _Theme.GetWindowBrush());
+                                ::FillRect(hDC, &rcItem, _Theme.GetWindowBrush());
                             }
 
                             return CDRF_NOTIFYITEMDRAW; // Request item-specific notifications.
@@ -160,9 +158,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
                             const LVITEMW lvi
                             {
-                                .mask       = LVIF_STATE,
-                                .iItem      = (int) lvcd->nmcd.dwItemSpec,
-                                .stateMask  = 0xFF,
+                                .mask      = LVIF_STATE,
+                                .iItem     = (int) lvcd->nmcd.dwItemSpec,
+                                .stateMask = 0xFF,
                             };
 
                             ListView_GetItem(hListView, &lvi);
@@ -306,7 +304,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
             Instance->IconSize = std::max(cx, cy);
 
-            ListView_SetIconSpacing(Instance->hListView, Instance->IconSize + (xPadding * 2), Instance->IconSize + (yPadding * 2));
+//          ListView_SetIconSpacing(Instance->hListView, Instance->IconSize + (xPadding * 2), Instance->IconSize + (yPadding * 2));
+
+            const LVTILEVIEWINFO lvtvi =
+            {
+                .cbSize   = sizeof(lvtvi),
+                .dwMask   = /*LVTVIM_COLUMNS |*/ LVTVIM_TILESIZE,
+                .dwFlags  = LVTVIF_FIXEDSIZE,
+                .sizeTile = { Instance->IconSize + (xPadding * 4), Instance->IconSize + (yPadding * 3) },
+//              .cLines   = 0
+            };
+
+            ListView_SetTileViewInfo(Instance->hListView, &lvtvi);
+
+            ListView_SetView(Instance->hListView, LV_VIEW_TILE);
 
             const int ImageCount = ::ImageList_GetImageCount(Instance->hImageList);
 
@@ -320,6 +331,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 };
 
                 ListView_InsertItem(Instance->hListView, &lvi);
+/*
+                UINT Columns[1] = { 0 };
+
+                const LVTILEINFO lvti =
+                {
+                    .cbSize    = sizeof(lvti),
+                    .iItem     = i,
+                    .cColumns  = 1,
+                    .puColumns = Columns,
+                };
+
+                ListView_SetTileInfo(Instance->hListView, &lvti);*/
             }
 
             return TRUE;

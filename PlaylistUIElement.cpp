@@ -610,6 +610,13 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
     {
         case CDDS_PREPAINT:
         {
+            // Draw the control background ourselves because a light/dark switch is not handled by fb2k::CCoreDarkModeHooks.
+            {
+                const RECT & rcItem = tvcd->nmcd.rc;
+
+                ::FillRect(hDC, &rcItem, _Theme.GetWindowBrush());
+            }
+
             SetMsgHandled(TRUE);
 
             return CDRF_NOTIFYITEMDRAW; // Request item-specific notifications.
@@ -651,14 +658,14 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
             TreeView_GetItemRect(hTreeView, hItem, &rcText, TRUE);
 
             const LONG ItemHeight = rcText.bottom - rcText.top;
-
+/*
             // Clear the background of the full item.
             {
                 auto & hBrush = _Theme.GetWindowBrush();
 
                 ::FillRect(hDC, &rcItem, hBrush);
             }
-
+*/
             RECT rc = rcItem;
 
             rc.left += ItemHeight * tvcd->iLevel;
@@ -728,8 +735,8 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
 
             // Draw the image.
             {
-                const LONG dx = ((1 + ItemHeight + 1) - (LONG) _State._IconSize) / 2;
-                const LONG dy = (     ItemHeight      - (LONG) _State._IconSize) / 2;
+                const LONG dx = ((1 + ItemHeight + 1) - (LONG) _State._ImageSize) / 2;
+                const LONG dy = (     ItemHeight      - (LONG) _State._ImageSize) / 2;
 
                 ::ImageList_Draw(_hImageList, tvi.iImage, hDC, rc.left + dx, rc.top + dy, ILD_NORMAL);
 
@@ -749,7 +756,7 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
 
                 rc.right = rc.left + (rcText.right - rcText.left);
 
-                ::DrawThemeTextEx(_Theme.GetTextStyle(), hDC, 0, 0, Text, -1, DT_LEFT | DT_SINGLELINE, &rc, &Options);
+                ::DrawThemeTextEx(_Theme.GetTextStyle(), hDC, 0, 0, Text, -1, DT_LEFT | DT_SINGLELINE | DT_VCENTER, &rc, &Options);
             }
 
             SetMsgHandled(TRUE);
@@ -961,7 +968,7 @@ LRESULT playlist_uielement_t::OnGetDisplayInfo(NMHDR * nmhd) noexcept
     {
         pfc::string Text;
 
-        HRESULT hResult = title_formatter_t::Evaluate(_State._NameFormat, Node->Id, Text);
+        HRESULT hResult = title_formatter_t::Evaluate(_State._TextFormat, Node->Id, Text);
 
         if (!SUCCEEDED(hResult))
             return FALSE;
@@ -1451,14 +1458,14 @@ HRESULT playlist_uielement_t::InitImageList() noexcept
 {
     _hImageList.Reset();
 
-    _hImageList = ::ImageList_Create((int) _State._IconSize, (int) _State._IconSize, ILC_COLOR32 | ILC_MASK, (int) _State._Images.size(), 0);
+    _hImageList = ::ImageList_Create((int) _State._ImageSize, (int) _State._ImageSize, ILC_COLOR32 | ILC_MASK, (int) _State._Images.size(), 0);
 
     if (!_hImageList)
         return HRESULT_FROM_WIN32(::GetLastError());
 
     for (const auto & Image : _State._Images)
     {
-        himagelist_t hSrcImageList = image_list_factory_t::Create(Image._FilePath, _State._IconSize);
+        himagelist_t hSrcImageList = image_list_factory_t::Create(Image._FilePath, _State._ImageSize);
 
         if (!hSrcImageList)
             return HRESULT_FROM_WIN32(::GetLastError());

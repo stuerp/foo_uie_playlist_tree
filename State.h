@@ -1,5 +1,5 @@
 
-/** $VER: State.h (2026.07.12) P. Stuer **/
+/** $VER: State.h (2026.07.22) P. Stuer **/
 
 #pragma once
 
@@ -43,10 +43,10 @@ public:
     json ToJSON() const noexcept;
 
 public:
-    std::string _NameFormat;
+    std::string _TextFormat;
+    uint32_t _ImageSize;
 
     std::vector<image_t> _Images;
-    uint32_t _IconSize;
 
     const uint32_t _SchemaVersion = 1; // v0.1.0.0
 

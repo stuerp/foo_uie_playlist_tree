@@ -68,27 +68,7 @@ public:
     /// </summary>
     virtual void apply() final
     {
-        std::wstring Text;
-
-        Text.resize(4096);
-
-        {
-            GetDlgItemTextW(IDC_TEXT_FORMAT, Text.data(), (int) Text.size());
-
-            _State._NameFormat = msc::WideToUTF8(Text.c_str());
-        }
-
-        {
-            if (_SelectedIndex != -1)
-            {
-                auto & Image = _State._Images[(size_t) _SelectedIndex];
-
-                GetDlgItemTextW(IDC_FILE_PATH, Text.data(), (int) Text.size());
-
-                Image._FilePath  = msc::WideToUTF8(Text.c_str());
-                Image._IconIndex = (uint32_t) SendDlgItemMessageW(IDC_IMAGE_LIST, ILM_GETSELECTEDITEM);
-            }
-        }
+        _State = _NewState;
 
         auto CurrentElement = _UIElementTracker.GetCurrent();
 
@@ -103,7 +83,7 @@ public:
     /// </summary>
     virtual void reset() final
     {
-        _State.Reset();
+        _NewState.Reset();
 
         InitializeControls();
 
@@ -118,6 +98,7 @@ public:
 
         COMMAND_HANDLER_EX(IDC_TEXT_FORMAT,         EN_CHANGE,      OnEditChange)
         COMMAND_HANDLER_EX(IDC_FILE_PATH,           EN_CHANGE,      OnEditChange)
+        COMMAND_HANDLER_EX(IDC_IMAGE_SIZE,          EN_KILLFOCUS,   OnEditKillFocus)
 
         COMMAND_HANDLER_EX(IDC_NODE_TYPE,           CBN_SELCHANGE,  OnSelectionChange)
 
@@ -134,6 +115,8 @@ private:
     {
         _DarkMode.AddDialogWithControls(*this);
 
+        _NewState = _State;
+
         InitializeControls();
 
         return FALSE;
@@ -144,10 +127,14 @@ private:
     /// </summary>
     void InitializeControls()
     {
-        // Initialize the Name Format edit box.
-        SetDlgItemTextW(IDC_TEXT_FORMAT, msc::UTF8ToWide(_State._NameFormat).c_str());
+        auto Scope = toggle_t(_IgnoreNotifications, true);
 
-        // Initialize the Image Type combobox.
+        // Text Format
+        {
+            SetDlgItemTextW(IDC_TEXT_FORMAT, msc::UTF8ToWide(_NewState._TextFormat).c_str());
+        }
+
+        // Node Type 
         {
             auto w = (CComboBox) GetDlgItem(IDC_NODE_TYPE);
 
@@ -161,8 +148,24 @@ private:
             _SelectedIndex = 0;
 
             w.SetCurSel(_SelectedIndex);
+        }
 
-            OnImageTypeChange();
+        // File Path and Icon Index
+        {
+            auto & Image = _NewState._Images[(size_t) _SelectedIndex];
+
+            SetDlgItemTextW(IDC_FILE_PATH, msc::UTF8ToWide(Image._FilePath).c_str());
+
+            UpdateIconList();
+        }
+
+        // Image Size
+        {
+            wchar_t Text[32];
+
+            _itow_s(std::clamp((int) _NewState._ImageSize, 16, 256), Text, _countof(Text), 10);
+
+            SetDlgItemTextW(IDC_IMAGE_SIZE, Text);
         }
     }
 
@@ -171,14 +174,24 @@ private:
     /// </summary>
     void OnSelectionChange(UINT, int id, CWindow w) noexcept
     {
-        if (id != IDC_NODE_TYPE)
-            return;
+        if (id == IDC_NODE_TYPE)
+        {
+            auto cb = (CComboBox) w;
 
-        auto cb = (CComboBox) w;
+            _SelectedIndex = cb.GetCurSel();
 
-        _SelectedIndex = cb.GetCurSel();
+            {
+                auto & Image = _NewState._Images[(size_t) _SelectedIndex];
 
-        OnImageTypeChange();
+                {
+                    auto Scope = toggle_t(_IgnoreNotifications, true);
+
+                    SetDlgItemTextW(IDC_FILE_PATH, msc::UTF8ToWide(Image._FilePath).c_str());
+                }
+
+                UpdateIconList();
+            }
+        }
 
         OnChanged();
     }
@@ -186,23 +199,68 @@ private:
     /// <summary>
     /// Handles a textbox change.
     /// </summary>
-    void OnEditChange(UINT, int id, CWindow) noexcept
+    void OnEditChange(UINT, int id, CWindow wnd) noexcept
     {
         if (_IgnoreNotifications)
             return;
 
-        // Update the icon list when the user changes the file path.
         if (id == IDC_FILE_PATH)
         {
-            std::wstring Text;
+            auto Edit = (CEdit) wnd;
 
-            Text.resize(4096);
+            auto & Image = _NewState._Images[(size_t) _SelectedIndex];
 
-            GetDlgItemTextW(IDC_FILE_PATH, Text.data(), (int) Text.size());
+            {
+                std::wstring Text;
 
-            const auto Index = (uint32_t) SendDlgItemMessageW(IDC_IMAGE_LIST, ILM_GETSELECTEDITEM);
+                Text.resize(MAX_PATH);
 
-            UpdateIconList(msc::WideToUTF8(Text.c_str()), Index);
+                Edit.GetWindowTextW(Text.data(), (int) Text.size());
+
+                Image._FilePath  = msc::WideToUTF8(Text).c_str();
+                Image._IconIndex = 0;
+            }
+
+            UpdateIconList();
+        }
+
+        OnChanged();
+    }
+
+    /// <summary>
+    /// Handles a textbox change.
+    /// </summary>
+    void OnEditKillFocus(UINT, int id, CWindow wnd) noexcept
+    {
+        if (_IgnoreNotifications)
+            return;
+
+        if (id == IDC_IMAGE_SIZE)
+        {
+            auto Edit = (CEdit) wnd;
+
+            {
+                wchar_t Text[32];
+
+                Edit.GetWindowTextW(Text, (int) _countof(Text));
+
+                _NewState._ImageSize = (uint32_t) std::clamp(_wtoi(Text), 16, 256);
+
+                // Convert the number back to text in case it got clamped.
+                _itow_s((int) _NewState._ImageSize, Text, _countof(Text), 10);
+
+                const auto CaretIndex = Edit.GetCaretIndex();
+
+                {
+                    auto Scope = toggle_t(_IgnoreNotifications, true);
+
+                    Edit.SetWindowTextW(Text);
+                }
+
+                Edit.SetCaretIndex(CaretIndex);
+            }
+
+            UpdateIconList();
         }
 
         OnChanged();
@@ -222,12 +280,10 @@ private:
             GetDlgItemTextW(IDC_FILE_PATH, FilePath.data(), (int) FilePath.size());
 
             if (msc::OpenFileDialog(m_hWnd, { { L"All files (*.*)", L"*.*" }}, 0, L"dll", L"Choose the icon file...", msc::GetFullPath(FilePath).c_str(), FilePath))
-            {
                 SetDlgItemTextW(IDC_FILE_PATH, FilePath.c_str());
-
-                OnChanged();
-            }
         }
+
+        OnChanged();
     }
 
     /// <summary>
@@ -243,6 +299,10 @@ private:
 
         if (nmhd->code != ILN_SELCHANGE)
             return FALSE;
+
+        auto & Image = _NewState._Images[(size_t) _SelectedIndex];
+
+        Image._IconIndex = (uint32_t) SendDlgItemMessageW(IDC_IMAGE_LIST, ILM_GETSELECTEDITEM);
 
         OnChanged();
 
@@ -266,24 +326,26 @@ private:
 
         Text.resize(4096);
 
+        // Text Format
         {
-            GetDlgItemTextW(IDC_TEXT_FORMAT, Text.data(), (int) Text.size());
-
-            if (_State._NameFormat != msc::WideToUTF8(Text.c_str()))
+            if (_NewState._TextFormat != _State._TextFormat)
                 return true;
         }
 
-        auto & Image = _State._Images[(size_t) _SelectedIndex];
+        auto & Image = _NewState._Images[(size_t) _SelectedIndex];
 
+        // File Path and Icon Index
         {
-            GetDlgItemTextW(IDC_FILE_PATH, Text.data(), (int) Text.size());
-
-            if (Image._FilePath != msc::WideToUTF8(Text.c_str()))
+            if (Image._FilePath != _State._Images[(size_t) _SelectedIndex]._FilePath)
                 return true;
 
-            const auto Index = (uint32_t) SendDlgItemMessageW(IDC_IMAGE_LIST, ILM_GETSELECTEDITEM);
+            if (Image._IconIndex != _State._Images[(size_t) _SelectedIndex]._IconIndex)
+                return true;
+        }
 
-            if (Image._IconIndex != Index)
+        // Image Size
+        {
+            if (_NewState._ImageSize != _State._ImageSize)
                 return true;
         }
 
@@ -291,55 +353,37 @@ private:
     }
 
     /// <summary>
-    /// Handles a change to the selected image type.
-    /// </summary>
-    void OnImageTypeChange() noexcept
-    {
-        _IgnoreNotifications = true;
-
-        auto & Image = _State._Images[(size_t) _SelectedIndex];
-
-        {
-            // Set the image file path.
-            SetDlgItemTextW(IDC_FILE_PATH, msc::UTF8ToWide(Image._FilePath).c_str());
-
-            // Set the image index.
-            UpdateIconList(Image._FilePath, Image._IconIndex);
-        }
-
-        _IgnoreNotifications = false;
-    }
-
-    /// <summary>
     /// Updates the icon list.
     /// </summary>
-    void UpdateIconList(const std::string & filePath, uint32_t iconIndex) noexcept
+    void UpdateIconList() noexcept
     {
+        const auto & Image = _NewState._Images[(size_t) _SelectedIndex];
+
         pfc::string Text;
 
-        HRESULT hResult = title_formatter_t::Evaluate(filePath, { }, Text);
+        HRESULT hResult = title_formatter_t::Evaluate(Image._FilePath, { }, Text);
 
-        auto FilePath = (SUCCEEDED(hResult)) ? Text.c_str() : filePath;
+        auto FilePath = (SUCCEEDED(hResult)) ? Text.c_str() : Image._FilePath;
 
-        HIMAGELIST hImageList = image_list_factory_t::Create(filePath, _State._IconSize);
+        HIMAGELIST hImageList = image_list_factory_t::Create(FilePath, _NewState._ImageSize);
 
         if (hImageList == NULL)
-            Log.AtWarn().Write("Failed to create image list from \"%s\": 0x%08X", filePath.c_str(), ::GetLastError());
+            Log.AtWarn().Write("Failed to create image list from \"%s\": 0x%08X", FilePath.c_str(), ::GetLastError());
 
         HWND hIconList = GetDlgItem(IDC_IMAGE_LIST);
 
         ::SendMessageW(hIconList, ILM_SETIMAGELIST, 0, (LPARAM) hImageList);
 
-        ::SendMessageW(hIconList, ILM_SELECTITEM, (WPARAM) iconIndex, 0);
+        ::SendMessageW(hIconList, ILM_SELECTITEM, (WPARAM) Image._IconIndex, 0);
     }
 
 private:
     const preferences_page_callback::ptr _Callback;
 
-    uielement_t * _CurrentElement;
-
     int _SelectedIndex;
     bool _IgnoreNotifications;
+
+    state_t _NewState;
 
     fb2k::CDarkModeHooks _DarkMode;
 };
