@@ -204,6 +204,21 @@ private:
         if (_IgnoreNotifications)
             return;
 
+        if (id == IDC_TEXT_FORMAT)
+        {
+            auto Edit = (CEdit) wnd;
+
+            {
+                std::wstring Text;
+
+                Text.resize(MAX_PATH);
+
+                Edit.GetWindowTextW(Text.data(), (int) Text.size());
+
+                _NewState._TextFormat = msc::WideToUTF8(Text).c_str();
+            }
+        }
+        else
         if (id == IDC_FILE_PATH)
         {
             auto Edit = (CEdit) wnd;

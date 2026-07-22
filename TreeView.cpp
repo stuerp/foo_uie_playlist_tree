@@ -1,5 +1,5 @@
 
-/** $VER: TreeView.cpp (2026.07.19) P. Stuer **/
+/** $VER: TreeView.cpp (2026.07.22) P. Stuer **/
 
 #include "pch.h"
 
@@ -15,11 +15,19 @@ bool tree_view_t::Create(HWND hWndParent, size_t id) noexcept
 {
     _Id = id;
 
-    const DWORD Styles = WS_CHILD | WS_VISIBLE | WS_VSCROLL | TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | TVS_EDITLABELS | TVS_SHOWSELALWAYS | TVS_TRACKSELECT; // | TVS_SINGLEEXPAND | TVS_INFOTIP | TVS_FULLROWSELECT;
+    const DWORD Styles = WS_CHILD | WS_VISIBLE | WS_VSCROLL | TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | TVS_EDITLABELS | TVS_SHOWSELALWAYS | TVS_TRACKSELECT | TVS_INFOTIP; // | TVS_SINGLEEXPAND | TVS_FULLROWSELECT;
 
     _hTreeView = ::CreateWindowExW(0, WC_TREEVIEW, L"", Styles, 0, 0, 0, 0, hWndParent, (HMENU) id, THIS_HINSTANCE, nullptr);
 
-    return (_hTreeView != NULL);
+    if (_hTreeView == NULL)
+        return false;
+
+    auto hToolTip = TreeView_GetToolTips(_hTreeView);
+
+    if (hToolTip != NULL)
+        ::SendMessageW(hToolTip, TTM_SETMAXTIPWIDTH, 0, 64);
+
+    return true;
 }
 
 /// <summary>

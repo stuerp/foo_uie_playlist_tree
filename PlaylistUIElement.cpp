@@ -1177,6 +1177,35 @@ LRESULT playlist_uielement_t::OnKeyDown(NMHDR * nmhd) noexcept
 }
 
 /// <summary>
+/// Handles the TVN_GETINFOTIP notification.
+/// </summary>
+LRESULT playlist_uielement_t::OnGetInfoTip(NMHDR * nmhd) noexcept
+{
+    auto nmgi = (NMTVGETINFOTIPW *) nmhd;
+
+//  const auto hTreeView = nmhd->hwndFrom;
+//  const auto hItem = (HTREEITEM) nmgi->hItem;
+
+    const auto Node = (node_t *) nmgi->lParam;
+
+    if (Node == nullptr)
+        return TRUE;
+
+    pfc::string Text;
+
+    HRESULT hResult = title_formatter_t::Evaluate("%playlist_size_natural%[, %playlist_duration_natural%]", Node->Id, Text);
+
+    if (!SUCCEEDED(hResult))
+        return TRUE;
+
+    ::wcscpy_s(nmgi->pszText, (rsize_t) nmgi->cchTextMax, msc::UTF8ToWide(Text.c_str()).c_str());
+
+    SetMsgHandled(FALSE);
+
+    return FALSE;
+}
+
+/// <summary>
 /// Handles the TVN_BEGINDRAG notification.
 /// </summary>
 LRESULT playlist_uielement_t::OnBeginDrag(NMHDR * nmhd) noexcept

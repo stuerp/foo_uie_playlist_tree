@@ -52,6 +52,9 @@ public:
 private:
     static const std::string ExpandEnvironmentStrings(const std::string & src) noexcept;
 
+    double GetPlaylistDuration(size_t index) const noexcept;
+    t_filesize GetPlaylistSize(size_t index) const noexcept;
+
 private:
     static_api_ptr_t<playlist_manager_v5> _PlaylistManager;
     static_api_ptr_t<folder_manager_t> _FolderManager;

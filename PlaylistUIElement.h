@@ -56,14 +56,15 @@ private:
     LRESULT OnRightClick(NMHDR * nmhd) noexcept;
     LRESULT OnMiddleClick(NMHDR * nmhd) noexcept;
 
-    LRESULT OnGetDisplayInfo(NMHDR * nmhd) noexcept;
+    LRESULT OnKeyDown(NMHDR * nmhd) noexcept;
+    LRESULT OnGetInfoTip(NMHDR * nmhd) noexcept;
     LRESULT OnSelectionChanged(NMHDR * nmhd) noexcept;
+    LRESULT OnGetDisplayInfo(NMHDR * nmhd) noexcept;
+    LRESULT OnItemExpanded(NMHDR * nmhd) noexcept;
+    LRESULT OnBeginDrag(NMHDR * nmhd) noexcept;
     LRESULT OnDeleteItem(NMHDR * nmhd) noexcept;
     LRESULT OnBeginLabelEdit(NMHDR * nmhd) noexcept;
     LRESULT OnEndLabelEdit(NMHDR * nmhd) noexcept;
-    LRESULT OnKeyDown(NMHDR * nmhd) noexcept;
-    LRESULT OnBeginDrag(NMHDR * nmhd) noexcept;
-    LRESULT OnItemExpanded(NMHDR * nmhd) noexcept;
 
     void OnMouseMove(UINT flags, CPoint point) noexcept;
     void OnMouseLeave() noexcept;
@@ -83,6 +84,7 @@ private:
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, NM_MCLICK, OnMiddleClick);
 
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_KEYDOWN, OnKeyDown);
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_GETINFOTIP, OnGetInfoTip);
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_SELCHANGED, OnSelectionChanged);
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_GETDISPINFO, OnGetDisplayInfo);
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_ITEMEXPANDED, OnItemExpanded);

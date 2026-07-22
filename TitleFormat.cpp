@@ -1,5 +1,5 @@
 
-/** $VER: TitleFormat.cpp (2026.07.12) P. Stuer **/
+/** $VER: TitleFormat.cpp (2026.07.22) P. Stuer **/
 
 #include "pch.h"
 
@@ -92,38 +92,11 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
 
         std::pair{ "playlist_duration", [&]() -> bool
         {
-            class callback_t : public playlist_manager::enum_items_callback
-            {
-            public:
-                virtual ~callback_t() { }
-
-                bool on_item(t_size itemIndex, const metadb_handle_ptr & item, bool isSelected) override
-                {
-                    if (item.is_valid())
-                    {
-                        const double Length = item->get_length(); // in seconds
-
-                        // Ignore unknown lengths (-1.0 or similar)
-                        if (Length > 0.)
-                            Duration += Length;
-                    }
-
-                    return true; // Continue enumerating
-                }
-
-            public:
-                double Duration = 0.; // in seconds
-            };
-
-            static_api_ptr_t<playlist_manager> pm;
-
-            callback_t Callback;
-
-            pm->playlist_enum_items(Index, Callback, bit_array_true());
+            auto Duration = GetPlaylistDuration(Index);
 
             std::locale Locale(""); // User default Windows locale.
 
-            const auto Text = std::format(Locale, "{:L}", Callback.Duration);
+            const auto Text = std::format(Locale, "{:L}", Duration);
 
             out->write(titleformat_inputtypes::unknown, Text.c_str());
 
@@ -132,34 +105,106 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
             return true;
         }},
 
-        std::pair{ "playlist_size", [&]() -> bool
+        std::pair{ "playlist_duration_natural", [&]() -> bool
         {
-            class callback_t : public playlist_manager::enum_items_callback
+            auto Duration = GetPlaylistDuration(Index);
+
+            if (Duration > 0.)
             {
-            public:
-                virtual ~callback_t() { }
+                constexpr double SECS_PER_WEEK  = 604'800.;
+                constexpr double SECS_PER_DAY   = 86'400.;
+                constexpr double SECS_PER_HOUR  = 3'600.;
+                constexpr double SECS_PER_MIN   = 60.;
 
-                bool on_item(t_size itemIndex, const metadb_handle_ptr & item, bool isSelected) override
+                std::ostringstream oss;
+
+                const auto Weeks = (size_t) (Duration / SECS_PER_WEEK); Duration = std::fmod(Duration, SECS_PER_WEEK);
+
+                if (Weeks > 0)
+                    oss << Weeks << 'w';
+
+                if (!oss.str().empty())
+                    oss << " ";
+
+                const auto Days = (size_t) (Duration / SECS_PER_DAY);  Duration = std::fmod(Duration, SECS_PER_DAY);
+
+                if (Days > 0)
+                    oss << Days << 'd';
+
+                if (!oss.str().empty())
+                    oss << " ";
+
+                if (Duration > 0.)
                 {
-                    if (item.is_valid())
-                        Size += item->get_filesize();
+                    const auto Hours   = (size_t) (Duration / SECS_PER_HOUR); Duration = std::fmod(Duration, SECS_PER_HOUR);
+                    const auto Minutes = (size_t) (Duration / SECS_PER_MIN);  Duration = std::fmod(Duration, SECS_PER_MIN);
+                    const auto Seconds = (size_t) (Duration);                 Duration -= Seconds;
 
-                    return true; // Continue enumerating
+                    oss << std::setfill('0') << std::setw(2) << Hours << ':'
+                        << std::setfill('0') << std::setw(2) << Minutes << ':'
+                        << std::setfill('0') << std::setw(2) << Seconds << '.'
+                        << std::setfill('0') << std::setw(3) << (int) (Duration * 1'000.);
                 }
 
-            public:
-                t_filesize Size = 0; // in bytes
-            };
+                out->write(titleformat_inputtypes::unknown, oss.str().c_str());
+            }
+            else
+                out->write(titleformat_inputtypes::unknown, "N/A");
 
-            static_api_ptr_t<playlist_manager> pm;
+            isFound = true;
 
-            callback_t Callback;
+            return true;
+        }},
 
-            pm->playlist_enum_items(Index, Callback, bit_array_true());
+        std::pair{ "playlist_size", [&]() -> bool
+        {
+            auto Size = GetPlaylistSize(Index);
 
-            std::locale Locale(""); // User default Windows locale.
+            std::string Text;
 
-            const auto Text = std::format(Locale, "{:L}", Callback.Size);
+            if (Size != SIZE_MAX)
+            {
+                std::locale Locale(""); // User default Windows locale.
+
+                Text = std::format(Locale, "{:L}", Size);
+            }
+            else
+                Text = "N/A";
+
+            out->write(titleformat_inputtypes::unknown, Text.c_str());
+
+            isFound = true;
+
+            return true;
+        }},
+
+        std::pair{ "playlist_size_natural", [&]() -> bool
+        {
+            auto Size = GetPlaylistSize(Index);
+
+            std::string Text;
+
+            if ((long long) Size >= 0)
+            {
+                std::locale Locale(""); // User default Windows locale.
+
+                if (Size >= 1'099'511'627'776)
+                    Text = std::format(Locale, "{:.3Lf} TB", (double) Size / 1'099'511'627'776.);
+                else
+                if (Size >= 1'073'741'824)
+                    Text = std::format(Locale, "{:.3Lf} GB", (double) Size / 1'073'741'824.);
+                else
+                if (Size >= 1'048'576)
+                    Text = std::format(Locale, "{:.3Lf} MB", (double) Size / 1'048'576.);
+
+                else
+                if (Size >= 1'024)
+                    Text = std::format(Locale, "{:.3Lf} KB", (double) Size / 1'024.);
+                else
+                    Text = std::format(Locale, "{:L} bytes", Size);
+            }
+            else
+                Text = "N/A";
 
             out->write(titleformat_inputtypes::unknown, Text.c_str());
 
@@ -246,4 +291,69 @@ const std::string custom_titleformat_hook_t::ExpandEnvironmentStrings(const std:
     ::ExpandEnvironmentStringsA(src.c_str(), (LPSTR) Dst.data(), (DWORD) Dst.size());
 
     return Dst;
+}
+
+/// <summary>
+/// Gets tje duration of a playlist (in seconds).
+/// </summary>
+double custom_titleformat_hook_t::GetPlaylistDuration(size_t index) const noexcept
+{
+    class callback_t : public playlist_manager::enum_items_callback
+    {
+    public:
+        virtual ~callback_t() { }
+
+        bool on_item(t_size itemIndex, const metadb_handle_ptr & item, bool isSelected) override
+        {
+            if (item.is_valid())
+            {
+                const double Length = item->get_length(); // in seconds
+
+                // Ignore unknown lengths (-1.0 or similar)
+                if (Length > 0.)
+                    Duration += Length;
+            }
+
+            return true; // Continue enumerating
+        }
+
+    public:
+        double Duration = 0.; // in seconds
+    };
+
+    callback_t Callback;
+
+    _PlaylistManager->playlist_enum_items(index, Callback, bit_array_true());
+
+    return Callback.Duration;
+}
+
+
+/// <summary>
+/// Gets the size of a playlist (in bytes).
+/// </summary>
+t_filesize custom_titleformat_hook_t::GetPlaylistSize(size_t index) const noexcept
+{
+    class callback_t : public playlist_manager::enum_items_callback
+    {
+    public:
+        virtual ~callback_t() { }
+
+        bool on_item(t_size itemIndex, const metadb_handle_ptr & item, bool isSelected) override
+        {
+            if (item.is_valid())
+                Size += item->get_filesize();
+
+            return true; // Continue enumerating
+        }
+
+    public:
+        t_filesize Size = 0; // in bytes
+    };
+
+    callback_t Callback;
+
+    _PlaylistManager->playlist_enum_items(index, Callback, bit_array_true());
+
+    return Callback.Size;
 }
