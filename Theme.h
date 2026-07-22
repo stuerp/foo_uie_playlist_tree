@@ -1,5 +1,5 @@
 
-/** $VER: Theme.h (2026.07.17) P. Stuer **/
+/** $VER: Theme.h (2026.07.22) P. Stuer **/
 
 #pragma once
 
@@ -55,6 +55,7 @@ public:
     HBRUSH GetInactiveSelectionBrush() const noexcept { return _hInactiveSelectionBrush; }
 
     HBRUSH GetHighlightBrush() const noexcept { return _hHighlightBrush; }
+    msc::hpen_t & GetHighlightPen() noexcept { return _hHighlightPen; }
 
 private:
     void Dispose() noexcept;
@@ -91,6 +92,7 @@ private:
     HBRUSH _hInactiveSelectionBrush = NULL;
 
     HBRUSH _hHighlightBrush = NULL;
+    msc::hpen_t _hHighlightPen;
 };
 
 extern theme_t _Theme;

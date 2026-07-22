@@ -145,7 +145,7 @@ private:
     #pragma region folder_callback_t
 
 	void OnFolderCreated(const GUID & id, const std::string & name) noexcept override;
-	void OnFolderRemoved(const GUID & id) noexcept override;
+	void OnFolderRemoving(const GUID & id) noexcept override;
 	void OnFolderRenamed(const GUID & id, const std::string & oldName, const std::string & newName) noexcept override;
 
     #pragma endregion

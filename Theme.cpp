@@ -137,6 +137,7 @@ void theme_t::SetHighlightColor(COLORREF color) noexcept
     _ColorHighlight = _IsDUI ? Blend(GetWindowColor(), color) : color;
 
     _hHighlightBrush = ::CreateSolidBrush(_ColorHighlight);
+    _hHighlightPen = msc::hpen_t(1, color);
 }
 
 /// <summary>
@@ -146,7 +147,7 @@ COLORREF theme_t::Blend(COLORREF c1, COLORREF c2) noexcept
 {
     const bool IsDarkMode = ui_config_manager::get()->is_dark_mode();
 
-    const uint8_t Alpha = IsDarkMode ? 240 : 51;
+    const uint8_t Alpha = IsDarkMode ? 240 : 50;
 
     const uint32_t rb = (((c1 & 0x00FF00FFu) * (255 - Alpha)) + ((c2 & 0x00FF00FFu) * Alpha)) >> 8;
 

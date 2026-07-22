@@ -4,13 +4,12 @@
 #include "pch.h"
 
 #include "TitleFormat.h"
-#include "Encoding.h"
 
 #pragma hdrstop
 
 template<typename... Pairs> auto dispatcher_t(Pairs &&... pairs)
 {
-    return std::unordered_map<std::string_view, std::function<bool()>>{ {std::forward<Pairs>(pairs)...} };
+    return std::unordered_map<std::string_view, std::function<bool()>>{ { std::forward<Pairs>(pairs)... } };
 }
 
 /// <summary>

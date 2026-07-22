@@ -144,39 +144,11 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
         // Handles the "New Folder" command.
         case IDM_NEW_FOLDER:
         {
-            // Create the new Folder item.
-            std::string Name("New Folder");
-
-            GUID Id;
-
-            HRESULT hResult = ::CoCreateGuid(&Id);
+            HRESULT hResult = _FolderManager->CreateFolder();
 
             if (!SUCCEEDED(hResult))
                 return;
 
-            _FolderManager->CreateFolder(Id, Name);
-
-            // Get the data of the item we were hovering over, if any.
-            const auto Parent = (node_t *) _TreeView.GetData(_hHighlightedtem);
-
-            // Add the item.
-            auto ParentId = GUID();
-            auto InsertAfterId = GUID();
-
-            if (Parent != nullptr)
-            {
-                if (Parent->IsFolder)
-                    ParentId = Parent->Id;
-                else
-                    InsertAfterId = Parent->Id;
-            }
-
-            _TreeView.AddItem(ParentId, InsertAfterId, Id, Name, true, false, true);
-
-            _hHighlightedtem = NULL;
-
-            // Redraw the tree view. Note: Only required when using custom draw.
-        //  _TreeView.Update();
             break;
         }
 
@@ -186,7 +158,8 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
             size_t NewIndex = _PlaylistManager->create_playlist_autoname();
 
             if (NewIndex == SIZE_MAX)
-                break;
+                return;
+
             break;
         }
 
@@ -201,10 +174,10 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
         case IDM_REMOVE:
         {
             auto Scope = toggle_t(_IsUser, true);
-            {
-                _TreeView.RemoveItem(_hHighlightedtem);
-            }
-            break;
+
+            _TreeView.RemoveItem(_hHighlightedtem);
+
+            return;
         }
 
         // Handles the "Sort" command.
@@ -425,11 +398,9 @@ void playlist_uielement_t::on_playlist_created(size_t index, const char * name, 
     if ((index == SIZE_MAX) || (name == nullptr) || (size == 0))
         return;
 
-    pfc::string Name;
-
-    _PlaylistManager->playlist_get_name(index, Name);
-
     const auto Id = _PlaylistManager->playlist_get_guid(index);
+
+    Log.AtDebug().Write("Created playlist %s as \"%s\".", msc::GUIDToUTF8(Id).c_str(), name);
 
     // Get the data of the item we were hovering over, if any.
     const auto Parent = (node_t *) _TreeView.GetData(_hHighlightedtem);
@@ -446,7 +417,7 @@ void playlist_uielement_t::on_playlist_created(size_t index, const char * name, 
             InsertAfterId = Parent->Id;
     }
 
-    _TreeView.AddItem(ParentId, InsertAfterId, Id, Name.c_str(), false, false, true);
+    _TreeView.AddItem(ParentId, InsertAfterId, Id, name, false, false, true);
 
     // Activate the newly created playlist.
     _PlaylistManager->set_active_playlist(index);
@@ -474,7 +445,9 @@ void playlist_uielement_t::on_playlists_removing(const bit_array & mask, size_t 
 
     for (size_t Index = mask.find_first(true, 0, oldCount); Index < oldCount; Index = mask.find_next(true, Index, oldCount))
     {
-        auto Id = _PlaylistManager->playlist_get_guid(Index);
+        const auto Id = _PlaylistManager->playlist_get_guid(Index);
+
+        Log.AtDebug().Write("Removing playlist %s.", msc::GUIDToUTF8(Id).c_str());
 
         _TreeView.RemoveItem(Id);
     }
@@ -497,11 +470,9 @@ void playlist_uielement_t::on_playlist_renamed(size_t index, const char * newNam
 
     const auto Id = _PlaylistManager->playlist_get_guid(index);
 
-    pfc::string Name;
+    Log.AtDebug().Write("Renaming playlist %s to \"%s\".", msc::GUIDToUTF8(Id).c_str(), newName);
 
-    _PlaylistManager->playlist_get_name(index, Name);
-
-    _TreeView.SetName(Id, Name.c_str());
+    _TreeView.SetName(Id, newName);
 }
 
 /// <summary>
@@ -568,13 +539,43 @@ void playlist_uielement_t::on_playback_pause(bool isPaused)
 /// </summary>
 void playlist_uielement_t::OnFolderCreated(const GUID & id, const std::string & name) noexcept
 {
+    Log.AtDebug().Write("Created folder %s.", msc::GUIDToUTF8(id).c_str());
+
+    if (_IgnoreNotifications || (id == GUID()) || name.empty())
+        return;
+
+    // Get the data of the item we were hovering over, if any.
+    const auto Parent = (node_t *) _TreeView.GetData(_hHighlightedtem);
+
+    // Add the item.
+    auto ParentId = GUID();
+    auto InsertAfterId = GUID();
+
+    if (Parent != nullptr)
+    {
+        if (Parent->IsFolder)
+            ParentId = Parent->Id;
+        else
+            InsertAfterId = Parent->Id;
+    }
+
+    _TreeView.AddItem(ParentId, InsertAfterId, id, name, true, false, true);
+
+    _hHighlightedtem = NULL;
+
+    // Redraw the tree view. Note: Only required when using custom draw.
+//  _TreeView.Update();
 };
 
 /// <summary>
-/// Called after a folder has been removed.
+/// Called when a folder is about to be removed.
 /// </summary>
-void playlist_uielement_t::OnFolderRemoved(const GUID & id) noexcept
+void playlist_uielement_t::OnFolderRemoving(const GUID & id) noexcept
 {
+    Log.AtDebug().Write("Removing folder %s.", msc::GUIDToUTF8(id).c_str());
+
+    if (_IgnoreNotifications)
+        return;
 };
 
 /// <summary>
@@ -644,7 +645,7 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
             const auto IsSelected    = ((tvi.state & TVIS_SELECTED) != 0); // || ((tvcd->nmcd.uItemState & CDIS_SELECTED) != 0);
             const auto IsHighlighted = ((tvi.state & TVIS_DROPHILITED) != 0);
             const auto IsHot         = ((tvcd->nmcd.uItemState & CDIS_HOT) != 0);
-            const auto IsFocus       = ((tvcd->nmcd.uItemState & CDIS_FOCUS) != 0);
+            const auto IsFocused     = ((tvcd->nmcd.uItemState & CDIS_FOCUS) != 0);
 
             // Get bounding rectangle of the item text.
             RECT rcText;
@@ -705,9 +706,9 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
                     ::FillRect(hDC, &rc, hBrush);
 
                     // Draw the focus rectangle.
-                    if (IsFocus)
+                    if (IsFocused)
                     {
-                        HPEN hPen = _Theme.GetWindowTextPen();
+                        auto & hPen = _Theme.GetHighlightPen();
 
                         auto hOldBrush = ::SelectObject(hDC, hBrush);
                         auto hOldPen = ::SelectObject(hDC, hPen);
@@ -935,8 +936,9 @@ LRESULT playlist_uielement_t::OnMiddleClick(NMHDR * nmhd) noexcept
     if (_hHighlightedtem == NULL)
         return -1;
 
-    auto Scope = toggle_t(_IsUser, true);
     {
+        auto Scope = toggle_t(_IsUser, true);
+
         _TreeView.RemoveItem(_hHighlightedtem);
     }
 
@@ -1041,6 +1043,8 @@ LRESULT playlist_uielement_t::OnDeleteItem(NMHDR * nmhd) noexcept
 
     if (Node->IsFolder)
     {
+        auto Scope = toggle_t(_IgnoreNotifications, true);
+
         _FolderManager->RemoveFolder(Node->Id);
     }
     else
@@ -1053,8 +1057,9 @@ LRESULT playlist_uielement_t::OnDeleteItem(NMHDR * nmhd) noexcept
             if (Index == SIZE_MAX)
                 return FALSE;
 
-            auto Scope = toggle_t(_IgnoreNotifications, true);
             {
+                auto Scope = toggle_t(_IgnoreNotifications, true);
+
                 _PlaylistManager->remove_playlist(Index);
             }
         }
@@ -1152,8 +1157,9 @@ LRESULT playlist_uielement_t::OnKeyDown(NMHDR * nmhd) noexcept
 
         case VK_DELETE:
         {
-            auto Scope = toggle_t(_IsUser, true);
             {
+                auto Scope = toggle_t(_IsUser, true);
+
                 _TreeView.RemoveSelectedItem();
             }
             break;
@@ -1241,7 +1247,11 @@ void playlist_uielement_t::FromJSON(json object, const GUID & parentId) noexcept
 
         if (IsFolder)
         {
-            _FolderManager->CreateFolder(Id, Name);
+            {
+                auto Scope = toggle_t(_IgnoreNotifications, true);
+
+                _FolderManager->CreateFolder(Id, Name);
+            }
 
             _TreeView.AddItem(parentId, { }, Id, Name, IsFolder, IsExpanded, false);
 

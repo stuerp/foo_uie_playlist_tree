@@ -36,17 +36,40 @@ public:
     virtual ~folder_manager_impl() = default;
 
     /// <summary>
+    /// Creates a new folder with a default name.
+    /// </summary>
+    virtual HRESULT CreateFolder() noexcept override
+    {
+        // Create the new Folder item.
+        std::string Name("New Folder");
+
+        GUID Id;
+
+        HRESULT hResult = ::CoCreateGuid(&Id);
+
+        if (!SUCCEEDED(hResult))
+            return hResult;
+
+        return CreateFolder(Id, Name);
+    }
+
+    /// <summary>
     /// Creates a new folder.
     /// </summary>
-    virtual void CreateFolder(const GUID & id, const std::string & name) noexcept override
+    virtual HRESULT CreateFolder(const GUID & id, const std::string & name) noexcept override
     {
         _Items.try_emplace(id, folder_t(name));
+
+        for (auto Callback : _Callbacks)
+            Callback->OnFolderCreated(id, name);
+
+        return S_OK;
     }
 
     /// <summary>
     /// Gets the name of the specified folder.
     /// </summary>
-    virtual void GetFolderName(const GUID & id, std::string & text) const noexcept override
+    virtual HRESULT GetFolderName(const GUID & id, std::string & text) const noexcept override
     {
         auto Iter = _Items.find(id);
 
@@ -54,47 +77,60 @@ public:
         {
             text.clear();
 
-            return;
+            return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
         }
 
         text = Iter->second.Name;
+
+        return S_OK;
     }
 
     /// <summary>
     /// Sets the name of the specified folder.
     /// </summary>
-    virtual void SetFolderName(const GUID & id, const std::string & text) noexcept override
+    virtual HRESULT SetFolderName(const GUID & id, const std::string & text) noexcept override
     {
         auto Iter = _Items.find(id);
 
         if (Iter == _Items.end())
-            return;
+            return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
 
         Iter->second.Name = text;
+
+        return S_OK;
     }
 
     /// <summary>
     /// Removes the specified folder.
     /// </summary>
-    virtual void RemoveFolder(const GUID & id) noexcept override
+    virtual HRESULT RemoveFolder(const GUID & id) noexcept override
     {
+        for (auto Callback : _Callbacks)
+            Callback->OnFolderRemoving(id);
+
         _Items.erase(id);
+
+        return S_OK;
     }
 
-	/// <summary>
-	/// Registers a callback.
-	/// </summary>
-	virtual void RegisterCallback(folder_manager_callback_t * callback) noexcept override
+    /// <summary>
+    /// Registers a callback.
+    /// </summary>
+    virtual HRESULT RegisterCallback(folder_manager_callback_t * callback) noexcept override
     {
         _Callbacks.insert(callback);
+
+        return S_OK;
     }
 
-	/// <summary>
-	/// Unregisters a callback.
-	/// </summary>
-	virtual void UnregisterCallback(folder_manager_callback_t * callback) noexcept override
+    /// <summary>
+    /// Unregisters a callback.
+    /// </summary>
+    virtual HRESULT UnregisterCallback(folder_manager_callback_t * callback) noexcept override
     {
         _Callbacks.erase(callback);
+
+        return S_OK;
     }
 
 private:
