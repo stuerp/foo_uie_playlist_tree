@@ -22,11 +22,6 @@ bool tree_view_t::Create(HWND hWndParent, size_t id) noexcept
     if (_hTreeView == NULL)
         return false;
 
-    auto hToolTip = TreeView_GetToolTips(_hTreeView);
-
-    if (hToolTip != NULL)
-        ::SendMessageW(hToolTip, TTM_SETMAXTIPWIDTH, 0, 64);
-
     return true;
 }
 
