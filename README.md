@@ -77,12 +77,10 @@ To create the component first build the x86 configuration and next the x64 confi
 
 ## Change Log
 
-v1.1.1.0, 2026-07-21
+v1.2.0.0, 2026-xx-xx
 
-* New: You can use the middle mouse button to remove a folder or playlist.
-* Improved: Major optimization of drop operations from playlists or the media library.
-* Improved: Minor code tweaks to better support switching between light and dark mode.
-* Fixed: Select the last active playlist upon startup.
+* New: You can select the image file path using a standard file dialog.
+* Improved: Minor cosmetic changes.
 
 ## Known Bugs
 

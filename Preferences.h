@@ -1,12 +1,13 @@
 
-/** $VER: Preferences.h (2026.07.12) **/
+/** $VER: Preferences.h (2026.07.22) **/
 
 #pragma once
 
-#define IDC_TEXT_FORMAT     1000
-#define IDC_NODE_TYPE      1001
-#define IDC_FILE_PATH       1002
-#define IDC_IMAGE_LIST      1003
+#define IDC_TEXT_FORMAT         1000
+#define IDC_NODE_TYPE           1001
+#define IDC_FILE_PATH           1002
+#define IDC_FILE_PATH_SELECT    1003
+#define IDC_IMAGE_LIST          1004
 
 #define W_A00   332 // Dialog width as set by foobar2000, in dialog units
 #define H_A00   288 // Dialog height as set by foobar2000, in dialog units
@@ -39,7 +40,7 @@
 // EditBox
 #define X_A12   X_A11 + W_A11 + IX
 #define Y_A12   Y_A11
-#define W_A12   W_A00 - W_A11 - IX - IX
+#define W_A12   (W_A00 - (W_A11) - IX)
 #define H_A12   H_EBX
 
 /** Image **/
@@ -67,13 +68,20 @@
 // EditBox
 #define X_A16   X_A15 + W_A15 + IX
 #define Y_A16   Y_A15
-#define W_A16   W_A00 - W_A15 - IX - IX
 #define H_A16   H_EBX
+
+// Button
+#define X_A17   W_A00 - 16
+#define Y_A17   Y_A16
+#define W_A17   16
+#define H_A17   H_BTN
+
+#define W_A16   (W_A00 - (W_A17) - (W_A15) - IX)
 
 /** Icon List **/
 
 // IconList
-#define X_A17   X_A16
-#define Y_A17   Y_A16 + H_A16 + IY
-#define W_A17   W_A16
-#define H_A17   64
+#define X_A18   X_A16
+#define Y_A18   Y_A16 + H_A16 + IY
+#define W_A18   (W_A00 - (W_A15) - IX)
+#define H_A18   64

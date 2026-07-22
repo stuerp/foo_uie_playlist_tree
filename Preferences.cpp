@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.cpp (2026.07.17) P. Stuer **/
+/** $VER: Preferences.cpp (2026.07.22) P. Stuer **/
 
 #include "pch.h"
 
@@ -116,10 +116,12 @@ public:
     BEGIN_MSG_MAP_EX(preferences_t)
         MSG_WM_INITDIALOG(OnInitDialog)
 
-        COMMAND_HANDLER_EX(IDC_TEXT_FORMAT, EN_CHANGE,      OnEditChange)
-        COMMAND_HANDLER_EX(IDC_FILE_PATH,   EN_CHANGE,      OnEditChange)
+        COMMAND_HANDLER_EX(IDC_TEXT_FORMAT,         EN_CHANGE,      OnEditChange)
+        COMMAND_HANDLER_EX(IDC_FILE_PATH,           EN_CHANGE,      OnEditChange)
 
-        COMMAND_HANDLER_EX(IDC_NODE_TYPE,   CBN_SELCHANGE,  OnSelectionChange)
+        COMMAND_HANDLER_EX(IDC_NODE_TYPE,           CBN_SELCHANGE,  OnSelectionChange)
+
+        COMMAND_HANDLER_EX(IDC_FILE_PATH_SELECT,    BN_CLICKED,     OnButtonClick)
 
         MSG_WM_NOTIFY(OnNotify);
     END_MSG_MAP()
@@ -211,7 +213,21 @@ private:
     /// </summary>
     void OnButtonClick(UINT, int id, CWindow w) noexcept
     {
-        OnChanged();
+        if (id == IDC_FILE_PATH_SELECT)
+        {
+            std::wstring FilePath;
+
+            FilePath.resize(MAX_PATH);
+
+            GetDlgItemTextW(IDC_FILE_PATH, FilePath.data(), (int) FilePath.size());
+
+            if (msc::OpenFileDialog(m_hWnd, { { L"All files (*.*)", L"*.*" }}, 0, L"dll", L"Choose the icon file...", msc::GetFullPath(FilePath).c_str(), FilePath))
+            {
+                SetDlgItemTextW(IDC_FILE_PATH, FilePath.c_str());
+
+                OnChanged();
+            }
+        }
     }
 
     /// <summary>
@@ -308,11 +324,7 @@ private:
         HIMAGELIST hImageList = image_list_factory_t::Create(filePath, _State._IconSize);
 
         if (hImageList == NULL)
-        {
-            _IgnoreNotifications = false;
-
-            return;
-        }
+            Log.AtWarn().Write("Failed to create image list from \"%s\": 0x%08X", filePath.c_str(), ::GetLastError());
 
         HWND hIconList = GetDlgItem(IDC_IMAGE_LIST);
 

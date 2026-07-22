@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.rc (2026.07.13) P. Stuer **/
+/** $VER: Preferences.rc (2026.07.22) P. Stuer **/
 
 #include "Resources.h"
 
@@ -15,14 +15,16 @@ IDD_PREFERENCES dialogex 0, 0, 0, 0
 style DS_SHELLFONT | WS_CHILD
 font 8, "MS Shell Dlg", 400, 0, 1
 {
-    rtext       "Text Format:"  IDC_STATIC,         X_A11, Y_A11 + 2, W_A11, H_A11
-    edittext                    IDC_TEXT_FORMAT,    X_A12, Y_A12,     W_A12, H_A12, ES_AUTOHSCROLL | WS_TABSTOP
+    rtext       "Text Format:"  IDC_STATIC,             X_A11, Y_A11 + 2, W_A11, H_A11
+    edittext                    IDC_TEXT_FORMAT,        X_A12, Y_A12,     W_A12, H_A12, ES_AUTOHSCROLL | WS_TABSTOP
 
-    rtext       "Node Type:"    IDC_STATIC,         X_A13, Y_A13 + 2, W_A13, H_A13
-    combobox                    IDC_NODE_TYPE,      X_A14, Y_A14,     W_A14, H_A14, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    rtext       "Node Type:"    IDC_STATIC,             X_A13, Y_A13 + 2, W_A13, H_A13
+    combobox                    IDC_NODE_TYPE,          X_A14, Y_A14,     W_A14, H_A14, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
-    rtext       "File Path:",   IDC_STATIC,         X_A15, Y_A15 + 2, W_A15, H_A15
-    edittext                    IDC_FILE_PATH,      X_A16, Y_A16,     W_A16, H_A16, ES_AUTOHSCROLL | WS_TABSTOP
+    rtext       "File Path:",   IDC_STATIC,             X_A15, Y_A15 + 2, W_A15, H_A15
+    edittext                    IDC_FILE_PATH,          X_A16, Y_A16,     W_A16, H_A16, ES_AUTOHSCROLL | WS_TABSTOP
+    pushbutton  "...",          IDC_FILE_PATH_SELECT,   X_A17, Y_A17,     W_A17, H_A17
 
-    control     "",             IDC_IMAGE_LIST,     WC_ICON_LIST, WS_CHILD | WS_VISIBLE | WS_TABSTOP, X_A17, Y_A17, W_A17, H_A17
+
+    control     "",             IDC_IMAGE_LIST,         WC_ICON_LIST, WS_CHILD | WS_VISIBLE | WS_TABSTOP, X_A18, Y_A18, W_A18, H_A18
 }
