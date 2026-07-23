@@ -44,6 +44,7 @@ public:
 
 public:
     std::string _TextFormat;
+    std::string _ToolTip;
     uint32_t _ImageSize;
 
     std::vector<image_t> _Images;

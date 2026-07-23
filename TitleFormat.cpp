@@ -92,11 +92,14 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
 
         std::pair{ "playlist_duration", [&]() -> bool
         {
-            auto Duration = GetPlaylistDuration(Index);
+            auto Seconds = GetPlaylistDuration(Index);
+
+            if (Seconds < 0.)
+                return false;
 
             std::locale Locale(""); // User default Windows locale.
 
-            const auto Text = std::format(Locale, "{:L}", Duration);
+            const auto Text = std::format(Locale, "{:L}", Seconds);
 
             out->write(titleformat_inputtypes::unknown, Text.c_str());
 
@@ -109,45 +112,43 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
         {
             auto Seconds = GetPlaylistDuration(Index);
 
+            if (Seconds < 0.)
+                return false;
+
+            const double SECS_PER_WEEK  = 604'800.;
+            const double SECS_PER_DAY   =  86'400.;
+            const double SECS_PER_HOUR  =   3'600.;
+            const double SECS_PER_MIN   =      60.;
+
+            std::ostringstream oss;
+
+            const auto Weeks = (size_t) (Seconds / SECS_PER_WEEK); Seconds = std::fmod(Seconds, SECS_PER_WEEK);
+
+            if (Weeks > 0)
+                oss << Weeks << 'w';
+
+            if (!oss.str().empty())
+                oss << " ";
+
+            const auto Days = (size_t) (Seconds / SECS_PER_DAY);  Seconds = std::fmod(Seconds, SECS_PER_DAY);
+
+            if (Days > 0)
+                oss << Days << 'd';
+
+            if (!oss.str().empty())
+                oss << " ";
+
             if (Seconds > 0.)
             {
-                const double SECS_PER_WEEK  = 604'800.;
-                const double SECS_PER_DAY   =  86'400.;
-                const double SECS_PER_HOUR  =   3'600.;
-                const double SECS_PER_MIN   =      60.;
+                const auto Hours   = (size_t) (Seconds / SECS_PER_HOUR); Seconds = std::fmod(Seconds, SECS_PER_HOUR);
+                const auto Minutes = (size_t) (Seconds / SECS_PER_MIN);  Seconds = std::fmod(Seconds, SECS_PER_MIN);
 
-                std::ostringstream oss;
+                std::locale Locale(""); // User default Windows locale.
 
-                const auto Weeks = (size_t) (Seconds / SECS_PER_WEEK); Seconds = std::fmod(Seconds, SECS_PER_WEEK);
-
-                if (Weeks > 0)
-                    oss << Weeks << 'w';
-
-                if (!oss.str().empty())
-                    oss << " ";
-
-                const auto Days = (size_t) (Seconds / SECS_PER_DAY);  Seconds = std::fmod(Seconds, SECS_PER_DAY);
-
-                if (Days > 0)
-                    oss << Days << 'd';
-
-                if (!oss.str().empty())
-                    oss << " ";
-
-                if (Seconds > 0.)
-                {
-                    const auto Hours   = (size_t) (Seconds / SECS_PER_HOUR); Seconds = std::fmod(Seconds, SECS_PER_HOUR);
-                    const auto Minutes = (size_t) (Seconds / SECS_PER_MIN);  Seconds = std::fmod(Seconds, SECS_PER_MIN);
-
-                    std::locale Locale(""); // User default Windows locale.
-
-                    oss << std::format(Locale, "{:02L}:{:02L}:{:02}", Hours, Minutes, (int) Seconds);
-                }
-
-                out->write(titleformat_inputtypes::unknown, oss.str().c_str());
+                oss << std::format(Locale, "{:02L}:{:02L}:{:02}", Hours, Minutes, (int) Seconds);
             }
-            else
-                out->write(titleformat_inputtypes::unknown, "N/A");
+
+            out->write(titleformat_inputtypes::unknown, oss.str().c_str());
 
             isFound = true;
 
@@ -158,16 +159,14 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
         {
             auto Size = GetPlaylistSize(Index);
 
+            if ((int64_t) Size < 0)
+                return false;
+
             std::string Text;
 
-            if (Size != SIZE_MAX)
-            {
-                std::locale Locale(""); // User default Windows locale.
+            std::locale Locale(""); // User default Windows locale.
 
-                Text = std::format(Locale, "{:L}", Size);
-            }
-            else
-                Text = "N/A";
+            Text = std::format(Locale, "{:L}", Size);
 
             out->write(titleformat_inputtypes::unknown, Text.c_str());
 
@@ -180,34 +179,32 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
         {
             auto Size = GetPlaylistSize(Index);
 
+            if ((int64_t) Size < 0)
+                return false;
+
             std::string Text;
 
-            if ((int64_t) Size >= 0)
-            {
-                const uint64_t TB = 1'099'511'627'776;
-                const uint64_t GB =     1'073'741'824;
-                const uint64_t MB =         1'048'576;
-                const uint64_t KB =             1'024;
+            const uint64_t TB = 1'099'511'627'776;
+            const uint64_t GB =     1'073'741'824;
+            const uint64_t MB =         1'048'576;
+            const uint64_t KB =             1'024;
 
-                std::locale Locale(""); // User default Windows locale.
+            std::locale Locale(""); // User default Windows locale.
 
-                if (Size >= TB)
-                    Text = std::format(Locale, "{:.3Lf} TB", (double) Size / TB);
-                else
-                if (Size >= GB)
-                    Text = std::format(Locale, "{:.3Lf} GB", (double) Size / GB);
-                else
-                if (Size >= MB)
-                    Text = std::format(Locale, "{:.3Lf} MB", (double) Size / MB);
-
-                else
-                if (Size >= KB)
-                    Text = std::format(Locale, "{:.3Lf} KB", (double) Size / KB);
-                else
-                    Text = std::format(Locale, "{:L} bytes", Size);
-            }
+            if (Size >= TB)
+                Text = std::format(Locale, "{:.3Lf} TB", (double) Size / TB);
             else
-                Text = "N/A";
+            if (Size >= GB)
+                Text = std::format(Locale, "{:.3Lf} GB", (double) Size / GB);
+            else
+            if (Size >= MB)
+                Text = std::format(Locale, "{:.3Lf} MB", (double) Size / MB);
+
+            else
+            if (Size >= KB)
+                Text = std::format(Locale, "{:.3Lf} KB", (double) Size / KB);
+            else
+                Text = std::format(Locale, "{:L} bytes", Size);
 
             out->write(titleformat_inputtypes::unknown, Text.c_str());
 

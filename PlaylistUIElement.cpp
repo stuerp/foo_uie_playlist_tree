@@ -1193,7 +1193,7 @@ LRESULT playlist_uielement_t::OnGetInfoTip(NMHDR * nmhd) noexcept
 
     pfc::string Text;
 
-    HRESULT hResult = title_formatter_t::Evaluate("%playlist_size_natural%[, %playlist_duration_natural%]", Node->Id, Text);
+    HRESULT hResult = title_formatter_t::Evaluate(_State._ToolTip, Node->Id, Text);
 
     if (!SUCCEEDED(hResult))
         return TRUE;

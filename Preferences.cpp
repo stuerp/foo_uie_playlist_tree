@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.cpp (2026.07.22) P. Stuer **/
+/** $VER: Preferences.cpp (2026.07.23) P. Stuer **/
 
 #include "pch.h"
 
@@ -97,6 +97,7 @@ public:
         MSG_WM_INITDIALOG(OnInitDialog)
 
         COMMAND_HANDLER_EX(IDC_TEXT_FORMAT,         EN_CHANGE,      OnEditChange)
+        COMMAND_HANDLER_EX(IDC_TOOL_TIP,            EN_CHANGE,      OnEditChange)
         COMMAND_HANDLER_EX(IDC_FILE_PATH,           EN_CHANGE,      OnEditChange)
         COMMAND_HANDLER_EX(IDC_IMAGE_SIZE,          EN_KILLFOCUS,   OnEditKillFocus)
 
@@ -132,6 +133,11 @@ private:
         // Text Format
         {
             SetDlgItemTextW(IDC_TEXT_FORMAT, msc::UTF8ToWide(_NewState._TextFormat).c_str());
+        }
+
+        // Tool Tip
+        {
+            SetDlgItemTextW(IDC_TOOL_TIP, msc::UTF8ToWide(_NewState._ToolTip).c_str());
         }
 
         // Node Type 
@@ -204,39 +210,56 @@ private:
         if (_IgnoreNotifications)
             return;
 
-        if (id == IDC_TEXT_FORMAT)
+        std::wstring Text;
+
+        switch (id)
         {
-            auto Edit = (CEdit) wnd;
-
+            case IDC_TEXT_FORMAT:
             {
-                std::wstring Text;
+                auto Edit = (CEdit) wnd;
 
-                Text.resize(MAX_PATH);
+                {
+                    Text.resize(1024);
 
-                Edit.GetWindowTextW(Text.data(), (int) Text.size());
+                    Edit.GetWindowTextW(Text.data(), (int) Text.size());
 
-                _NewState._TextFormat = msc::WideToUTF8(Text).c_str();
-            }
-        }
-        else
-        if (id == IDC_FILE_PATH)
-        {
-            auto Edit = (CEdit) wnd;
-
-            auto & Image = _NewState._Images[(size_t) _SelectedIndex];
-
-            {
-                std::wstring Text;
-
-                Text.resize(MAX_PATH);
-
-                Edit.GetWindowTextW(Text.data(), (int) Text.size());
-
-                Image._FilePath  = msc::WideToUTF8(Text).c_str();
-                Image._IconIndex = 0;
+                    _NewState._TextFormat = msc::WideToUTF8(Text).c_str();
+                }
+                break;
             }
 
-            UpdateIconList();
+            case IDC_TOOL_TIP:
+            {
+                auto Edit = (CEdit) wnd;
+
+                {
+                    Text.resize(1024);
+
+                    Edit.GetWindowTextW(Text.data(), (int) Text.size());
+
+                    _NewState._ToolTip = msc::WideToUTF8(Text).c_str();
+                }
+                break;
+            }
+
+            case IDC_FILE_PATH:
+            {
+                auto Edit = (CEdit) wnd;
+
+                auto & Image = _NewState._Images[(size_t) _SelectedIndex];
+
+                {
+                    Text.resize(MAX_PATH);
+
+                    Edit.GetWindowTextW(Text.data(), (int) Text.size());
+
+                    Image._FilePath  = msc::WideToUTF8(Text).c_str();
+                    Image._IconIndex = 0;
+                }
+
+                UpdateIconList();
+                break;
+            }
         }
 
         OnChanged();
@@ -344,6 +367,12 @@ private:
         // Text Format
         {
             if (_NewState._TextFormat != _State._TextFormat)
+                return true;
+        }
+
+        // Text Format
+        {
+            if (_NewState._ToolTip != _State._ToolTip)
                 return true;
         }
 

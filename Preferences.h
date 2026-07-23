@@ -1,14 +1,15 @@
 
-/** $VER: Preferences.h (2026.07.22) **/
+/** $VER: Preferences.h (2026.07.23) **/
 
 #pragma once
 
 #define IDC_TEXT_FORMAT         1000
-#define IDC_NODE_TYPE           1001
-#define IDC_IMAGE_SIZE          1002
-#define IDC_FILE_PATH           1003
-#define IDC_FILE_PATH_SELECT    1004
-#define IDC_IMAGE_LIST          1005
+#define IDC_TOOL_TIP            1001
+#define IDC_NODE_TYPE           1002
+#define IDC_IMAGE_SIZE          1003
+#define IDC_FILE_PATH           1004
+#define IDC_FILE_PATH_SELECT    1005
+#define IDC_IMAGE_LIST          1006
 
 #define W_A00   332 // Dialog width as set by foobar2000, in dialog units
 #define H_A00   288 // Dialog height as set by foobar2000, in dialog units
@@ -44,12 +45,26 @@
 #define W_A12   (W_A00 - (W_A11) - IX)
 #define H_A12   H_EBX
 
+/** Tool Tip **/
+
+// Label
+#define X_A21   0
+#define Y_A21   Y_A12 + H_A12 + IY
+#define W_A21   W_A11
+#define H_A21   H_LBL
+
+// EditBox
+#define X_A22   X_A21 + W_A21 + IX
+#define Y_A22   Y_A21
+#define W_A22   (W_A00 - (W_A21) - IX)
+#define H_A22   H_EBX
+
 /** Node Type **/
 
 // Label
 #define X_A13   0
-#define Y_A13   Y_A12 + H_A12 + IY
-#define W_A13   W_A11
+#define Y_A13   Y_A22 + H_A22 + IY
+#define W_A13   W_A21
 #define H_A13   H_LBL
 
 // ComboBox
