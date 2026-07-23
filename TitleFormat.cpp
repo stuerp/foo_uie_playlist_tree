@@ -1,5 +1,5 @@
 
-/** $VER: TitleFormat.cpp (2026.07.22) P. Stuer **/
+/** $VER: TitleFormat.cpp (2026.07.23) P. Stuer **/
 
 #include "pch.h"
 
@@ -107,18 +107,18 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
 
         std::pair{ "playlist_duration_natural", [&]() -> bool
         {
-            auto Duration = GetPlaylistDuration(Index);
+            auto Seconds = GetPlaylistDuration(Index);
 
-            if (Duration > 0.)
+            if (Seconds > 0.)
             {
-                constexpr double SECS_PER_WEEK  = 604'800.;
-                constexpr double SECS_PER_DAY   = 86'400.;
-                constexpr double SECS_PER_HOUR  = 3'600.;
-                constexpr double SECS_PER_MIN   = 60.;
+                const double SECS_PER_WEEK  = 604'800.;
+                const double SECS_PER_DAY   =  86'400.;
+                const double SECS_PER_HOUR  =   3'600.;
+                const double SECS_PER_MIN   =      60.;
 
                 std::ostringstream oss;
 
-                const auto Weeks = (size_t) (Duration / SECS_PER_WEEK); Duration = std::fmod(Duration, SECS_PER_WEEK);
+                const auto Weeks = (size_t) (Seconds / SECS_PER_WEEK); Seconds = std::fmod(Seconds, SECS_PER_WEEK);
 
                 if (Weeks > 0)
                     oss << Weeks << 'w';
@@ -126,7 +126,7 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
                 if (!oss.str().empty())
                     oss << " ";
 
-                const auto Days = (size_t) (Duration / SECS_PER_DAY);  Duration = std::fmod(Duration, SECS_PER_DAY);
+                const auto Days = (size_t) (Seconds / SECS_PER_DAY);  Seconds = std::fmod(Seconds, SECS_PER_DAY);
 
                 if (Days > 0)
                     oss << Days << 'd';
@@ -134,16 +134,14 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
                 if (!oss.str().empty())
                     oss << " ";
 
-                if (Duration > 0.)
+                if (Seconds > 0.)
                 {
-                    const auto Hours   = (size_t) (Duration / SECS_PER_HOUR); Duration = std::fmod(Duration, SECS_PER_HOUR);
-                    const auto Minutes = (size_t) (Duration / SECS_PER_MIN);  Duration = std::fmod(Duration, SECS_PER_MIN);
-                    const auto Seconds = (size_t) (Duration);                 Duration -= Seconds;
+                    const auto Hours   = (size_t) (Seconds / SECS_PER_HOUR); Seconds = std::fmod(Seconds, SECS_PER_HOUR);
+                    const auto Minutes = (size_t) (Seconds / SECS_PER_MIN);  Seconds = std::fmod(Seconds, SECS_PER_MIN);
 
-                    oss << std::setfill('0') << std::setw(2) << Hours << ':'
-                        << std::setfill('0') << std::setw(2) << Minutes << ':'
-                        << std::setfill('0') << std::setw(2) << Seconds << '.'
-                        << std::setfill('0') << std::setw(3) << (int) (Duration * 1'000.);
+                    std::locale Locale(""); // User default Windows locale.
+
+                    oss << std::format(Locale, "{:02L}:{:02L}:{:02}", Hours, Minutes, (int) Seconds);
                 }
 
                 out->write(titleformat_inputtypes::unknown, oss.str().c_str());
@@ -184,22 +182,27 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
 
             std::string Text;
 
-            if ((long long) Size >= 0)
+            if ((int64_t) Size >= 0)
             {
+                const uint64_t TB = 1'099'511'627'776;
+                const uint64_t GB =     1'073'741'824;
+                const uint64_t MB =         1'048'576;
+                const uint64_t KB =             1'024;
+
                 std::locale Locale(""); // User default Windows locale.
 
-                if (Size >= 1'099'511'627'776)
-                    Text = std::format(Locale, "{:.3Lf} TB", (double) Size / 1'099'511'627'776.);
+                if (Size >= TB)
+                    Text = std::format(Locale, "{:.3Lf} TB", (double) Size / TB);
                 else
-                if (Size >= 1'073'741'824)
-                    Text = std::format(Locale, "{:.3Lf} GB", (double) Size / 1'073'741'824.);
+                if (Size >= GB)
+                    Text = std::format(Locale, "{:.3Lf} GB", (double) Size / GB);
                 else
-                if (Size >= 1'048'576)
-                    Text = std::format(Locale, "{:.3Lf} MB", (double) Size / 1'048'576.);
+                if (Size >= MB)
+                    Text = std::format(Locale, "{:.3Lf} MB", (double) Size / MB);
 
                 else
-                if (Size >= 1'024)
-                    Text = std::format(Locale, "{:.3Lf} KB", (double) Size / 1'024.);
+                if (Size >= KB)
+                    Text = std::format(Locale, "{:.3Lf} KB", (double) Size / KB);
                 else
                     Text = std::format(Locale, "{:L} bytes", Size);
             }
