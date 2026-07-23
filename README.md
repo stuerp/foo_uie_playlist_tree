@@ -77,12 +77,12 @@ To create the component first build the x86 configuration and next the x64 confi
 
 ## Change Log
 
-v1.2.0.0, 2026-xx-xx
+v1.2.0.0, 2026-07-23
 
 * New: You can select the image file path using a standard file dialog.
 * New: Configurable node image size.
 * New: Configurable tool tip.
-* New: %playlist_duration_size% and %playlist_duration_natural% formatting fields.
+* New: %playlist_size_natural% and %playlist_duration_natural% formatting fields.
 * Improved: Minor cosmetic changes.
 
 ## Known Bugs

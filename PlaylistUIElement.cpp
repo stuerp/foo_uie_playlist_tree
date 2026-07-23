@@ -1181,10 +1181,10 @@ LRESULT playlist_uielement_t::OnKeyDown(NMHDR * nmhd) noexcept
 /// </summary>
 LRESULT playlist_uielement_t::OnGetInfoTip(NMHDR * nmhd) noexcept
 {
-    auto nmgi = (NMTVGETINFOTIPW *) nmhd;
+    if (_State._ToolTip.empty())
+        return TRUE;
 
-//  const auto hTreeView = nmhd->hwndFrom;
-//  const auto hItem = (HTREEITEM) nmgi->hItem;
+    auto nmgi = (NMTVGETINFOTIPW *) nmhd;
 
     const auto Node = (node_t *) nmgi->lParam;
 
@@ -1197,6 +1197,8 @@ LRESULT playlist_uielement_t::OnGetInfoTip(NMHDR * nmhd) noexcept
 
     if (!SUCCEEDED(hResult))
         return TRUE;
+
+    Text = Text.replace("\\n", "\n");
 
     ::wcscpy_s(nmgi->pszText, (rsize_t) nmgi->cchTextMax, msc::UTF8ToWide(Text.c_str()).c_str());
 
