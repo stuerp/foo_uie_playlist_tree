@@ -71,10 +71,7 @@ private:
     void OnLButtonUp(UINT flags, CPoint point) noexcept;
 
     BEGIN_MSG_MAP_EX(playlist_uielement_t)
-        CHAIN_MSG_MAP(uielement_t)
-//      CHAIN_MSG_MAP(multi_select_tree_view_t)
-
-        MSG_WM_DESTROY(OnDestroy);
+//      MSG_WM_DESTROY(OnDestroy);
 
         MSG_WM_COMMAND(OnCommand);
         MSG_WM_SETFOCUS(OnSetFocus);
@@ -96,6 +93,9 @@ private:
         MSG_WM_MOUSEMOVE(OnMouseMove);
         MSG_WM_MOUSELEAVE(OnMouseLeave);
         MSG_WM_LBUTTONUP(OnLButtonUp);
+
+//      CHAIN_MSG_MAP(multi_select_tree_view_t)
+        CHAIN_MSG_MAP(uielement_t)
     END_MSG_MAP()
 
     #pragma endregion
