@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.cpp (2026.07.22) P. Stuer **/
+/** $VER: PlaylistsUIElement.cpp (2026.07.23) P. Stuer **/
 
 #include "pch.h"
 
@@ -22,6 +22,11 @@
 /// </summary>
 playlist_uielement_t::playlist_uielement_t() : multi_select_tree_view_t(IDC_TREEVIEW)
 {
+    HRESULT hResult = ::OleInitialize(nullptr);
+
+    if (!SUCCEEDED(hResult))
+        Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to initialize OLE: 0x%08X", hResult);
+
     _PlaylistManager->register_callback(this, (t_uint32) flag_all);
     _FolderManager->RegisterCallback(this);
 }
@@ -34,7 +39,9 @@ playlist_uielement_t::~playlist_uielement_t()
     _FolderManager->UnregisterCallback(this);
     _PlaylistManager->unregister_callback(this);
 
-    OnDestroy();
+//  OnDestroy();
+
+    ::OleUninitialize();
 }
 
 /// <summary>
@@ -68,14 +75,12 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
 
     // Create the drop target.
     {
-        HRESULT hResult = ::OleInitialize(nullptr);
-
         _DropTarget = new drop_target_t(_TreeView.Get(), this);
 
-        hResult = ::RegisterDragDrop(m_hWnd, _DropTarget);
+        HRESULT hResult = ::RegisterDragDrop(m_hWnd, _DropTarget);
 
         if (!SUCCEEDED(hResult))
-            Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to register a drop target: 0x08X", hResult);
+            Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to register drop target: 0x%08X", hResult);
     }
 
     // Deserialize the state.
@@ -103,20 +108,29 @@ void playlist_uielement_t::OnDestroy() noexcept
 
     // Destroy the drop target.
     {
-        ::RevokeDragDrop(m_hWnd);
+        if (m_hWnd != NULL)
+        {
+            HRESULT hResult = ::RevokeDragDrop(m_hWnd);
+
+            if (!SUCCEEDED(hResult))
+                Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to revoke drop target: 0x%08X", hResult);
+        }
 
         if (_DropTarget != nullptr)
         {
             _DropTarget->Release();
             _DropTarget = nullptr;
         }
-
-        ::OleUninitialize();
     }
 
     // Destroy the tree view.
+    if (_TreeView.Get() != NULL)
     {
+        auto Scope = toggle_t(_IgnoreNotifications, true);
+
         _hImageList.Reset();
+
+        _TreeViewSubclass.Detach(_TreeView.Get());
 
         _TreeView.Destroy();
     }
@@ -1455,7 +1469,7 @@ std::string playlist_uielement_t::GetConfiguration() const noexcept
         Object["nodes"] = Nodes;
 
         #ifdef _DEBUG
-        console::print(Object.dump(4).c_str());
+//      console::print(Object.dump(4).c_str());
         #endif
 
         const auto Config = Object.dump(-1);

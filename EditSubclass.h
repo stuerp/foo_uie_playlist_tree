@@ -1,5 +1,5 @@
 
-/** $VER: EditSubclass.h (2026.07.19) P. Stuer **/
+/** $VER: EditSubclass.h (2026.07.23) P. Stuer **/
 
 #pragma once
 
@@ -27,6 +27,19 @@ public:
         ::SetWindowLongPtrW(hWnd, GWLP_USERDATA, (LONG_PTR) this);
 
         _OldWndProc = (WNDPROC) ::SetWindowLongPtrW(hWnd, GWLP_WNDPROC, (LONG_PTR) &edit_subclass_t::WndProc);
+    }
+
+    /// <summary>
+    /// Detaches an existing edit control.
+    /// </summary>
+    void Detach(HWND hWnd)
+    {
+        if (hWnd == NULL)
+            return;
+
+        (WNDPROC) ::SetWindowLongPtrW(hWnd, GWLP_WNDPROC, (LONG_PTR) _OldWndProc);
+
+        ::SetWindowLongPtrW(hWnd, GWLP_USERDATA, (LONG_PTR) nullptr);
     }
 
 private:

@@ -5,7 +5,7 @@
 
 #include "UIElement.h"
 
-#include "Theme.h"
+#include "Log.h"
 
 #pragma hdrstop
 
@@ -21,7 +21,6 @@ uielement_t::uielement_t() : m_bMsgHandled(FALSE)
 /// </summary>
 uielement_t::~uielement_t()
 {
-    OnDestroy();
 }
 
 /// <summary>
