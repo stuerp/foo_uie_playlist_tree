@@ -1,17 +1,20 @@
 
-/** $VER: Toggle.h (2026.07.19) P. Stuer - Adaped from foobar2000 SDK **/
+/** $VER: Toggle.h (2026.07.22) P. Stuer - Adaped from foobar2000 SDK **/
 
 #pragma once
 
 #pragma once
 
-template<class T> class toggle_t
+/// <summary>
+/// Implements a toggle that returns a variable to its previous value when the toggle goes out of scope.
+/// </summary>
+template<typename T> class toggle_t
 {
 public:
-    template<typename arg_t> toggle_t(T & variable, arg_t && value) : _Variable(variable)
+    template<typename U> toggle_t(T & variable, U && value) : _Variable(variable)
     {
         _OldValue = std::move(_Variable);
-        _Variable = std::forward<arg_t>(value);
+        _Variable = std::forward<U>(value);
     }
 
     toggle_t(const toggle_t &) = delete;

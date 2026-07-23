@@ -1,5 +1,5 @@
 
-/** $VER: Win32.h (2026.07.16) P. Stuer **/
+/** $VER: Win32.h (2026.07.22) P. Stuer **/
 
 #pragma once
 
@@ -9,6 +9,9 @@
 #include <windows.h>
 
 #include <guiddef.h>
+
+#include <vector>
+#include <utility> // std::pair
 
 namespace msc
 {
@@ -106,6 +109,9 @@ namespace msc
     {
         return WideToGUID(UTF8ToWide(text));
     }
+
+    std::wstring GetFullPath(const std::wstring & fileName) noexcept;
+    bool OpenFileDialog(HWND hParent, const std::vector<std::pair<std::wstring_view, std::wstring_view>> & filters, uint32_t selectedExtension, const std::wstring_view & defaultExtension, const std::wstring_view & title, const std::wstring_view & directoryPath, std::wstring & filePath) noexcept;
 }
 
 // std::hash specialization

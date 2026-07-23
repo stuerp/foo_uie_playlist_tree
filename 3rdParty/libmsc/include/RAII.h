@@ -1,5 +1,5 @@
 
-/** $VER: RAII.h (2026.07.10) P. Stuer - RAII wrappers **/
+/** $VER: RAII.h (2026.07.22) P. Stuer - RAII wrappers **/
 
 #pragma once
 
@@ -266,7 +266,7 @@ class hicon_t
 {
 public:
     hicon_t() noexcept : _hIcon(nullptr) { }
-    hicon_t(HICON hIcon) noexcept : _hIcon(hIcon) { }
+    hicon_t(HICON hIcon) noexcept : _hIcon(hIcon) { } // Take ownership
 
     // Move-only type
     hicon_t(const hicon_t & other) = delete;
@@ -333,5 +333,172 @@ public:
 private:
     HICON _hIcon = nullptr;
 };
+
+/// <summary>
+/// Implements a RAII wrapper for HBRUSH.
+/// </summary>
+class brush_t
+{
+public:
+    explicit brush_t() : _hBrush(nullptr) { }
+
+    explicit brush_t(COLORREF color) : _hBrush(::CreateSolidBrush(color))
+    {
+        if (_hBrush == nullptr)
+            throw std::runtime_error("CreateSolidBrush() failed");
+    }
+
+    brush_t(int style, COLORREF color) : _hBrush(::CreateHatchBrush(style, color))
+    {
+        if (_hBrush == nullptr)
+            throw std::runtime_error("CreateHatchBrush() failed");
+    }
+
+    explicit brush_t(HBRUSH hBrush) noexcept : _hBrush(hBrush) { } // Take ownership
+
+    // Move-only type
+    brush_t(const brush_t & other) = delete;
+    brush_t & operator=(const brush_t & other) = delete;
+
+    brush_t(brush_t && other) noexcept : _hBrush(std::exchange(other._hBrush, nullptr)) { }
+
+    brush_t & operator =(brush_t && other) noexcept
+    {
+        if (this != &other)
+        {
+            Reset();
+
+            _hBrush = std::exchange(other._hBrush, nullptr);
+        }
+
+        return *this;
+    }
+
+    ~brush_t() noexcept
+    {
+        Reset();
+    }
+
+    HBRUSH Get() const noexcept
+    {
+        return _hBrush;
+    }
+
+    operator HBRUSH() const noexcept
+    {
+        return _hBrush;
+    }
+
+    operator HGDIOBJ() const noexcept
+    {
+        return (HGDIOBJ) _hBrush;
+    }
+
+    explicit operator bool() const noexcept
+    {
+        return _hBrush != nullptr;
+    }
+
+    bool Reset() noexcept
+    {
+        if (_hBrush == nullptr)
+            return true;
+
+        const BOOL Result = ::DeleteObject(_hBrush);
+
+        _hBrush = nullptr;
+
+        return Result != FALSE;
+    }
+
+private:
+    HBRUSH _hBrush = nullptr;
+};
+
+inline HGDIOBJ SelectObject(HDC hDC, const brush_t & brush) noexcept
+{
+    return ::SelectObject(hDC, brush.Get());
+}
+
+/// <summary>
+/// Implements a RAII wrapper for HPEN.
+/// </summary>
+class pen_t
+{
+public:
+    explicit pen_t() : _hPen(nullptr) { }
+
+    explicit pen_t(int width, COLORREF color) : _hPen(::CreatePen(PS_SOLID, width, color))
+    {
+        if (_hPen == nullptr)
+            throw std::runtime_error("CreatePen() failed");
+    }
+
+    explicit pen_t(HPEN hPen) noexcept : _hPen(hPen) { } // Take ownership
+
+    // Move-only type
+    pen_t(const pen_t & other) = delete;
+    pen_t & operator=(const pen_t & other) = delete;
+
+    pen_t(pen_t && other) noexcept : _hPen(std::exchange(other._hPen, nullptr)) { }
+
+    pen_t & operator =(pen_t && other) noexcept
+    {
+        if (this != &other)
+        {
+            Reset();
+
+            _hPen = std::exchange(other._hPen, nullptr);
+        }
+
+        return *this;
+    }
+
+
+    ~pen_t() noexcept
+    {
+        Reset();
+    }
+
+    HPEN Get() const noexcept
+    {
+        return _hPen;
+    }
+
+    operator HPEN() const noexcept
+    {
+        return _hPen;
+    }
+
+    operator HGDIOBJ() const noexcept
+    {
+        return (HGDIOBJ) _hPen;
+    }
+
+    explicit operator bool() const noexcept
+    {
+        return _hPen != nullptr;
+    }
+
+    bool Reset() noexcept
+    {
+        if (_hPen == nullptr)
+            return true;
+
+        const BOOL Result = ::DeleteObject(_hPen);
+
+        _hPen = nullptr;
+
+        return Result != FALSE;
+    }
+
+private:
+    HPEN _hPen = nullptr;
+};
+
+inline HGDIOBJ SelectObject(HDC hDC, const pen_t & pen) noexcept
+{
+    return ::SelectObject(hDC, pen.Get());
+}
 
 }

@@ -443,8 +443,9 @@ private:
 //          .ptDrag
         };
 
-        auto Scope = toggle_t(_OwnSelectionChangeNotification, true);
         {
+            auto Scope = toggle_t(_OwnSelectionChangeNotification, true);
+
             tree.GetParent().SendMessage(WM_NOTIFY, _Id, (LPARAM) &nmtv);
         }
     }

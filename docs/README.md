@@ -69,7 +69,7 @@ The first time the component opens it loads all the playlists that are currently
 
 ---
 
-## Context mMnu
+## Context Menu
 
 Right-click on the component window to display the context menu. The following items are available:
 
@@ -110,7 +110,7 @@ Loads a playlist.
 
 `Restore`
 
-Allows you to restore a playlist that has been removed during the current session from the foobar200 playlist recycle bin.
+Allows you to restore a playlist that has been removed during the current session from the foobar2000 playlist recycle bin.
 
 > [!Note]
 > This submenu only appears when one ore more playlists were removed.
@@ -173,19 +173,21 @@ Closes the dialog box and undoes any changes to the configuration.
 
 Where noted you can use the foobar2000 [Title Formatting](https://wiki.hydrogenaudio.org/index.php?title=Foobar2000:Title_Formatting_Introduction).
 
-The component provides the following custom fields:
+The component provides the following custom formatting fields:
 
-| Name                  | Description |
-| --------------------- | ----------- |
-| %node_name%           | The name of the item, either a playlist or a folder. |
-| %node_is_folder%      | Boolean value for use in $if( ...) expressions and is true when the item is a folder. |
-| %node_item_count%     | The number of playlists in a folder or number of items in a playlist. |
-| %playlist_duration%   | The duration of the playlist (in seconds). |
-| %playlist_size%       | The size of the playlist (in bytes). |
-| %fb2k_path%           | The directory path of the foobar2000 installation. |
-| %fb2k_component_path% | The directory path of the component. |
-| %fb2k_profile_path%   | The directory path of the foobar2000 profile. |
-| Any Windows environment variable | |
+| Name                             | Description |
+| -------------------------------- | ----------- |
+| %node_name%                      | The name of the item, either a playlist or a folder. |
+| %node_is_folder%                 | Boolean value for use in $if( ...) expressions and is true when the item is a folder. |
+| %node_item_count%                | The number of playlists in a folder or number of items in a playlist. |
+| %playlist_duration%              | The duration of the playlist (in seconds). |
+| %playlist_duration_natural%      | The duration of the playlist in weeks, days, hours, minutes and seconds. |
+| %playlist_size%                  | The size of the playlist (in bytes). |
+| %playlist_size_natural%          | The size of the playlist in TB, GB, MB, KB or bytes. |
+| %fb2k_path%                      | The directory path of the foobar2000 installation. |
+| %fb2k_component_path%            | The directory path of the component. |
+| %fb2k_profile_path%              | The directory path of the foobar2000 profile. |
+| Any Windows environment variable | For example %UserProfile% or %WinDir% (See [Full List of Environment Variables](https://gist.github.com/RebeccaWhit3/5dad8627b8227142e1bea432db3f8824)) |
 
 ### Text Format
 
@@ -194,12 +196,29 @@ This setting determines how the text of a tree node gets formatted.
 Here are some examples:
 
 ``` foobar2000
-- %node_name%$if(%node_is_folder%,,' ('%node_item_count%')')
-- %node_name%$if(%node_is_folder%,,' ('%node_item_count%') '%playlist_size%' bytes')
+%node_name%$if(%node_is_folder%,,' ('%node_item_count%')')
+
+%node_name%$if(%node_is_folder%,,' ('%node_item_count%') '%playlist_size%' bytes')
 ```
 
 > [!Note]
 > This setting supports title formatting.
+
+### Tool Tip
+
+This setting specifies title formatting for the tooltip displayed in the tree view.
+
+The default is:
+
+``` foobar2000
+$if(%playlist_size_natural%,%playlist_size_natural%\n$if2(%playlist_duration_natural%,', N/A'),'N/A')
+```
+
+Leave the text empty to disable the tooltips.
+
+> [!Note]
+> This setting supports title formatting.
+> The text can contain \n to break the text into multiple lines
 
 ### Node Image
 
@@ -212,6 +231,10 @@ This setting determines for which node type the image will be selected.
 - Folder: A folder in the tree
 - Playlist: A playlist in the tree
 - Playlist (Playing): The playlist from which foobar2000 is playing audio. This can be different from the currently displayed playlist.
+
+### Image Size
+
+This setting specififies the size of the image in the tree view in pixels. The default is 16 for a 16x16 image. The valid range is 16 to 256 pixels.
 
 ### File Path
 

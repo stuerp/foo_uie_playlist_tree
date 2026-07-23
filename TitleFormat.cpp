@@ -1,16 +1,15 @@
 
-/** $VER: TitleFormat.cpp (2026.07.12) P. Stuer **/
+/** $VER: TitleFormat.cpp (2026.07.23) P. Stuer **/
 
 #include "pch.h"
 
 #include "TitleFormat.h"
-#include "Encoding.h"
 
 #pragma hdrstop
 
 template<typename... Pairs> auto dispatcher_t(Pairs &&... pairs)
 {
-    return std::unordered_map<std::string_view, std::function<bool()>>{ {std::forward<Pairs>(pairs)...} };
+    return std::unordered_map<std::string_view, std::function<bool()>>{ { std::forward<Pairs>(pairs)... } };
 }
 
 /// <summary>
@@ -93,38 +92,14 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
 
         std::pair{ "playlist_duration", [&]() -> bool
         {
-            class callback_t : public playlist_manager::enum_items_callback
-            {
-            public:
-                virtual ~callback_t() { }
+            auto Seconds = GetPlaylistDuration(Index);
 
-                bool on_item(t_size itemIndex, const metadb_handle_ptr & item, bool isSelected) override
-                {
-                    if (item.is_valid())
-                    {
-                        const double Length = item->get_length(); // in seconds
-
-                        // Ignore unknown lengths (-1.0 or similar)
-                        if (Length > 0.)
-                            Duration += Length;
-                    }
-
-                    return true; // Continue enumerating
-                }
-
-            public:
-                double Duration = 0.; // in seconds
-            };
-
-            static_api_ptr_t<playlist_manager> pm;
-
-            callback_t Callback;
-
-            pm->playlist_enum_items(Index, Callback, bit_array_true());
+            if (Seconds < 0.)
+                return false;
 
             std::locale Locale(""); // User default Windows locale.
 
-            const auto Text = std::format(Locale, "{:L}", Callback.Duration);
+            const auto Text = std::format(Locale, "{:L}", Seconds);
 
             out->write(titleformat_inputtypes::unknown, Text.c_str());
 
@@ -133,34 +108,103 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
             return true;
         }},
 
+        std::pair{ "playlist_duration_natural", [&]() -> bool
+        {
+            auto Seconds = GetPlaylistDuration(Index);
+
+            if (Seconds < 0.)
+                return false;
+
+            const double SECS_PER_WEEK  = 604'800.;
+            const double SECS_PER_DAY   =  86'400.;
+            const double SECS_PER_HOUR  =   3'600.;
+            const double SECS_PER_MIN   =      60.;
+
+            std::ostringstream oss;
+
+            const auto Weeks = (size_t) (Seconds / SECS_PER_WEEK); Seconds = std::fmod(Seconds, SECS_PER_WEEK);
+
+            if (Weeks > 0)
+                oss << Weeks << 'w';
+
+            if (!oss.str().empty())
+                oss << " ";
+
+            const auto Days = (size_t) (Seconds / SECS_PER_DAY);  Seconds = std::fmod(Seconds, SECS_PER_DAY);
+
+            if (Days > 0)
+                oss << Days << 'd';
+
+            if (!oss.str().empty())
+                oss << " ";
+
+            if (Seconds > 0.)
+            {
+                const auto Hours   = (size_t) (Seconds / SECS_PER_HOUR); Seconds = std::fmod(Seconds, SECS_PER_HOUR);
+                const auto Minutes = (size_t) (Seconds / SECS_PER_MIN);  Seconds = std::fmod(Seconds, SECS_PER_MIN);
+
+                std::locale Locale(""); // User default Windows locale.
+
+                oss << std::format(Locale, "{:02L}:{:02L}:{:02}", Hours, Minutes, (int) Seconds);
+            }
+
+            out->write(titleformat_inputtypes::unknown, oss.str().c_str());
+
+            isFound = true;
+
+            return true;
+        }},
+
         std::pair{ "playlist_size", [&]() -> bool
         {
-            class callback_t : public playlist_manager::enum_items_callback
-            {
-            public:
-                virtual ~callback_t() { }
+            auto Size = GetPlaylistSize(Index);
 
-                bool on_item(t_size itemIndex, const metadb_handle_ptr & item, bool isSelected) override
-                {
-                    if (item.is_valid())
-                        Size += item->get_filesize();
+            if ((int64_t) Size < 0)
+                return false;
 
-                    return true; // Continue enumerating
-                }
-
-            public:
-                t_filesize Size = 0; // in bytes
-            };
-
-            static_api_ptr_t<playlist_manager> pm;
-
-            callback_t Callback;
-
-            pm->playlist_enum_items(Index, Callback, bit_array_true());
+            std::string Text;
 
             std::locale Locale(""); // User default Windows locale.
 
-            const auto Text = std::format(Locale, "{:L}", Callback.Size);
+            Text = std::format(Locale, "{:L}", Size);
+
+            out->write(titleformat_inputtypes::unknown, Text.c_str());
+
+            isFound = true;
+
+            return true;
+        }},
+
+        std::pair{ "playlist_size_natural", [&]() -> bool
+        {
+            auto Size = GetPlaylistSize(Index);
+
+            if ((int64_t) Size < 0)
+                return false;
+
+            std::string Text;
+
+            const uint64_t TB = 1'099'511'627'776;
+            const uint64_t GB =     1'073'741'824;
+            const uint64_t MB =         1'048'576;
+            const uint64_t KB =             1'024;
+
+            std::locale Locale(""); // User default Windows locale.
+
+            if (Size >= TB)
+                Text = std::format(Locale, "{:.3Lf} TB", (double) Size / TB);
+            else
+            if (Size >= GB)
+                Text = std::format(Locale, "{:.3Lf} GB", (double) Size / GB);
+            else
+            if (Size >= MB)
+                Text = std::format(Locale, "{:.3Lf} MB", (double) Size / MB);
+
+            else
+            if (Size >= KB)
+                Text = std::format(Locale, "{:.3Lf} KB", (double) Size / KB);
+            else
+                Text = std::format(Locale, "{:L} bytes", Size);
 
             out->write(titleformat_inputtypes::unknown, Text.c_str());
 
@@ -247,4 +291,69 @@ const std::string custom_titleformat_hook_t::ExpandEnvironmentStrings(const std:
     ::ExpandEnvironmentStringsA(src.c_str(), (LPSTR) Dst.data(), (DWORD) Dst.size());
 
     return Dst;
+}
+
+/// <summary>
+/// Gets tje duration of a playlist (in seconds).
+/// </summary>
+double custom_titleformat_hook_t::GetPlaylistDuration(size_t index) const noexcept
+{
+    class callback_t : public playlist_manager::enum_items_callback
+    {
+    public:
+        virtual ~callback_t() { }
+
+        bool on_item(t_size itemIndex, const metadb_handle_ptr & item, bool isSelected) override
+        {
+            if (item.is_valid())
+            {
+                const double Length = item->get_length(); // in seconds
+
+                // Ignore unknown lengths (-1.0 or similar)
+                if (Length > 0.)
+                    Duration += Length;
+            }
+
+            return true; // Continue enumerating
+        }
+
+    public:
+        double Duration = 0.; // in seconds
+    };
+
+    callback_t Callback;
+
+    _PlaylistManager->playlist_enum_items(index, Callback, bit_array_true());
+
+    return Callback.Duration;
+}
+
+
+/// <summary>
+/// Gets the size of a playlist (in bytes).
+/// </summary>
+t_filesize custom_titleformat_hook_t::GetPlaylistSize(size_t index) const noexcept
+{
+    class callback_t : public playlist_manager::enum_items_callback
+    {
+    public:
+        virtual ~callback_t() { }
+
+        bool on_item(t_size itemIndex, const metadb_handle_ptr & item, bool isSelected) override
+        {
+            if (item.is_valid())
+                Size += item->get_filesize();
+
+            return true; // Continue enumerating
+        }
+
+    public:
+        t_filesize Size = 0; // in bytes
+    };
+
+    callback_t Callback;
+
+    _PlaylistManager->playlist_enum_items(index, Callback, bit_array_true());
+
+    return Callback.Size;
 }

@@ -50,19 +50,21 @@ private:
     virtual void OnSize(UINT nType, CSize size) noexcept override;
 
     void OnCommand(UINT notifyCode, int id, CWindow wnd) noexcept;
+    void OnSetFocus(CWindow wndOld) noexcept;
 
     LRESULT OnCustomDraw(NMHDR * nmhd) noexcept;
     LRESULT OnRightClick(NMHDR * nmhd) noexcept;
     LRESULT OnMiddleClick(NMHDR * nmhd) noexcept;
 
-    LRESULT OnGetDisplayInfo(NMHDR * nmhd) noexcept;
+    LRESULT OnKeyDown(NMHDR * nmhd) noexcept;
+    LRESULT OnGetInfoTip(NMHDR * nmhd) noexcept;
     LRESULT OnSelectionChanged(NMHDR * nmhd) noexcept;
+    LRESULT OnGetDisplayInfo(NMHDR * nmhd) noexcept;
+    LRESULT OnItemExpanded(NMHDR * nmhd) noexcept;
+    LRESULT OnBeginDrag(NMHDR * nmhd) noexcept;
     LRESULT OnDeleteItem(NMHDR * nmhd) noexcept;
     LRESULT OnBeginLabelEdit(NMHDR * nmhd) noexcept;
     LRESULT OnEndLabelEdit(NMHDR * nmhd) noexcept;
-    LRESULT OnKeyDown(NMHDR * nmhd) noexcept;
-    LRESULT OnBeginDrag(NMHDR * nmhd) noexcept;
-    LRESULT OnItemExpanded(NMHDR * nmhd) noexcept;
 
     void OnMouseMove(UINT flags, CPoint point) noexcept;
     void OnMouseLeave() noexcept;
@@ -75,12 +77,14 @@ private:
         MSG_WM_DESTROY(OnDestroy);
 
         MSG_WM_COMMAND(OnCommand);
+        MSG_WM_SETFOCUS(OnSetFocus);
 
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, NM_CUSTOMDRAW, OnCustomDraw);
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, NM_RCLICK, OnRightClick);
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, NM_MCLICK, OnMiddleClick);
 
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_KEYDOWN, OnKeyDown);
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_GETINFOTIP, OnGetInfoTip);
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_SELCHANGED, OnSelectionChanged);
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_GETDISPINFO, OnGetDisplayInfo);
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_ITEMEXPANDED, OnItemExpanded);
@@ -145,7 +149,7 @@ private:
     #pragma region folder_callback_t
 
 	void OnFolderCreated(const GUID & id, const std::string & name) noexcept override;
-	void OnFolderRemoved(const GUID & id) noexcept override;
+	void OnFolderRemoving(const GUID & id) noexcept override;
 	void OnFolderRenamed(const GUID & id, const std::string & oldName, const std::string & newName) noexcept override;
 
     #pragma endregion
