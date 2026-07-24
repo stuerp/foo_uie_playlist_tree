@@ -79,7 +79,7 @@ To create the component first build the x86 configuration and next the x64 confi
 
 v1.3.0.0, 2026-xx-xx
 
-* New: A playlist can be locked to prevent unwanted changes.
+* New: A playlist can be locked to prevent unwanted operations.
 * Fixed: The expanded/collapsed state of a folder was not restored at startup.
 
 ## Known Bugs

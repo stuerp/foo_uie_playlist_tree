@@ -45,9 +45,9 @@ bool playlist_tree_view_t::SetName(const GUID & id, const std::string & name) co
 /// <summary>
 /// Adds an item.
 /// </summary>
-node_t * playlist_tree_view_t::AddItem(const GUID & parentId, const GUID & insertAfterId, const GUID & id, const std::string & name, bool isFolder, bool isLocked, bool isExpanded) const noexcept
+node_t * playlist_tree_view_t::AddItem(const GUID & parentId, const GUID & insertAfterId, const GUID & id, const std::string & name, bool isFolder, bool isExpanded) const noexcept
 {
-    auto Node = new node_t(id, name, isFolder, isLocked);
+    auto Node = new node_t(id, name, isFolder);
 
     HTREEITEM hParent = FindItem(parentId);
 

@@ -19,6 +19,7 @@
     <ClCompile Include="CUIElement.cpp" />
     <ClCompile Include="DropTarget.cpp" />
     <ClCompile Include="CUIColorClient.cpp" />
+    <ClCompile Include="PlaylistLockManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DUIElement.h" />
@@ -45,6 +46,7 @@
     <ClInclude Include="TreeViewSubclass.h" />
     <ClInclude Include="Toggle.h" />
     <ClInclude Include="MultiSelectTreeView.h" />
+    <ClInclude Include="PlaylistLockManager.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />
