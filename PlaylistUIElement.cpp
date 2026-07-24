@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.cpp (2026.07.23) P. Stuer **/
+/** $VER: PlaylistsUIElement.cpp (2026.07.24) P. Stuer **/
 
 #include "pch.h"
 
@@ -18,7 +18,7 @@
 #pragma hdrstop
 
 /// <summary>
-/// Initializes a new instance.
+/// Initializes a new instance. Note to self: Don't put anything expensive here. Brain-dead CUI constructs and destructs UI elements at will.
 /// </summary>
 playlist_uielement_t::playlist_uielement_t() : multi_select_tree_view_t(IDC_TREEVIEW)
 {
@@ -32,7 +32,7 @@ playlist_uielement_t::playlist_uielement_t() : multi_select_tree_view_t(IDC_TREE
 }
 
 /// <summary>
-/// Deletes this instance.
+/// Deletes this instance. Note to self: Don't put anything expensive here. Brain-dead CUI constructs and destructs UI elements at will.
 /// </summary>
 playlist_uielement_t::~playlist_uielement_t()
 {
@@ -83,7 +83,7 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
             Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to register drop target: 0x%08X", hResult);
     }
 
-    // Deserialize the state.
+    // Deserialize the tree view nodes.
 //  _State._Object.clear(); // Uncomment to reset the state.
 
     FromJSON(_State._Object);
@@ -161,9 +161,9 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
             HRESULT hResult = _FolderManager->CreateFolder();
 
             if (!SUCCEEDED(hResult))
-                return;
+                Log.AtError().Write(STR_COMPONENT_BASENAME " failed to create folder: 0x%08X", hResult);
 
-            break;
+            return;
         }
 
         // Handles the "New Playlist" command.
@@ -172,16 +172,17 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
             size_t NewIndex = _PlaylistManager->create_playlist_autoname();
 
             if (NewIndex == SIZE_MAX)
-                return;
+                Log.AtError().Write(STR_COMPONENT_BASENAME " failed to create playlist");
 
-            break;
+            return;
         }
 
         // Handles the "Rename" command.
         case IDM_RENAME:
         {
             _TreeView.EditItem(_hHighlightedtem);
-            break;
+
+            return;
         }
 
         // Handles the "Remove" command.
@@ -189,7 +190,23 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
         {
             auto Scope = toggle_t(_IsUser, true);
 
-            _TreeView.RemoveItem(_hHighlightedtem);
+            if(!_TreeView.RemoveItem(_hHighlightedtem))
+                Log.AtError().Write(STR_COMPONENT_BASENAME " failed to remove highlighted item");
+
+            return;
+        }
+
+        // Handles the "Lock"/"Unlock" command.
+        case IDM_LOCK_TOGGLE:
+        {
+            auto Node = (node_t *) _TreeView.GetData(_hHighlightedtem);
+
+            if (Node == nullptr)
+                return;
+
+            Node->IsLocked = !Node->IsLocked;
+
+            _TreeView.RefreshItem(Node->Id);
 
             return;
         }
@@ -198,14 +215,16 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
         case IDM_SORT:
         {
             _TreeView.Sort(_hHighlightedtem);
-            break;
+
+            return;
         }
 
         // Handles the "Save all playlists..." command.
         case IDM_SAVE_ALL:
         {
             standard_commands::main_save_all_playlists();
-            break;
+
+            return;
         }
 
         // Handles the "Save playlist..." command.
@@ -214,17 +233,17 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
             const auto Node = (node_t *) _TreeView.GetData(_hHighlightedtem);
 
             if (Node == nullptr)
-                break;
+                return;
 
             auto Index = _PlaylistManager->find_playlist_by_guid(Node->Id);
 
             if (Index == SIZE_MAX)
-                break;
+                return;
 
             pfc::string FileName;
 
             if (!_PlaylistManager->playlist_get_name(Index, FileName))
-                break;
+                return;
 
             pfc::list_t<metadb_handle_ptr> Items;
 
@@ -263,14 +282,16 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
                     popup_message::g_show(e.what(), "Error writing playlist", popup_message::icon_error);
                 }
             }
-            break;
+
+            return;
         }
 
         // Handles the "Load playlist..." command.
         case IDM_LOAD:
         {
             standard_commands::main_load_playlist();
-            break;
+
+            return;
         }
 
         // Handles the "Clear history" command.
@@ -280,7 +301,8 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
 
             if (Result == IDYES)
                 _PlaylistManager->recycler_purge(bit_array_true());
-            break;
+
+            return;
         }
 
         default:
@@ -337,16 +359,14 @@ void playlist_uielement_t::on_items_added(size_t playlistIndex, size_t start, co
     auto Id = _PlaylistManager->playlist_get_guid(playlistIndex);
 
     _TreeView.RefreshItem(Id);
-
-    // Redraw the tree view. Note: Only required when using custom draw.
-//  _TreeView.Update();
 }
 
 /// <summary>
 /// 
 /// </summary>
 void playlist_uielement_t::on_items_reordered(size_t playlistIndex, const size_t * order, size_t count) noexcept
-{}
+{
+}
 
 /// <summary>
 /// 
@@ -363,46 +383,49 @@ void playlist_uielement_t::on_items_removed(size_t playlistIndex, const bit_arra
     auto Id = _PlaylistManager->playlist_get_guid(playlistIndex);
 
     _TreeView.RefreshItem(Id);
-
-    // Redraw the tree view. Note: Only required when using custom draw.
-//  _TreeView.Update();
 }
 
 /// <summary>
 /// 
 /// </summary>
 void playlist_uielement_t::on_items_selection_change(size_t playlistIndex, const bit_array & affected, const bit_array & state) noexcept
-{}
+{
+}
 
 /// <summary>
 /// 
 /// </summary>
 void playlist_uielement_t::on_item_focus_change(size_t playlistIndex, size_t from, size_t to) noexcept
-{}
+{
+}
     
 /// <summary>
 /// 
 /// </summary>
 void playlist_uielement_t::on_items_modified(size_t playlistIndex, const bit_array & mask) noexcept
-{}
+{
+}
 
 /// <summary>
 /// 
 /// </summary>
 void playlist_uielement_t::on_items_modified_fromplayback(size_t playlistIndex, const bit_array & mask, play_control::t_display_level level) noexcept
-{}
+{
+}
 
 /// <summary>
 /// 
 /// </summary>
 void playlist_uielement_t::on_items_replaced(size_t playlistIndex, const bit_array & mask, const pfc::list_base_const_t<t_on_items_replaced_entry> & data) noexcept
-{}
+{
+}
 
 /// <summary>
 /// 
 /// </summary>
 void playlist_uielement_t::on_item_ensure_visible(size_t playlistIndex, size_t itemIndex) noexcept
-{}
+{
+}
 
 /// <summary>
 /// Handles the activation of a new playlist.
@@ -428,8 +451,8 @@ void playlist_uielement_t::on_playlist_created(size_t index, const char * name, 
     const auto Parent = (node_t *) _TreeView.GetData(_hHighlightedtem);
 
     // Add the item.
-    auto ParentId = GUID();
-    auto InsertAfterId = GUID();
+    auto ParentId = GUID_NULL;
+    auto InsertAfterId = GUID_NULL;
 
     if (Parent != nullptr)
     {
@@ -439,15 +462,14 @@ void playlist_uielement_t::on_playlist_created(size_t index, const char * name, 
             InsertAfterId = Parent->Id;
     }
 
-    _TreeView.AddItem(ParentId, InsertAfterId, Id, name, false, false, true);
+    _TreeView.AddItem(ParentId, InsertAfterId, Id, name, false, false, false);
 
     // Activate the newly created playlist.
     _PlaylistManager->set_active_playlist(index);
 
-    _hHighlightedtem = NULL;
+    SelectPlaylist(index);
 
-    // Redraw the tree view. Note: Only required when using custom draw.
-//  _TreeView.Update();
+    _hHighlightedtem = NULL;
 }
 
 /// <summary>
@@ -563,15 +585,15 @@ void playlist_uielement_t::OnFolderCreated(const GUID & id, const std::string & 
 {
     Log.AtDebug().Write("Created folder %s.", msc::GUIDToUTF8(id).c_str());
 
-    if (_IgnoreNotifications || (id == GUID()) || name.empty())
+    if (_IgnoreNotifications || (id == GUID_NULL) || name.empty())
         return;
 
     // Get the data of the item we were hovering over, if any.
     const auto Parent = (node_t *) _TreeView.GetData(_hHighlightedtem);
 
     // Add the item.
-    auto ParentId = GUID();
-    auto InsertAfterId = GUID();
+    auto ParentId = GUID_NULL;
+    auto InsertAfterId = GUID_NULL;
 
     if (Parent != nullptr)
     {
@@ -581,12 +603,11 @@ void playlist_uielement_t::OnFolderCreated(const GUID & id, const std::string & 
             InsertAfterId = Parent->Id;
     }
 
-    _TreeView.AddItem(ParentId, InsertAfterId, id, name, true, false, true);
+    _TreeView.AddItem(ParentId, InsertAfterId, id, name, true, false, false);
+
+    _TreeView.SelectItem(id);
 
     _hHighlightedtem = NULL;
-
-    // Redraw the tree view. Note: Only required when using custom draw.
-//  _TreeView.Update();
 };
 
 /// <summary>
@@ -867,9 +888,12 @@ LRESULT playlist_uielement_t::OnRightClick(NMHDR * nmhd) noexcept
     // Remember the item we're hovering over, if any.
     _hHighlightedtem = _TreeView.GetHighlightedItem(pt);
 
+    const bool OnItem = (_hHighlightedtem != NULL);
+
     const auto Node = (node_t *) _TreeView.GetData(_hHighlightedtem);
 
-    const bool OnPlaylistNode = (Node != nullptr) && (_PlaylistManager->find_playlist_by_guid(Node->Id) != SIZE_MAX);
+    const bool IsPlaylist = (Node != nullptr) && (_PlaylistManager->find_playlist_by_guid(Node->Id) != SIZE_MAX);
+    const bool IsLocked   = IsPlaylist && Node->IsLocked;
 
     const HMENU hMenu = ::LoadMenuW(THIS_HINSTANCE, MAKEINTRESOURCE(IDM_CONTEXT_MENU));
 
@@ -881,17 +905,24 @@ LRESULT playlist_uielement_t::OnRightClick(NMHDR * nmhd) noexcept
     if (hPopup != NULL)
     {
         {
-            const UINT State = (_hHighlightedtem != NULL) ? MF_ENABLED : MF_DISABLED | MF_GRAYED;
+            const UINT State = (OnItem && !IsLocked) ? MF_ENABLED : MF_DISABLED | MF_GRAYED;
 
             ::EnableMenuItem(hPopup, IDM_RENAME, State);
             ::EnableMenuItem(hPopup, IDM_REMOVE, State);
         }
 
         {
-            ::EnableMenuItem(hPopup, IDM_SAVE,     OnPlaylistNode ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+            ::EnableMenuItem(hPopup, IDM_LOCK_TOGGLE, IsPlaylist ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
 
-            ::EnableMenuItem(hPopup, IDM_SAVE_ALL, (_hHighlightedtem == NULL) ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
-            ::EnableMenuItem(hPopup, IDM_LOAD,     (_hHighlightedtem == NULL) ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+            if (IsPlaylist)
+                ::ModifyMenuW(hPopup, IDM_LOCK_TOGGLE, MF_BYCOMMAND | MF_STRING, IDM_LOCK_TOGGLE, Node->IsLocked ? L"Unlock" : L"Lock");
+        }
+
+        {
+            ::EnableMenuItem(hPopup, IDM_SAVE,     IsPlaylist ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+
+            ::EnableMenuItem(hPopup, IDM_SAVE_ALL, !OnItem ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+            ::EnableMenuItem(hPopup, IDM_LOAD,     !OnItem ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
         }
 
         // Create and append the Restore submenu.
@@ -955,6 +986,11 @@ LRESULT playlist_uielement_t::OnMiddleClick(NMHDR * nmhd) noexcept
     if (_hHighlightedtem == NULL)
         return -1;
 
+    auto Node = (const node_t *) _TreeView.GetData(_hHighlightedtem);
+
+    if ((Node == nullptr) || Node->IsLocked)
+        return FALSE;
+
     {
         auto Scope = toggle_t(_IsUser, true);
 
@@ -996,7 +1032,7 @@ LRESULT playlist_uielement_t::OnGetDisplayInfo(NMHDR * nmhd) noexcept
             tvi.iImage = tvi.iSelectedImage = ItemImage::Folder;
         else
         {
-            auto Image = ItemImage::Playlist;
+            auto Image = Node->IsLocked ? ItemImage::PlaylistLocked : ItemImage::Playlist;
 
             if (_IsPlaying)
             {
@@ -1057,7 +1093,7 @@ LRESULT playlist_uielement_t::OnDeleteItem(NMHDR * nmhd) noexcept
 
     auto Node = (node_t *) nmtv->itemOld.lParam;
 
-    if (Node == nullptr)
+    if ((Node == nullptr) || Node->IsLocked)
         return FALSE;
 
     if (Node->IsFolder)
@@ -1100,7 +1136,7 @@ LRESULT playlist_uielement_t::OnBeginLabelEdit(NMHDR * nmhd) noexcept
 
     const auto Node = (node_t *) nmdi->item.lParam;
 
-    if (Node == nullptr)
+    if ((Node == nullptr) || Node->IsLocked)
         return TRUE;
 
     auto hEdit = _TreeView.GetEditControl();
@@ -1151,9 +1187,6 @@ LRESULT playlist_uielement_t::OnEndLabelEdit(NMHDR * nmhd) noexcept
     // Recalculate the item rectangle.
     _TreeView.RefreshItem(Node->Id);
 
-    // Redraw the tree view. Note: Only required when using custom draw.
-//  _TreeView.Update();
-
     SetMsgHandled(FALSE);
 
     return TRUE; // Keep the text.
@@ -1164,6 +1197,11 @@ LRESULT playlist_uielement_t::OnEndLabelEdit(NMHDR * nmhd) noexcept
 /// </summary>
 LRESULT playlist_uielement_t::OnKeyDown(NMHDR * nmhd) noexcept
 {
+    auto Node = _TreeView.GetSelectedItem();
+
+    if ((Node == nullptr) || Node->IsLocked)
+        return 0;
+
     const auto nmkd = (NMTVKEYDOWN *) nmhd;
 
     switch (nmkd->wVKey)
@@ -1187,7 +1225,7 @@ LRESULT playlist_uielement_t::OnKeyDown(NMHDR * nmhd) noexcept
 
     SetMsgHandled(FALSE);
 
-    return FALSE;
+    return 0;
 }
 
 /// <summary>
@@ -1195,7 +1233,7 @@ LRESULT playlist_uielement_t::OnKeyDown(NMHDR * nmhd) noexcept
 /// </summary>
 LRESULT playlist_uielement_t::OnGetInfoTip(NMHDR * nmhd) noexcept
 {
-    if (_State._ToolTip.empty())
+    if (_State._ToolTipFormat.empty())
         return TRUE;
 
     auto nmgi = (NMTVGETINFOTIPW *) nmhd;
@@ -1207,7 +1245,7 @@ LRESULT playlist_uielement_t::OnGetInfoTip(NMHDR * nmhd) noexcept
 
     pfc::string Text;
 
-    HRESULT hResult = title_formatter_t::Evaluate(_State._ToolTip, Node->Id, Text);
+    HRESULT hResult = title_formatter_t::Evaluate(_State._ToolTipFormat, Node->Id, Text);
 
     if (!SUCCEEDED(hResult))
         return TRUE;
@@ -1240,9 +1278,6 @@ LRESULT playlist_uielement_t::OnBeginDrag(NMHDR * nmhd) noexcept
 /// </summary>
 LRESULT playlist_uielement_t::OnItemExpanded(NMHDR * nmhd) noexcept
 {
-    // Redraw the tree view. Note: Only required when using custom draw.
-//  _TreeView.Update();
-
     SetMsgHandled(FALSE);
 
     return TRUE;
@@ -1253,7 +1288,7 @@ LRESULT playlist_uielement_t::OnItemExpanded(NMHDR * nmhd) noexcept
 /// </summary>
 void playlist_uielement_t::FromJSON(json object) noexcept
 {
-    FromJSON(object, { });
+    FromJSON(object, GUID_NULL);
 
     // Add all playlists that are missing in the loaded configuration to the root.
     const size_t PlaylistCount = _PlaylistManager->get_playlist_count();
@@ -1269,12 +1304,12 @@ void playlist_uielement_t::FromJSON(json object) noexcept
 
         _PlaylistManager->playlist_get_name(PlaylistIndex, Name);
 
-        _TreeView.AddItem({ }, { }, Id, Name.c_str(), false, false, false);
+        _TreeView.AddItem(GUID_NULL, GUID_NULL, Id, Name.c_str(), false, false, false);
     }
 }
 
 /// <summary>
-/// Deserializes this instance from a JSON object.
+/// Deserializes the tree nodes from a JSON object.
 /// </summary>
 void playlist_uielement_t::FromJSON(json object, const GUID & parentId) noexcept
 {
@@ -1283,16 +1318,16 @@ void playlist_uielement_t::FromJSON(json object, const GUID & parentId) noexcept
 
     for (auto Node : Nodes)
     {
-        std::string IdText = Node.value("id", IdText);
-        std::string Name   = Node.value("name", Name);
+        std::string IdText    = Node.value("id",   "");
+        std::string Name      = Node.value("name", "");
 
-        bool IsFolder   = Node.value("isFolder", IsFolder);
-        bool IsExpanded = Node.value("isExpanded", IsExpanded);
+        const bool IsFolder   = Node.value("isFolder",   false);
+        const bool IsLocked   = Node.value("isLocked",   false);
+        const bool IsExpanded = Node.value("isExpanded", false);
 
         const GUID Id = msc::UTF8ToGUID(IdText);
-//      Id = pfc::GUID_from_text(IdText.c_str());
 
-        if (Id == GUID())
+        if (Id == GUID_NULL)
             continue; // Should not happen...
 
         if (IsFolder)
@@ -1303,7 +1338,7 @@ void playlist_uielement_t::FromJSON(json object, const GUID & parentId) noexcept
                 _FolderManager->CreateFolder(Id, Name);
             }
 
-            _TreeView.AddItem(parentId, { }, Id, Name, IsFolder, IsExpanded, false);
+            _TreeView.AddItem(parentId, { }, Id, Name, IsFolder, IsLocked, IsExpanded);
 
             const auto & Children = Node["nodes"];
 
@@ -1317,7 +1352,7 @@ void playlist_uielement_t::FromJSON(json object, const GUID & parentId) noexcept
             if (Index == SIZE_MAX)
                 continue; // TODO: Use a grayed out image to indicate this playlist is missing and add a command to restore it.
 
-            _TreeView.AddItem(parentId, { }, Id, Name, IsFolder, IsExpanded, false);
+            _TreeView.AddItem(parentId, { }, Id, Name, IsFolder, IsLocked, IsExpanded);
         }
     }
 }
@@ -1329,19 +1364,7 @@ void playlist_uielement_t::SelectPlaylist(size_t index) const noexcept
 {
     const auto Id = _PlaylistManager->playlist_get_guid(index);
 
-    _TreeView.Walk([&](HTREEITEM hItem, void * context) -> bool
-    {
-        auto Node = (node_t *) _TreeView.GetData(hItem);
-
-        if ((Node != nullptr) && (Node->Id == Id))
-        {
-            _TreeView.SelectItem(hItem);
-
-            return false;
-        }
-
-        return true; // Continue enumerating
-    });
+    _TreeView.SelectItem(Id);
 }
 
 /// <summary>
@@ -1360,6 +1383,12 @@ DWORD playlist_uielement_t::GetDropEffect(DWORD keyState, const POINT & pt) noex
 
         _TreeView.SetState(_hDropTarget, TVIS_DROPHILITED);
     }
+
+    // Determine the effect.
+    const auto Node = (node_t *) _TreeView.GetData(hItem);
+
+    if ((Node == nullptr) || Node->IsLocked)
+        return DROPEFFECT_NONE;
 
     if (keyState & MK_CONTROL)
         return DROPEFFECT_MOVE;
@@ -1452,13 +1481,13 @@ std::string playlist_uielement_t::GetConfiguration() const noexcept
         {
             const auto Node = (node_t *) _TreeView.GetData(hItem);
 
-            if ((Node == nullptr) || ((Node != nullptr) && (Node->Id == GUID())))
+            if ((Node == nullptr) || ((Node != nullptr) && (Node->Id == GUID_NULL)))
                 return true; // Continue enumerating. Should not occur.
 
-//          (*node)["id"]       = pfc::print_guid(Node->Id).c_str();
             (*node)["id"]       = msc::GUIDToUTF8(Node->Id);
             (*node)["name"]     = Node->Name;
             (*node)["isFolder"] = Node->IsFolder;
+            (*node)["isLocked"] = Node->IsLocked;
 
             if (Node->IsFolder)
                 (*node)["isExpanded"] = _TreeView.IsExpanded(Node->Id);

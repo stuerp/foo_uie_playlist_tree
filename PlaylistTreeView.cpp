@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsTreeView.cpp (2026.07.18) P. Stuer **/
+/** $VER: PlaylistsTreeView.cpp (2026.07.24) P. Stuer **/
 
 #include "pch.h"
 
@@ -45,9 +45,9 @@ bool playlist_tree_view_t::SetName(const GUID & id, const std::string & name) co
 /// <summary>
 /// Adds an item.
 /// </summary>
-node_t * playlist_tree_view_t::AddItem(const GUID & parentId, const GUID & insertAfterId, const GUID & id, const std::string & name, bool isFolder, bool isExpanded, bool select) const noexcept
+node_t * playlist_tree_view_t::AddItem(const GUID & parentId, const GUID & insertAfterId, const GUID & id, const std::string & name, bool isFolder, bool isLocked, bool isExpanded) const noexcept
 {
-    auto Node = new node_t(id, name, isFolder);
+    auto Node = new node_t(id, name, isFolder, isLocked);
 
     HTREEITEM hParent = FindItem(parentId);
 
@@ -70,13 +70,6 @@ node_t * playlist_tree_view_t::AddItem(const GUID & parentId, const GUID & inser
         return nullptr;
     }
 
-    // Expand the parent.
-    __super::ExpandItem(hParent);
-
-    // Select the added item.
-    if (select)
-        __super::SelectItem(hNewItem);
-
     return Node;
 }
 
@@ -94,11 +87,24 @@ bool playlist_tree_view_t::RemoveItem(const GUID & id) const noexcept
 }
 
 /// <summary>
+/// Selects the specified item.
+/// </summary>
+bool playlist_tree_view_t::SelectItem(const GUID & id) const noexcept
+{
+    HTREEITEM hItem = FindItem(id);
+
+    if (hItem == NULL)
+        return false;
+
+    return __super::SelectItem(hItem);
+}
+
+/// <summary>
 /// Find the specified item.
 /// </summary>
 HTREEITEM playlist_tree_view_t::FindItem(const GUID & id) const noexcept
 {
-    if (id == GUID())
+    if (id == GUID_NULL)
         return NULL;
 
     HTREEITEM hFoundItem = NULL;

@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.cpp (2026.07.23) P. Stuer **/
+/** $VER: Preferences.cpp (2026.07.24) P. Stuer **/
 
 #include "pch.h"
 
@@ -41,7 +41,9 @@ public:
     };
 
     //! Called when user changes configuration of fonts.
-    virtual void ui_fonts_changed() {}
+    virtual void ui_fonts_changed()
+    {
+    }
 
     //! Called when user changes configuration of colors (also as a result of toggling dark mode). \n
     virtual void ui_colors_changed()
@@ -137,7 +139,7 @@ private:
 
         // Tool Tip
         {
-            SetDlgItemTextW(IDC_TOOL_TIP, msc::UTF8ToWide(_NewState._ToolTip).c_str());
+            SetDlgItemTextW(IDC_TOOL_TIP, msc::UTF8ToWide(_NewState._ToolTipFormat).c_str());
         }
 
         // Node Type 
@@ -146,7 +148,7 @@ private:
 
             w.ResetContent();
 
-            const WCHAR * Labels[] = { L"Folder", L"Playlist", L"Playlist (Playing)" };
+            const WCHAR * Labels[] = { L"Folder", L"Playlist", L"Playlist (Playing)", L"Playlist (Locked)" };
 
             for (auto Label : Labels)
                 w.AddString(Label);
@@ -237,7 +239,7 @@ private:
 
                     Edit.GetWindowTextW(Text.data(), (int) Text.size());
 
-                    _NewState._ToolTip = msc::WideToUTF8(Text).c_str();
+                    _NewState._ToolTipFormat = msc::WideToUTF8(Text).c_str();
                 }
                 break;
             }
@@ -372,7 +374,7 @@ private:
 
         // Text Format
         {
-            if (_NewState._ToolTip != _State._ToolTip)
+            if (_NewState._ToolTipFormat != _State._ToolTipFormat)
                 return true;
         }
 

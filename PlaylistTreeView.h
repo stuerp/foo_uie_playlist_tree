@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsTreeView.h (2026.07.19) P. Stuer **/
+/** $VER: PlaylistsTreeView.h (2026.07.24) P. Stuer **/
 
 #pragma once
 
@@ -33,8 +33,11 @@ public:
     bool GetText(const GUID & id, std::string & text) const noexcept;
     bool SetName(const GUID & id, const std::string & name) const noexcept;
 
-    node_t * AddItem(const GUID & parentId, const GUID & insertAfterId, const GUID & id, const std::string & name, bool isFolder, bool isExpanded, bool select) const noexcept;
+    using tree_view_t::SelectItem; // Adds the base class overload.
+
+    node_t * AddItem(const GUID & parentId, const GUID & insertAfterId, const GUID & id, const std::string & name, bool isFolder, bool isLocked, bool isExpanded) const noexcept;
     bool RemoveItem(const GUID & id) const noexcept;
+    bool SelectItem(const GUID & id) const noexcept;
 
     HTREEITEM FindItem(const GUID & id) const noexcept;
 

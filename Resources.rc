@@ -1,5 +1,5 @@
 
-/** $VER: Resources.rc (2026.07.15) P. Stuer **/
+/** $VER: Resources.rc (2026.07.24) P. Stuer **/
 
 #include "Resources.h"
 
@@ -58,6 +58,10 @@ IDM_CONTEXT_MENU menu
 
         menuitem "Rename\tF2",              IDM_RENAME
         menuitem "Remove\tDel",             IDM_REMOVE
+        menuitem "Lock",                    IDM_LOCK_TOGGLE
+
+        menuitem separator
+
         menuitem "Sort",                    IDM_SORT
 
         menuitem separator
