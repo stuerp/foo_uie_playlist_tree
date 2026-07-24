@@ -326,6 +326,14 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
             return;
         }
 
+        // Handles the "Dump configuration" command.
+        case IDM_DUMP:
+        {
+            console::print(GetConfiguration().c_str());
+
+            return;
+        }
+
         default:
         {
             if (id >= IDM_HISTORY)
@@ -992,6 +1000,13 @@ LRESULT playlist_uielement_t::OnRightClick(NMHDR * nmhd) noexcept
 
                 ::InsertMenuItemW(hPopup, (UINT) ::GetMenuItemCount(hPopup), TRUE, &mii);
             }
+        }
+
+        // Append a troubleshooting menu item.
+        if ((::GetKeyState(VK_CONTROL) & 0x8000) && (::GetKeyState(VK_SHIFT) & 0x8000))
+        {
+            ::AppendMenuW(hPopup, MF_SEPARATOR, 0, NULL);
+            ::AppendMenuW(hPopup, MF_STRING, IDM_DUMP, L"Dump configuration");
         }
 
         ::TrackPopupMenu(hPopup, TPM_RIGHTBUTTON, pt.x, pt.y, 0, m_hWnd, nullptr);

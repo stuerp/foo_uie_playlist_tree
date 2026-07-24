@@ -1,5 +1,5 @@
 
-/** $VER: Resources.h (2026.07.24) P. Stuer **/
+/** $VER: Resources.h (2026.07.25) P. Stuer **/
 
 #pragma once
 
@@ -58,30 +58,32 @@
 
 /** Controls **/
 
-#define IDC_TREEVIEW                           1
+#define IDC_TREEVIEW        1
 
 /** Configuration **/
 
-#define IDD_PREFERENCES                      101
+#define IDD_PREFERENCES     101
 
 /** Resources **/
 
-#define IDM_CONTEXT_MENU                       1
+#define IDM_CONTEXT_MENU    1
 
-#define IDM_NEW_FOLDER                        10
-#define IDM_NEW_PLAYLIST                      11
+#define IDM_NEW_FOLDER      10
+#define IDM_NEW_PLAYLIST    11
 
-#define IDM_RENAME                            20
-#define IDM_REMOVE                            21
-#define IDM_LOCK_TOGGLE                       23
+#define IDM_RENAME          20
+#define IDM_REMOVE          21
+#define IDM_LOCK_TOGGLE     23
 
-#define IDM_SORT                              30
+#define IDM_SORT            30
 
-#define IDM_LOAD                              40
-#define IDM_SAVE                              41
-#define IDM_SAVE_ALL                          42
+#define IDM_LOAD            40
+#define IDM_SAVE            41
+#define IDM_SAVE_ALL        42
 
-#define IDM_CONTENTS                          50
+#define IDM_CONTENTS        50
 
-#define IDM_CLEAR_HISTORY                     60
-#define IDM_HISTORY                            (IDM_CLEAR_HISTORY + 1)
+#define IDM_DUMP            60
+
+#define IDM_CLEAR_HISTORY   70
+#define IDM_HISTORY         (IDM_CLEAR_HISTORY + 1)
