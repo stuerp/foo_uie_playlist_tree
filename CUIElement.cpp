@@ -1,10 +1,11 @@
 
-/** $VER: CUIElement.cpp (2026.07.17) P. Stuer **/
+/** $VER: CUIElement.cpp (2026.07.25) P. Stuer **/
 
 #include "pch.h"
 
 #include "CUIElement.h"
 #include "CUIColorClient.h"
+#include "CUIFontClient.h"
 
 #include "Resources.h"
 #include "Theme.h"
@@ -17,6 +18,7 @@ namespace uie
 static uie::window_factory<cui_element_t> _CUIElementFactory;
 
 static cui::colours::client::factory<cui_color_client_t> _CUIColorClientFactory;
+static cui::fonts::client::factory<cui_font_client_t> _CUIFontClientFactory;
 
 /// <summary>
 /// Initializes a new instance.
@@ -54,14 +56,24 @@ HWND cui_element_t::create_or_transfer_window(HWND hParent, const window_host_pt
         SetWindowPos(NULL, position.x, position.y, (int) position.cx, (int) position.cy, SWP_NOZORDER);
     }
 
-    auto Client = &_CUIColorClientFactory.get_static_instance();
+    {
+        auto Client = &_CUIColorClientFactory.get_static_instance();
 
-    if (Client != nullptr)
-        Client->_Element = this;
+        if (Client != nullptr)
+            Client->_Element = this;
+    }
 
-    _Theme.Initialize();
+    {
+        auto Client = &_CUIFontClientFactory.get_static_instance();
+
+        if (Client != nullptr)
+            Client->_Element = this;
+    }
+
+    _Theme.Initialize(m_hWnd);
 
     GetColors();
+    GetFonts();
 
     return *this;
 }
@@ -121,6 +133,16 @@ void cui_element_t::GetColors() noexcept
     TreeView_SetTextColor(_TreeView.Get(), _Theme.GetWindowTextColor());
 
     ::InvalidateRect(_TreeView.Get(), nullptr, TRUE);
+}
+
+/// <summary>
+/// Gets the fonts.
+/// </summary>
+void cui_element_t::GetFonts() noexcept
+{
+    cui::fonts::helper Helper(GUID_UI_ELEMENT); // Use pfc::guid_null for Global
+
+    _Theme.SetPlaylistFont(Helper.get_font());
 }
 
 }

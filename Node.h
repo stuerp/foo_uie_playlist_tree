@@ -1,5 +1,5 @@
 
-/** $VER: Node.h (2026.07.07) P. Stuer **/
+/** $VER: Node.h (2026.07.24) P. Stuer **/
 
 #pragma once
 

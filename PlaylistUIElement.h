@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.h (2026.07.20) P. Stuer **/
+/** $VER: PlaylistsUIElement.h (2026.07.25) P. Stuer **/
 
 #pragma once
 
@@ -7,6 +7,7 @@
 
 #include "EditSubclass.h"
 #include "FolderManager.h"
+#include "PlaylistLockManager.h"
 #include "MultiSelectTreeView.h"
 #include "PlaylistTreeView.h"
 #include "Resources.h"
@@ -19,7 +20,7 @@
 /// <summary>
 /// Implements the user interface element base class.
 /// </summary>
-class playlist_uielement_t : public uielement_t, public playlist_callback, private play_callback_impl_base, public multi_select_tree_view_t, public folder_manager_callback_t
+class playlist_uielement_t : public uielement_t, private playlist_callback, private play_callback_impl_base, private multi_select_tree_view_t, private folder_manager_callback_t
 {
 public:
     playlist_uielement_t();
@@ -36,6 +37,8 @@ public:
 
     void Refresh() noexcept;
 
+    virtual void OnFontsChanged() noexcept override;
+
 protected:
     void SetConfiguration(const char * data, size_t size) noexcept;
     std::string GetConfiguration() const noexcept;
@@ -49,6 +52,7 @@ private:
     virtual void OnDestroy() noexcept override;
     virtual void OnSize(UINT nType, CSize size) noexcept override;
 
+    void OnPaint(CDCHandle dc) noexcept;
     void OnCommand(UINT notifyCode, int id, CWindow wnd) noexcept;
     void OnSetFocus(CWindow wndOld) noexcept;
 
@@ -73,6 +77,7 @@ private:
     BEGIN_MSG_MAP_EX(playlist_uielement_t)
 //      MSG_WM_DESTROY(OnDestroy);
 
+        MSG_WM_PAINT(OnPaint);
         MSG_WM_COMMAND(OnCommand);
         MSG_WM_SETFOCUS(OnSetFocus);
 
@@ -160,6 +165,7 @@ private:
     void SelectPlaylist(size_t playlistIndex) const noexcept;
 
     HRESULT InitImageList() noexcept;
+    void ModifyFilterMask(uint32_t mask) const noexcept;
 
 protected:
     playlist_tree_view_t _TreeView;
@@ -167,8 +173,9 @@ protected:
 private:
     himagelist_t _hImageList;
 
-    static_api_ptr_t<playlist_manager_v5> _PlaylistManager;
     static_api_ptr_t<folder_manager_t> _FolderManager;
+    static_api_ptr_t<playlist_manager_v5> _PlaylistManager;
+    static_api_ptr_t<playlist_lock_manager_t> _LockManager;
 
     HTREEITEM _hDropTarget = NULL;
     HTREEITEM _hHighlightedtem = NULL;

@@ -1,5 +1,5 @@
 
-/** $VER: TitleFormat.cpp (2026.07.23) P. Stuer **/
+/** $VER: TitleFormat.cpp (2026.07.25) P. Stuer **/
 
 #include "pch.h"
 
@@ -84,6 +84,37 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
                 return false;
 
             out->write_int(titleformat_inputtypes::unknown, 1);
+
+            isFound = true;
+
+            return true;
+        }},
+
+        std::pair{ "node_is_locked", [&]() -> bool
+        {
+            if (IsFolder)
+                return false;
+
+            const auto Value = (_PlaylistManager->playlist_lock_get_filter_mask(Index) != 0) ? 1 : 0;
+
+            out->write_int(titleformat_inputtypes::unknown, Value);
+
+            isFound = true;
+
+            return true;
+        }},
+
+        std::pair{ "node_lock_name", [&]() -> bool
+        {
+            if (_PlaylistManager->playlist_lock_get_filter_mask(Index) == 0)
+                return false;
+
+            pfc::string LockName;
+
+            if (!_PlaylistManager->playlist_lock_query_name(Index, LockName))
+                return false;
+
+            out->write(titleformat_inputtypes::unknown, LockName.c_str());
 
             isFound = true;
 

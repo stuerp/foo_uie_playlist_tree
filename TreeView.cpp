@@ -1,5 +1,5 @@
 
-/** $VER: TreeView.cpp (2026.07.22) P. Stuer **/
+/** $VER: TreeView.cpp (2026.07.25) P. Stuer **/
 
 #include "pch.h"
 
@@ -115,7 +115,7 @@ bool tree_view_t::RefreshItem(HTREEITEM hItem) const noexcept
 
     return (TreeView_SetItem(_hTreeView, &tvi) != 0);
 }
-
+#include "Log.h"
 /// <summary>
 /// Refreshes all items.
 /// </summary>
@@ -133,19 +133,18 @@ bool tree_view_t::RefreshAllItems() const noexcept
             hItem = hChild;
         else
         {
-            auto hNext = TreeView_GetNextSibling(_hTreeView, hItem);
-
-            while (hNext != NULL)
+            while (hItem != NULL)
             {
-                hItem = TreeView_GetParent(_hTreeView, hItem);
+                auto hNext = TreeView_GetNextSibling(_hTreeView, hItem);
 
-                if (hItem != NULL)
+                if (hNext != NULL)
+                {
+                    hItem = hNext;
                     break;
+                }
 
-                hNext = TreeView_GetNextSibling(_hTreeView, hItem);
+                hItem = TreeView_GetParent(_hTreeView, hItem);
             }
-
-            hItem = hNext;
         }
     }
 

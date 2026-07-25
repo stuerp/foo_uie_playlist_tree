@@ -12,7 +12,7 @@ STDMETHODIMP drop_target_t::QueryInterface(REFIID riid, void ** ppv)
 {
     if (riid == IID_IUnknown || riid == IID_IDropTarget)
     {
-        *ppv = static_cast<IDropTarget*>(this);
+        *ppv = (IDropTarget *) this;
 
         AddRef();
 

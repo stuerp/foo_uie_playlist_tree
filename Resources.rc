@@ -1,5 +1,5 @@
 
-/** $VER: Resources.rc (2026.07.15) P. Stuer **/
+/** $VER: Resources.rc (2026.07.25) P. Stuer **/
 
 #include "Resources.h"
 
@@ -58,6 +58,24 @@ IDM_CONTEXT_MENU menu
 
         menuitem "Rename\tF2",              IDM_RENAME
         menuitem "Remove\tDel",             IDM_REMOVE
+
+        popup "Lock"
+        {
+            menuitem "Add items",           IDM_LOCK_ADD_ITEMS
+            menuitem "Remove items",        IDM_LOCK_REMOVE_ITEMS
+            menuitem "Reorder items",       IDM_LOCK_REORDER_ITEMS
+            menuitem "Replace items",       IDM_LOCK_REPLACE_ITEMS
+            menuitem separator
+            menuitem "Rename playlist",     IDM_LOCK_RENAME
+            menuitem "Remove playlist",     IDM_LOCK_REMOVE
+            menuitem "Default action",      IDM_LOCK_DEFAULT_ACTION
+            menuitem separator
+            menuitem "All",                 IDM_LOCK_ALL
+            menuitem "None",                IDM_LOCK_NONE
+        }
+
+        menuitem separator
+
         menuitem "Sort",                    IDM_SORT
 
         menuitem separator

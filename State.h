@@ -1,5 +1,5 @@
 
-/** $VER: State.h (2026.07.22) P. Stuer **/
+/** $VER: State.h (2026.07.24) P. Stuer **/
 
 #pragma once
 
@@ -17,6 +17,7 @@ enum ItemImage : int
     Folder          = 0,
     Playlist        = 1,
     PlaylistPlaying = 2,
+    PlaylistLocked  = 3,
 };
 
 struct image_t
@@ -44,7 +45,7 @@ public:
 
 public:
     std::string _TextFormat;
-    std::string _ToolTip;
+    std::string _ToolTipFormat;
     uint32_t _ImageSize;
 
     std::vector<image_t> _Images;

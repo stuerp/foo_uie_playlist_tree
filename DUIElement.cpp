@@ -1,5 +1,5 @@
 
-/** $VER: DUIElement.cpp (2026.07.17) P. Stuer - Implements Default User Interface support **/
+/** $VER: DUIElement.cpp (2026.07.25) P. Stuer - Implements Default User Interface support **/
 
 #include "pch.h"
 
@@ -20,9 +20,10 @@ dui_element_t::dui_element_t(ui_element_config::ptr data, ui_element_instance_ca
     set_configuration(data);
 
     // Call here before the colors have been initialized.
-    _Theme.Initialize();
+    _Theme.Initialize(m_hWnd);
 
     GetColors();
+    GetFonts();
 }
 
 #pragma region ui_element_instance interface
@@ -30,7 +31,7 @@ dui_element_t::dui_element_t(ui_element_config::ptr data, ui_element_instance_ca
 /// <summary>
 /// Retrieves the name of the element.
 /// </summary>
-void dui_element_t::g_get_name(pfc::string_base & name)
+void dui_element_t::g_get_name(pfc::string_base & name) noexcept
 {
     name = STR_COMPONENT_NAME;
 }
@@ -38,7 +39,7 @@ void dui_element_t::g_get_name(pfc::string_base & name)
 /// <summary>
 /// Retrieves the description of the element.
 /// </summary>
-const char * dui_element_t::g_get_description()
+const char * dui_element_t::g_get_description() noexcept
 {
     return STR_COMPONENT_DESCRIPTION;
 }
@@ -46,7 +47,7 @@ const char * dui_element_t::g_get_description()
 /// <summary>
 /// Retrieves the GUID of the element.
 /// </summary>
-GUID dui_element_t::g_get_guid()
+GUID dui_element_t::g_get_guid() noexcept
 {
     return uielement_t::GetGUID();
 }
@@ -54,7 +55,7 @@ GUID dui_element_t::g_get_guid()
 /// <summary>
 /// Retrieves the subclass GUID of the element.
 /// </summary>
-GUID dui_element_t::g_get_subclass()
+GUID dui_element_t::g_get_subclass() noexcept
 {
     return ui_element_subclass_utility;
 }
@@ -62,7 +63,7 @@ GUID dui_element_t::g_get_subclass()
 /// <summary>
 /// Retrieves the default configuration of the element.
 /// </summary>
-ui_element_config::ptr dui_element_t::g_get_default_configuration()
+ui_element_config::ptr dui_element_t::g_get_default_configuration() noexcept
 {
     const auto Config = GetDefaultConfiguration();
 
@@ -72,7 +73,7 @@ ui_element_config::ptr dui_element_t::g_get_default_configuration()
 /// <summary>
 /// Initializes the element's windows.
 /// </summary>
-void dui_element_t::initialize_window(HWND hWndParent)
+void dui_element_t::initialize_window(HWND hWndParent) noexcept
 {
     const DWORD Style = 0;
     const DWORD ExStyle = 0;
@@ -83,7 +84,7 @@ void dui_element_t::initialize_window(HWND hWndParent)
 /// <summary>
 /// Sets the instance configuration data.
 /// </summary>
-void dui_element_t::set_configuration(ui_element_config::ptr data)
+void dui_element_t::set_configuration(ui_element_config::ptr data) noexcept
 {
     ui_element_config_parser Parser(data);
 
@@ -93,7 +94,7 @@ void dui_element_t::set_configuration(ui_element_config::ptr data)
 /// <summary>
 /// Gets the instance configuration data.
 /// </summary>
-ui_element_config::ptr dui_element_t::get_configuration()
+ui_element_config::ptr dui_element_t::get_configuration() noexcept
 {
     const auto Config = GetConfiguration();
 
@@ -109,6 +110,9 @@ void dui_element_t::notify(const GUID & what, t_size param1, const void * param2
 {
     if (what == ui_element_notify_colors_changed)
         OnColorsChanged();
+    else
+    if (what == ui_element_notify_font_changed)
+        OnFontsChanged();
 }
 
 /// <summary>
@@ -132,6 +136,14 @@ void dui_element_t::GetColors() noexcept
     TreeView_SetTextColor(_TreeView.Get(), _Theme.GetWindowTextColor());
 
     ::InvalidateRect(_TreeView.Get(), nullptr, TRUE);
+}
+
+/// <summary>
+/// Gets the fonts.
+/// </summary>
+void dui_element_t::GetFonts() noexcept
+{
+    _Theme.SetPlaylistFont(m_callback->query_font_ex(ui_font_playlists));
 }
 
 static service_factory_single_t<ui_element_impl_withpopup<dui_element_t>> _Factory;

@@ -1,5 +1,5 @@
 
-/** $VER: Theme.h (2026.07.22) P. Stuer **/
+/** $VER: Theme.h (2026.07.25) P. Stuer **/
 
 #pragma once
 
@@ -17,9 +17,9 @@ class theme_t
 public:
     ~theme_t() noexcept;
 
-    HRESULT Initialize() noexcept;
+    HRESULT Initialize(HWND hWnd) noexcept;
 
-    HFONT GetFont() const noexcept { return _hFont; }
+    HFONT GetIconFont() const noexcept { return _hIconFont; }
     HTHEME GetTextStyle() const noexcept { return _hTextStyle; }
 
     COLORREF GetWindowColor() const noexcept { return _ColorWindow; }
@@ -57,6 +57,9 @@ public:
     msc::brush_t & GetHighlightBrush() noexcept { return _hHighlightBrush; }
     msc::pen_t & GetHighlightPen() noexcept { return _hHighlightPen; }
 
+    HFONT GetPlaylistFont() const noexcept { return _hPlaylistFont; }
+    void SetPlaylistFont(HFONT hFont) noexcept;
+
 private:
     void Dispose() noexcept;
 
@@ -66,8 +69,12 @@ public:
     bool _IsDUI = true; // Ugly but I don't know any API to detect if DUI or CUI is active, independent from a panel.
 
 private:
-    HFONT _hFont = NULL;
+    HWND _hWnd = NULL;
+    HFONT _hIconFont = NULL;
     HTHEME _hTextStyle = NULL;
+
+    HFONT _hPlaylistFont = NULL;
+    UINT _TextHeight = 0;
 
     COLORREF _ColorWindow                = 0x202020;
     COLORREF _ColorWindowText            = 0xC0C0C0;

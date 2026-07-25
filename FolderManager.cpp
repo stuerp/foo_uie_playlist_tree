@@ -1,5 +1,5 @@
 
-/** $VER: FolderManager.cpp (2026.07.20) P. Stuer **/
+/** $VER: FolderManager.cpp (2026.07.25) P. Stuer **/
 
 #include "pch.h"
 
@@ -38,7 +38,7 @@ public:
     /// <summary>
     /// Creates a new folder with a default name.
     /// </summary>
-    virtual HRESULT CreateFolder() noexcept override
+    HRESULT CreateFolder() noexcept final
     {
         // Create the new Folder item.
         std::string Name("New Folder");
@@ -56,7 +56,7 @@ public:
     /// <summary>
     /// Creates a new folder.
     /// </summary>
-    virtual HRESULT CreateFolder(const GUID & id, const std::string & name) noexcept override
+    HRESULT CreateFolder(const GUID & id, const std::string & name) noexcept final
     {
         _Items.try_emplace(id, folder_t(name));
 
@@ -69,7 +69,7 @@ public:
     /// <summary>
     /// Gets the name of the specified folder.
     /// </summary>
-    virtual HRESULT GetFolderName(const GUID & id, std::string & text) const noexcept override
+    HRESULT GetFolderName(const GUID & id, std::string & text) const noexcept final
     {
         auto Iter = _Items.find(id);
 
@@ -88,7 +88,7 @@ public:
     /// <summary>
     /// Sets the name of the specified folder.
     /// </summary>
-    virtual HRESULT SetFolderName(const GUID & id, const std::string & text) noexcept override
+    HRESULT SetFolderName(const GUID & id, const std::string & text) noexcept final
     {
         auto Iter = _Items.find(id);
 
@@ -103,7 +103,7 @@ public:
     /// <summary>
     /// Removes the specified folder.
     /// </summary>
-    virtual HRESULT RemoveFolder(const GUID & id) noexcept override
+    HRESULT RemoveFolder(const GUID & id) noexcept final
     {
         for (auto Callback : _Callbacks)
             Callback->OnFolderRemoving(id);
@@ -116,7 +116,7 @@ public:
     /// <summary>
     /// Registers a callback.
     /// </summary>
-    virtual HRESULT RegisterCallback(folder_manager_callback_t * callback) noexcept override
+    HRESULT RegisterCallback(folder_manager_callback_t * callback) noexcept final
     {
         _Callbacks.insert(callback);
 
@@ -126,7 +126,7 @@ public:
     /// <summary>
     /// Unregisters a callback.
     /// </summary>
-    virtual HRESULT UnregisterCallback(folder_manager_callback_t * callback) noexcept override
+    HRESULT UnregisterCallback(folder_manager_callback_t * callback) noexcept final
     {
         _Callbacks.erase(callback);
 

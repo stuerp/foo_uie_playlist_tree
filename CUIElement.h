@@ -1,5 +1,5 @@
 
-/** $VER: CUIElement.h (2026.07.15) P. Stuer - Columns User Interface support **/
+/** $VER: CUIElement.h (2026.07.25) P. Stuer - Columns User Interface support **/
 
 #pragma once
 
@@ -90,7 +90,8 @@ public:
 
     #pragma endregion
 
-    void GetColors() noexcept override;
+    void GetColors() noexcept final;
+    void GetFonts() noexcept final;
 
 private:
     window_host_ptr _Host;

@@ -324,6 +324,7 @@
   <ItemGroup>
     <ClCompile Include="CUIColorClient.cpp" />
     <ClCompile Include="CUIElement.cpp" />
+    <ClCompile Include="CUIFontClient.cpp" />
     <ClCompile Include="DropTarget.cpp" />
     <ClCompile Include="FolderManager.cpp" />
     <ClCompile Include="IconList.cpp" />
@@ -339,6 +340,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|ARM64EC'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="PlaylistLockManager.cpp" />
     <ClCompile Include="PlaylistTreeView.cpp" />
     <ClCompile Include="PlaylistUIElement.cpp" />
     <ClCompile Include="Preferences.cpp" />
@@ -351,6 +353,7 @@
   <ItemGroup>
     <ClInclude Include="CUIColorClient.h" />
     <ClInclude Include="CUIElement.h" />
+    <ClInclude Include="CUIFontClient.h" />
     <ClInclude Include="DropTarget.h" />
     <ClInclude Include="EditSubclass.h" />
     <ClInclude Include="FolderManager.h" />
@@ -359,6 +362,7 @@
     <ClInclude Include="Log.h" />
     <ClInclude Include="MultiSelectTreeView.h" />
     <ClInclude Include="Node.h" />
+    <ClInclude Include="PlaylistLockManager.h" />
     <ClInclude Include="PlaylistTreeView.h" />
     <ClInclude Include="Preferences.h" />
     <ClInclude Include="Theme.h" />

@@ -29,14 +29,14 @@ public:
 
     #pragma region cui::colours::client
 
-    virtual const GUID & get_client_guid() const
+    const GUID & get_client_guid() const noexcept final
     {
         static const GUID Id = GUID_UI_ELEMENT;
 
         return Id;
     }
 
-    virtual void get_name(pfc::string_base & out) const
+    void get_name(pfc::string_base & out) const noexcept final
     {
         out = STR_COMPONENT_NAME;
     }
@@ -44,7 +44,7 @@ public:
     /// <summary>
     /// Return a combination of colours to indicate which colors are supported. 
     /// </summary>
-    uint32_t get_supported_colours() const override
+    uint32_t get_supported_colours() const noexcept final
     {
         return cui::colours::colour_flag_text                    | cui::colours::colour_flag_background |
                cui::colours::colour_flag_selection_text          | cui::colours::colour_flag_selection_background |
@@ -64,7 +64,7 @@ public:
     /// <summary>
     /// Return a combination of bool_flag_t to indicate which boolean flags are supported. 
     /// </summary>
-    virtual uint32_t get_supported_bools() const override
+    virtual uint32_t get_supported_bools() const noexcept final
     {
         return cui::colours::bool_dark_mode_enabled;
     }
@@ -72,17 +72,17 @@ public:
     /// <summary>
     /// Indicates whether the Theme API is supported.
     /// </summary>
-    virtual bool get_themes_supported() const override
+    virtual bool get_themes_supported() const noexcept final
     {
         return false;
     }
 
-    virtual void on_colour_changed(uint32_t changed_items_mask) const override;
+    virtual void on_colour_changed(uint32_t changed_items_mask) const noexcept final;
 
     /// <summary>
     /// Called whenever a supported boolean flag changes. Support for a flag is determined using the get_supported_bools() method.
     /// </summary>
-    virtual void on_bool_changed(uint32_t changed_items_mask) const override;
+    virtual void on_bool_changed(uint32_t changed_items_mask) const noexcept final;
 
     #pragma endregion
 

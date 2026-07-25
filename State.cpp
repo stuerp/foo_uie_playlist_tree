@@ -1,5 +1,5 @@
 
-/** $VER: State.cpp (2026.07.23) P. Stuer **/
+/** $VER: State.cpp (2026.07.24) P. Stuer **/
 
 #include "pch.h"
 
@@ -20,16 +20,16 @@ state_t::state_t() noexcept
 /// </summary>
 void state_t::Reset() noexcept
 {
-    _TextFormat = "%node_name%$if(%node_is_folder%,,' ('%node_item_count%')')";
-    _ToolTip    = "$if(%playlist_size_natural%,%playlist_size_natural%\n$if2(%playlist_duration_natural%,', N/A'),'N/A')";
-
-    _ImageSize = (uint32_t) ::GetSystemMetrics(SM_CXSMICON);
+    _TextFormat    = "%node_name%$if(%node_is_folder%,,' ('%node_item_count%')')";
+    _ToolTipFormat = "$if(%playlist_size_natural%,%playlist_size_natural%\n$if2(%playlist_duration_natural%,', N/A'),'N/A')";
+    _ImageSize     = (uint32_t) ::GetSystemMetrics(SM_CXSMICON);
 
     _Images.clear();
 
     _Images.push_back({ "imageres.dll",   4 }); // Folder
     _Images.push_back({ "imageres.dll", 126 }); // Playlist
-    _Images.push_back({ "imageres.dll", 125 }); // Playlist Playing
+    _Images.push_back({ "imageres.dll", 125 }); // Playlist (Playing)
+    _Images.push_back({ "shell32.dll",   47 }); // Playlist (Locked)
 
     _Object.clear();
 }
@@ -39,10 +39,11 @@ void state_t::Reset() noexcept
 /// </summary>
 state_t & state_t::operator=(const state_t & other) noexcept
 {
-    _TextFormat = other._TextFormat;
-    _ToolTip    = other._ToolTip;
-    _ImageSize  = other._ImageSize;
-    _Images     = other._Images;
+    _TextFormat    = other._TextFormat;
+    _ToolTipFormat = other._ToolTipFormat;
+    _ImageSize     = other._ImageSize;
+
+    _Images        = other._Images;
 
     return *this;
 }
@@ -57,22 +58,32 @@ void state_t::FromJSON(const char * data, size_t size) noexcept
 
     const json Object = json::parse(data, data + size, nullptr, true);
 
-    _TextFormat = Object.value("nameFormat", _TextFormat).c_str();
-    _ToolTip    = Object.value("toolTip", _ToolTip).c_str();
-    _ImageSize  = Object.value("imageSize", _ImageSize);
+    _TextFormat    = Object.value("nameFormat", _TextFormat).c_str();
+    _ToolTipFormat = Object.value("toolTip",    _ToolTipFormat).c_str();
+    _ImageSize     = Object.value("imageSize",  _ImageSize);
 
-    if (_Images.size() == Object["images"].size())
+    size_t Index = 0;
+
+    for (const auto & Image : Object["images"])
     {
-        _Images.clear();
-
-        for (const auto & Image : Object["images"])
+        if (Index < _Images.size())
         {
-            _Images.push_back(
+            _Images[Index] =
             {
+                Image["filePath"],
+                Image["iconIndex"]
+            };
+        }
+        else
+        {
+            _Images.push_back
+            ({
                 Image["filePath"],
                 Image["iconIndex"]
             });
         }
+
+        ++Index;
     }
 
     _Object = Object;
@@ -88,7 +99,7 @@ json state_t::ToJSON() const noexcept
         { "schemaVersion", _SchemaVersion },
 
         { "nameFormat", _TextFormat },
-        { "toolTip", _ToolTip },
+        { "toolTip", _ToolTipFormat },
         { "imageSize", _ImageSize },
     };
 
