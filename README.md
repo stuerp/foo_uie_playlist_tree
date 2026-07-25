@@ -79,7 +79,13 @@ To create the component first build the x86 configuration and next the x64 confi
 
 v1.3.0.0, 2026-xx-xx
 
-* New: A playlist can be locked to prevent unwanted operations.
+* New: Playlist lock support
+  * Context menu to add or remove fine-grained lock restrictions.
+  * The name of the owner of the lock will be displayed at the bottom of the menu.
+  * New image **Playlist (Locked)**
+* New: Font support
+  * DUI uses the **Playlist** font, when enabled.
+  * CUI uses the **Items** font, when enabled.
 * Fixed: The expanded/collapsed state of a folder was not restored at startup.
 
 ## Known Bugs

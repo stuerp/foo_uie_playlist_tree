@@ -66,24 +66,35 @@
 
 /** Resources **/
 
-#define IDM_CONTEXT_MENU    1
+#define IDM_CONTEXT_MENU        1
 
-#define IDM_NEW_FOLDER      10
-#define IDM_NEW_PLAYLIST    11
+#define IDM_NEW_FOLDER          10
+#define IDM_NEW_PLAYLIST        11
 
-#define IDM_RENAME          20
-#define IDM_REMOVE          21
-#define IDM_LOCK_TOGGLE     23
+#define IDM_RENAME              20
+#define IDM_REMOVE              21
 
-#define IDM_SORT            30
+#define IDM_LOCK_ADD_ITEMS      30
+#define IDM_LOCK_REMOVE_ITEMS   31
+#define IDM_LOCK_REORDER_ITEMS  32
+#define IDM_LOCK_REPLACE_ITEMS  33
 
-#define IDM_LOAD            40
-#define IDM_SAVE            41
-#define IDM_SAVE_ALL        42
+#define IDM_LOCK_RENAME         34
+#define IDM_LOCK_REMOVE         35
+#define IDM_LOCK_DEFAULT_ACTION 36
 
-#define IDM_CONTENTS        50
+#define IDM_LOCK_ALL            37
+#define IDM_LOCK_NONE           39
 
-#define IDM_DUMP            60
+#define IDM_SORT                40
 
-#define IDM_CLEAR_HISTORY   70
-#define IDM_HISTORY         (IDM_CLEAR_HISTORY + 1)
+#define IDM_LOAD                50
+#define IDM_SAVE                51
+#define IDM_SAVE_ALL            52
+
+#define IDM_CONTENTS            60
+
+#define IDM_DUMP                70
+
+#define IDM_CLEAR_HISTORY       80
+#define IDM_HISTORY             (IDM_CLEAR_HISTORY + 1)

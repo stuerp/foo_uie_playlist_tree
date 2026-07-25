@@ -161,6 +161,7 @@ private:
     void SelectPlaylist(size_t playlistIndex) const noexcept;
 
     HRESULT InitImageList() noexcept;
+    void ModifyFilterMask(uint32_t mask) const noexcept;
 
 protected:
     playlist_tree_view_t _TreeView;

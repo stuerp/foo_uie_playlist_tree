@@ -137,6 +137,16 @@ public:
 
     #pragma endregion
 
+    static inline bool IsAddEnabled             (uint32_t filterMask) noexcept { return ((filterMask & playlist_lock::filter_add) != 0); }
+    static inline bool IsRemoveEnabled          (uint32_t filterMask) noexcept { return ((filterMask & playlist_lock::filter_remove) != 0); }
+    static inline bool IsReorderEnabled         (uint32_t filterMask) noexcept { return ((filterMask & playlist_lock::filter_reorder) != 0); }
+    static inline bool IsReplaceEnabled         (uint32_t filterMask) noexcept { return ((filterMask & playlist_lock::filter_replace) != 0); }
+
+    static inline bool IsRenamePlaylistEnabled  (uint32_t filterMask) noexcept { return ((filterMask & playlist_lock::filter_rename) != 0); }
+    static inline bool IsRemovePlaylistEnabled  (uint32_t filterMask) noexcept { return ((filterMask & playlist_lock::filter_remove_playlist) != 0); }
+
+    static inline bool IsDefaultActionEnabled   (uint32_t filterMask) noexcept { return ((filterMask & playlist_lock::filter_default_action) != 0); }
+
 private:
     uint32_t _Mask;
 };
@@ -149,7 +159,8 @@ class NOVTABLE  playlist_lock_manager_t : public service_base
 public:
     virtual HRESULT Add(const GUID & id, uint32_t mask) noexcept = 0;
     virtual HRESULT Remove(const GUID & id) noexcept = 0;
-    virtual bool IsLocked(const GUID & id) noexcept = 0;
+    virtual bool IsLocked(const GUID & id) const noexcept = 0;
+    virtual HRESULT GetFilterMask(const GUID & id, uint32_t & mask) const noexcept = 0;
 
     FB2K_MAKE_SERVICE_INTERFACE_ENTRYPOINT(playlist_lock_manager_t);
 };

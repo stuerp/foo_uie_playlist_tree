@@ -52,19 +52,27 @@ public:
     HRESULT Add(const GUID & id, uint32_t mask) noexcept final
     {
         if ((id == GUID_NULL) || (mask == 0u))
-            return E_FAIL;
+            return E_INVALIDARG;
 
         static_api_ptr_t<playlist_manager_v5> pm;
 
         const auto Index = pm->find_playlist_by_guid(id);
 
+        if (Index == SIZE_MAX)
+            return E_INVALIDARG;
+
         if (pm->playlist_lock_is_present(Index))
-            return E_FAIL;
+        {
+            HRESULT hResult = Remove(id);
+
+            if (!SUCCEEDED(hResult))
+                return hResult; // Already locked but not by us.
+        }
 
         auto Lock = fb2k::service_new<playlist_lock_t>(mask);
 
         if (!pm->playlist_lock_install(Index, Lock))
-            return E_FAIL;
+            return ERROR_LOCK_FAILED;
 
         _Locks.try_emplace(id, Lock);
 
@@ -77,33 +85,51 @@ public:
     HRESULT Remove(const GUID & id) noexcept final
     {
         if (id == GUID_NULL)
-            return E_FAIL;
+            return E_INVALIDARG;
 
         const auto Iter = _Locks.find(id);
 
         if (Iter == _Locks.end())
-            return E_FAIL;
+            return E_INVALIDARG;
 
         static_api_ptr_t<playlist_manager_v5> pm;
 
         const auto Index = pm->find_playlist_by_guid(id);
 
         if (Index == SIZE_MAX)
-            return E_FAIL;
+            return E_INVALIDARG;
 
         const bool Success = pm->playlist_lock_uninstall(Index, Iter->second);
 
         _Locks.erase(id);
 
-        return Success ? S_OK : E_FAIL;
+        return Success ? S_OK : ERROR_WAS_UNLOCKED;
     }
 
     /// <summary>
     /// Returns true if the playlist has been locked by this component.
     /// </summary>
-    bool IsLocked(const GUID & id) noexcept final
+    bool IsLocked(const GUID & id) const noexcept final
     {
         return _Locks.contains(id);
+    }
+
+    /// <summary>
+    /// Returns the filter mask of a lock if present.
+    /// </summary>
+    HRESULT GetFilterMask(const GUID & id, uint32_t & mask) const noexcept final
+    {
+        if (id == GUID_NULL)
+            return E_INVALIDARG;
+
+        const auto Iter = _Locks.find(id);
+
+        if (Iter == _Locks.end())
+            return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
+
+        mask = Iter->second->get_filter_mask();
+
+        return S_OK;
     }
 
 private:
