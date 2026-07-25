@@ -1,5 +1,5 @@
 
-/** $VER: UIElement.cpp (2026.07.17) P. Stuer **/
+/** $VER: UIElement.cpp (2026.07.25) P. Stuer **/
 
 #include "pch.h"
 
@@ -48,9 +48,19 @@ void uielement_t::OnSize(UINT type, CSize size) noexcept
 /// <summary>
 /// Handles a change of the user interface colors.
 /// </summary>
-void uielement_t::OnColorsChanged()
+void uielement_t::OnColorsChanged() noexcept
 {
     GetColors();
+}
+
+/// <summary>
+/// Handles a change of the user interface fonts.
+/// </summary>
+void uielement_t::OnFontsChanged() noexcept
+{
+    GetFonts();
+
+    ::InvalidateRect(m_hWnd, nullptr, TRUE);
 }
 
 #pragma region CWindowImpl<uielement_t>

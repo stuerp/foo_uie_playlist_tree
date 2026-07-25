@@ -28,7 +28,7 @@ class preferences_t : public CDialogImpl<preferences_t>, public preferences_page
 public:
     preferences_t(preferences_page_callback::ptr callback) : m_bMsgHandled(FALSE), _Callback(callback)
     {
-        _Theme.Initialize();
+        _Theme.Initialize(m_hWnd);
 
         icon_list_t::Register(THIS_HINSTANCE);
     }

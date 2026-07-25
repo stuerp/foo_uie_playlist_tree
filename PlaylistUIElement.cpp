@@ -71,6 +71,8 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
             if (!SUCCEEDED(hResult))
                 Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to initialize image lists: 0x%08X.", hResult);
         }
+
+        _TreeView.SetFont(_Theme.GetPlaylistFont());
     }
 
     // Create the drop target.
@@ -146,6 +148,16 @@ void playlist_uielement_t::OnSize(UINT type, CSize size) noexcept
     uielement_t::OnSize(type, size);
 
     ::MoveWindow(_TreeView.Get(), 0, 0, size.cx, size.cy, TRUE);
+}
+
+/// <summary>
+/// Handles the WM_PAINT message.
+/// </summary>
+void playlist_uielement_t::OnPaint(CDCHandle dc) noexcept
+{
+    _TreeView.Redraw();
+
+    SetMsgHandled(FALSE);
 }
 
 /// <summary>
@@ -606,7 +618,7 @@ void playlist_uielement_t::on_playlist_locked(size_t index, bool isLocked) noexc
     if (!_PlaylistManager->playlist_lock_query_name(index, LockName))
         LockName = "<Unknown>";
 
-    Log.AtTrace().Write(STR_COMPONENT_BASENAME " noticed playlist %d was %s by \"%s\".", index, isLocked ? "locked" : "unlocked", LockName.c_str());
+    Log.AtTrace().Write(STR_COMPONENT_BASENAME " noticed playlist %d was %s with lock \"%s\".", index, isLocked ? "locked" : "unlocked", LockName.c_str());
 
     const auto Id = _PlaylistManager->playlist_get_guid(index);
 
@@ -786,7 +798,7 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
 
                     rcChev.right = rcChev.left + ItemHeight;
 
-                    const auto hOldFont = (HFONT) ::SelectObject(hDC, _Theme.GetFont());
+                    const auto hOldFont = (HFONT) ::SelectObject(hDC, _Theme.GetIconFont());
 
                 //  const wchar_t * ChevronLeft  = L"\uE76B";
                     const wchar_t * ChevronRight = L"\uE76C";
@@ -864,7 +876,11 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
 
                 rc.right = rc.left + (rcText.right - rcText.left);
 
+                auto hOldFont = ::SelectObject(hDC, _Theme.GetPlaylistFont());
+
                 ::DrawThemeTextEx(_Theme.GetTextStyle(), hDC, 0, 0, Text, -1, DT_LEFT | DT_SINGLELINE | DT_VCENTER, &rc, &Options);
+
+                ::SelectObject(hDC, hOldFont);
             }
 
             SetMsgHandled(TRUE);
@@ -1012,15 +1028,15 @@ LRESULT playlist_uielement_t::OnRightClick(NMHDR * nmhd) noexcept
                 ::EnableMenuItem(hPopup, IDM_LOCK_ALL,            IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
                 ::EnableMenuItem(hPopup, IDM_LOCK_NONE,           IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
 
-                pfc::string OwnerName;
+                pfc::string LockName;
 
-                if (!_PlaylistManager->playlist_lock_query_name(Index, OwnerName))
-                    OwnerName = "<Unknown>";
+                if (!_PlaylistManager->playlist_lock_query_name(Index, LockName))
+                    LockName = "<Unknown>";
 
                 const HMENU hLock = ::GetSubMenu(hPopup, 4);
 
                 ::AppendMenuW(hLock, MF_SEPARATOR, 0, NULL);
-                ::AppendMenuW(hLock, MF_STRING | MF_GRAYED | MF_DISABLED, 0, msc::FormatText(L"Locked by %S", OwnerName.c_str()).c_str());
+                ::AppendMenuW(hLock, MF_STRING | MF_GRAYED | MF_DISABLED, 0, msc::FormatText(L"Locked with %S", LockName.c_str()).c_str());
             }
         }
 
@@ -1258,16 +1274,28 @@ LRESULT playlist_uielement_t::OnBeginLabelEdit(NMHDR * nmhd) noexcept
     if (Node == nullptr)
         return TRUE;
 
-    const auto hEdit = _TreeView.GetEditControl();
+    const size_t Index = _PlaylistManager->find_playlist_by_guid(Node->Id);
 
-    if (hEdit == NULL)
+    if (Index == SIZE_MAX)
         return TRUE;
 
-    _EditSubclass.Attach(hEdit);
+    auto FilterMask = _PlaylistManager->playlist_lock_get_filter_mask(Index);
 
-    ::SetWindowTextW(hEdit, (LPCWSTR) msc::UTF8ToWide(Node->Name).c_str());
+    if (playlist_lock_t::IsRenamePlaylistEnabled(FilterMask))
+        return TRUE;
 
-    ::SetFocus(hEdit);
+    {
+        const auto hEdit = _TreeView.GetEditControl();
+
+        if (hEdit == NULL)
+            return TRUE;
+
+        _EditSubclass.Attach(hEdit);
+
+        ::SetWindowTextW(hEdit, (LPCWSTR) msc::UTF8ToWide(Node->Name).c_str());
+
+        ::SetFocus(hEdit);
+    }
 
     SetMsgHandled(FALSE);
 
@@ -1330,7 +1358,7 @@ LRESULT playlist_uielement_t::OnKeyDown(NMHDR * nmhd) noexcept
 
     // Ignore the action when the playlist is locked by another component.
     if ((FilterMask != 0) && !_LockManager->IsLocked(Node->Id))
-        return;
+        return 0;
 
     const auto nmkd = (NMTVKEYDOWN *) nmhd;
 
@@ -1523,11 +1551,9 @@ DWORD playlist_uielement_t::GetDropEffect(DWORD keyState, const POINT & pt) noex
     // Determine the effect.
     const auto Node = (node_t *) _TreeView.GetData(hItem);
 
-    if (Node == nullptr)
-        return DROPEFFECT_NONE;
-
-    // Handle a lock if present.
+    if (Node != nullptr)
     {
+        // Handle a lock if present.
         const auto Index = _PlaylistManager->find_playlist_by_guid(Node->Id);
 
         if (Index == SIZE_MAX)
@@ -1592,7 +1618,7 @@ void playlist_uielement_t::DropFiles(IDataObject * dataObject) noexcept
 /// </summary>
 void playlist_uielement_t::Refresh() noexcept
 {
-    _Theme.Initialize();
+    _Theme.Initialize(m_hWnd);
 
     HRESULT hResult = InitImageList();
 
@@ -1600,6 +1626,16 @@ void playlist_uielement_t::Refresh() noexcept
         Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to initialize image list: 0x%08X.", hResult);
 
     _TreeView.RefreshAllItems();
+}
+
+/// <summary>
+/// Handles a change of the fonts.
+/// </summary>
+void playlist_uielement_t::OnFontsChanged() noexcept
+{
+    __super::OnFontsChanged();
+
+    _TreeView.SetFont(_Theme.GetPlaylistFont());
 }
 
 /// <summary>

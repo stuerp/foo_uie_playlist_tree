@@ -23,9 +23,11 @@ theme_t::~theme_t() noexcept
 /// <summary>
 /// Initializes some GDI object used by custom draw.
 /// </summary>
-HRESULT theme_t::Initialize() noexcept
+HRESULT theme_t::Initialize(HWND hWnd) noexcept
 {
     Dispose();
+
+    _hWnd = hWnd;
 
     // Get the font height.
     NONCLIENTMETRICSW ncm { sizeof(ncm) };
@@ -36,9 +38,9 @@ HRESULT theme_t::Initialize() noexcept
     const LOGFONTW & lf = ncm.lfMessageFont;
 
     // Create the font.
-    _hFont = ::CreateFontW(lf.lfHeight, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH, L"Segoe Fluent Icons");
+    _hIconFont = ::CreateFontW(lf.lfHeight, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH, L"Segoe Fluent Icons");
 
-    if (_hFont == NULL)
+    if (_hIconFont == NULL)
         Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to create font for custom draw: 0x%08X.", ::GetLastError());
 
     // Get the text style from the visual style.
@@ -58,10 +60,10 @@ void theme_t::Dispose() noexcept
         _hTextStyle = NULL;
     }
 
-    if (_hFont != NULL)
+    if (_hIconFont != NULL)
     {
-        ::DeleteObject(_hFont);
-        _hFont = NULL;
+        ::DeleteObject(_hIconFont);
+        _hIconFont = NULL;
     }
 }
 
@@ -99,6 +101,25 @@ void theme_t::SetHighlightColor(COLORREF color) noexcept
 
     _hHighlightBrush = msc::brush_t(_ColorHighlight);
     _hHighlightPen = msc::pen_t(1, color);
+}
+
+void theme_t::SetPlaylistFont(HFONT hFont) noexcept
+{
+    _hPlaylistFont = hFont;
+
+    HDC hDC = ::GetDC(_hWnd);
+
+    auto hOldFont = ::SelectObject(hDC, hFont);
+
+    TEXTMETRICW tm = { };
+
+    ::GetTextMetricsW(hDC, &tm);
+
+    _TextHeight = (uint16_t) (tm.tmHeight + tm.tmExternalLeading);
+
+    ::SelectObject(hDC, hOldFont);
+
+    ::ReleaseDC(_hWnd, hDC);
 }
 
 /// <summary>

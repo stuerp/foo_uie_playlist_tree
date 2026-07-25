@@ -324,6 +324,7 @@
   <ItemGroup>
     <ClCompile Include="CUIColorClient.cpp" />
     <ClCompile Include="CUIElement.cpp" />
+    <ClCompile Include="CUIFontClient.cpp" />
     <ClCompile Include="DropTarget.cpp" />
     <ClCompile Include="FolderManager.cpp" />
     <ClCompile Include="IconList.cpp" />
@@ -352,6 +353,7 @@
   <ItemGroup>
     <ClInclude Include="CUIColorClient.h" />
     <ClInclude Include="CUIElement.h" />
+    <ClInclude Include="CUIFontClient.h" />
     <ClInclude Include="DropTarget.h" />
     <ClInclude Include="EditSubclass.h" />
     <ClInclude Include="FolderManager.h" />

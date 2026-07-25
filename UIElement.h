@@ -1,5 +1,5 @@
 
-/** $VER: UIElement.h (2026.07.17) P. Stuer **/
+/** $VER: UIElement.h (2026.07.25) P. Stuer **/
 
 #pragma once
 
@@ -28,7 +28,8 @@ public:
 
     static CWndClassInfo & GetWndClassInfo();
 
-    void OnColorsChanged();
+    virtual void OnColorsChanged() noexcept;
+    virtual void OnFontsChanged() noexcept;
 
     #pragma endregion
 
@@ -44,6 +45,7 @@ protected:
     }
 
     virtual void GetColors() noexcept = 0;
+    virtual void GetFonts() noexcept = 0;
 
 protected:
     #pragma region CWindowImpl

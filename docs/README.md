@@ -116,6 +116,46 @@ Allows you to restore a playlist that has been removed during the current sessio
 > This submenu only appears when one ore more playlists were removed.
 > Ther `Clear history` menu items empties the playlist recycle bin.
 
+### Lock Submenu
+
+The `Lock` menu allows you to lock a playlist or inspect an existing lock from another component. When a playlist is locked the name of the lock is displayed at the bottom of the menu.
+
+`Add items`
+
+Prevents items from being added to the playlist when enabled.
+
+`Remove items`
+
+Prevents items from being removed from the playlist when enabled.
+
+`Reorder items`
+
+Prevents items from being reordered in the playlist when enabled.
+
+`Replace items`
+
+Prevents items from being replaced in the playlist when enabled.
+
+`Rename playlist`
+
+Prevents the playlist from being renamed when enabled.
+
+`Remove playlist`
+
+Prevents the playlist from being removed when enabled.
+
+`Default action`
+
+Prevents the playlist from executing its default item action (usually starting playback) when enabled.
+
+`All`
+
+Enables all lock restrictions.
+
+`None`
+
+Disables all lock restrictions.
+
 ---
 
 ## Drag & Drop
@@ -180,6 +220,8 @@ The component provides the following custom formatting fields:
 | %node_name%                      | The name of the item, either a playlist or a folder. |
 | %node_is_folder%                 | Boolean value for use in $if( ...) expressions and is true when the item is a folder. |
 | %node_item_count%                | The number of playlists in a folder or number of items in a playlist. |
+| %node_is_locked%                 | Boolean value for use in $if( ...) expressions and is true when the item is locked. |
+| %node_lock_name%                 | The name of the lock if the item is locked. |
 | %playlist_duration%              | The duration of the playlist (in seconds). |
 | %playlist_duration_natural%      | The duration of the playlist in weeks, days, hours, minutes and seconds. |
 | %playlist_size%                  | The size of the playlist (in bytes). |

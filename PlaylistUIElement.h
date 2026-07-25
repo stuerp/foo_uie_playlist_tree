@@ -37,6 +37,8 @@ public:
 
     void Refresh() noexcept;
 
+    virtual void OnFontsChanged() noexcept override;
+
 protected:
     void SetConfiguration(const char * data, size_t size) noexcept;
     std::string GetConfiguration() const noexcept;
@@ -50,6 +52,7 @@ private:
     virtual void OnDestroy() noexcept override;
     virtual void OnSize(UINT nType, CSize size) noexcept override;
 
+    void OnPaint(CDCHandle dc) noexcept;
     void OnCommand(UINT notifyCode, int id, CWindow wnd) noexcept;
     void OnSetFocus(CWindow wndOld) noexcept;
 
@@ -74,6 +77,7 @@ private:
     BEGIN_MSG_MAP_EX(playlist_uielement_t)
 //      MSG_WM_DESTROY(OnDestroy);
 
+        MSG_WM_PAINT(OnPaint);
         MSG_WM_COMMAND(OnCommand);
         MSG_WM_SETFOCUS(OnSetFocus);
 

@@ -1,5 +1,5 @@
 
-/** $VER: TreeView.h (2026.07.22) P. Stuer **/
+/** $VER: TreeView.h (2026.07.25) P. Stuer **/
 
 #pragma once
 
@@ -139,6 +139,11 @@ public:
     HIMAGELIST SetStateImageList(HIMAGELIST hImageList) const noexcept
     {
         return TreeView_SetImageList(_hTreeView, hImageList, TVSIL_STATE);
+    }
+
+    void SetFont(HFONT hFont) const noexcept
+    {
+        ::SendMessageW(_hTreeView, WM_SETFONT, (WPARAM) hFont, (LPARAM) TRUE);
     }
 
     void Redraw() const noexcept;
