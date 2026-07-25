@@ -1497,7 +1497,7 @@ void playlist_uielement_t::Refresh() noexcept
     HRESULT hResult = InitImageList();
 
     if (!SUCCEEDED(hResult))
-        Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to initialize image list: 0x%08", hResult);
+        Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to initialize image list: 0x%08X", hResult);
 
     _TreeView.RefreshAllItems();
 }
