@@ -82,6 +82,7 @@ v1.3.1.0, 2026-07-26
 * Improved: Dropping files or playlist items on a folder creates a playlist in that folder.
 * Fixed: Font changes not correctly applied at startup.
 * Fixed: Incorrect redraw behavior during a drag & drop operation from outside the tree view.
+* Fixed: Folders could not be renamed. (Regression)
 
 ## Acknowledgements / Credits
 

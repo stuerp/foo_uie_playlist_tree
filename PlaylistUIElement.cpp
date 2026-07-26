@@ -1208,15 +1208,23 @@ LRESULT playlist_uielement_t::OnBeginLabelEdit(NMHDR * nmhd) noexcept
     if (Node == nullptr)
         return TRUE;
 
-    const size_t Index = _PlaylistManager->find_playlist_by_guid(Node->Id);
+    // Check for a playlist lock.
+    if (!Node->IsFolder)
+    {
+        const size_t Index = _PlaylistManager->find_playlist_by_guid(Node->Id);
 
-    if (Index == SIZE_MAX)
-        return TRUE;
+        if (Index == SIZE_MAX)
+            return TRUE;
 
-    const auto FilterMask = _PlaylistManager->playlist_lock_get_filter_mask(Index);
+        const auto FilterMask = _PlaylistManager->playlist_lock_get_filter_mask(Index);
 
-    if (playlist_lock_t::IsRenamePlaylistEnabled(FilterMask))
-        return TRUE;
+        // Ignore the action when the playlist is locked by another component.
+        if ((FilterMask != 0) && !_LockManager->IsLocked(Node->Id))
+            return TRUE;
+
+        if (playlist_lock_t::IsRenamePlaylistEnabled(FilterMask))
+            return TRUE;
+    }
 
     {
         const auto hEdit = _TreeView.GetEditControl();
@@ -1283,16 +1291,22 @@ LRESULT playlist_uielement_t::OnKeyDown(NMHDR * nmhd) noexcept
     if (Node == nullptr)
         return 0;
 
-    const size_t Index = _PlaylistManager->find_playlist_by_guid(Node->Id);
+    uint32_t FilterMask = 0;
 
-    if (Index == SIZE_MAX)
-        return 0;
+    // Check for a playlist lock.
+    if (!Node->IsFolder)
+    {
+        const size_t Index = _PlaylistManager->find_playlist_by_guid(Node->Id);
 
-    const auto FilterMask = _PlaylistManager->playlist_lock_get_filter_mask(Index);
+        if (Index == SIZE_MAX)
+            return 0;
 
-    // Ignore the action when the playlist is locked by another component.
-    if ((FilterMask != 0) && !_LockManager->IsLocked(Node->Id))
-        return 0;
+        FilterMask = _PlaylistManager->playlist_lock_get_filter_mask(Index);
+
+        // Ignore the action when the playlist is locked by another component.
+        if ((FilterMask != 0) && !_LockManager->IsLocked(Node->Id))
+            return 0;
+    }
 
     const auto nmkd = (NMTVKEYDOWN *) nmhd;
 
