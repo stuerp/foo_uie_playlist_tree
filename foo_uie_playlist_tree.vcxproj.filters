@@ -65,4 +65,8 @@
     <ResourceCompile Include="Resources.rc" />
     <ResourceCompile Include="Preferences.rc" />
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="docs\assets\Lock-Menu.png" />
+    <Image Include="docs\assets\Preferences.png" />
+  </ItemGroup>
 </Project>
