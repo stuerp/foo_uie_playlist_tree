@@ -1,5 +1,5 @@
 
-/** $VER: DUIElement.cpp (2026.07.25) P. Stuer - Implements Default User Interface support **/
+/** $VER: DUIElement.cpp (2026.07.26) P. Stuer - Implements Default User Interface support **/
 
 #include "pch.h"
 
@@ -21,9 +21,6 @@ dui_element_t::dui_element_t(ui_element_config::ptr data, ui_element_instance_ca
 
     // Call here before the colors have been initialized.
     _Theme.Initialize(m_hWnd);
-
-    GetColors();
-    GetFonts();
 }
 
 #pragma region ui_element_instance interface
@@ -79,6 +76,9 @@ void dui_element_t::initialize_window(HWND hWndParent) noexcept
     const DWORD ExStyle = 0;
 
     this->Create(hWndParent, nullptr, nullptr, Style, ExStyle);
+
+    GetColors();
+    GetFonts();
 }
 
 /// <summary>
@@ -144,6 +144,8 @@ void dui_element_t::GetColors() noexcept
 void dui_element_t::GetFonts() noexcept
 {
     _Theme.SetPlaylistFont(m_callback->query_font_ex(ui_font_playlists));
+
+    _TreeView.SetFont(_Theme.GetPlaylistFont());
 }
 
 static service_factory_single_t<ui_element_impl_withpopup<dui_element_t>> _Factory;

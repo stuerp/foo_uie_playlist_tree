@@ -416,6 +416,10 @@
       <Project>{30271063-52c9-4151-b200-444990da01e0}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="docs\assets\Lock-Menu.png" />
+    <Image Include="docs\assets\Preferences.png" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

@@ -1,6 +1,18 @@
 
 # foo_uie_playlist_tree History
 
+v1.3.0.0, 2026-07-25
+
+* New: Playlist lock support
+  * Context menu to add or remove fine-grained lock restrictions.
+  * The name of the lock will be displayed at the bottom of the menu.
+  * New image **Playlist (Locked)**
+  * New custom fields: %node_is_locked% and %node_lock_name%
+* New: Font support
+  * DUI uses the **Playlists** font, when enabled.
+  * CUI uses the **Common (list items)** font, when enabled.
+* Fixed: The expanded/collapsed state of a folder was not restored at startup.
+
 v1.2.0.0, 2026-07-23
 
 * New: You can select the image file path using a standard file dialog.

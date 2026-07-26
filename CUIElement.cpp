@@ -143,6 +143,8 @@ void cui_element_t::GetFonts() noexcept
     cui::fonts::helper Helper(GUID_UI_ELEMENT); // Use pfc::guid_null for Global
 
     _Theme.SetPlaylistFont(Helper.get_font());
+
+    _TreeView.SetFont(_Theme.GetPlaylistFont());
 }
 
 }

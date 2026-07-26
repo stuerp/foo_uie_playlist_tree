@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.cpp (2026.07.25) P. Stuer **/
+/** $VER: PlaylistsUIElement.cpp (2026.07.26) P. Stuer **/
 
 #include "pch.h"
 
@@ -69,10 +69,8 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
             HRESULT hResult = InitImageList();
 
             if (!SUCCEEDED(hResult))
-                Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to initialize image lists: 0x%08X.", hResult);
+                Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to initialize image list: 0x%08X.", hResult);
         }
-
-        _TreeView.SetFont(_Theme.GetPlaylistFont());
     }
 
     // Create the drop target.
@@ -428,7 +426,7 @@ void playlist_uielement_t::OnLButtonUp(UINT flags, CPoint point) noexcept
 /// </summary>
 void playlist_uielement_t::on_items_added(size_t playlistIndex, size_t start, const pfc::list_base_const_t<metadb_handle_ptr> & handles, const bit_array & selection) noexcept
 {
-    auto Id = _PlaylistManager->playlist_get_guid(playlistIndex);
+    const auto Id = _PlaylistManager->playlist_get_guid(playlistIndex);
 
     _TreeView.RefreshItem(Id);
 }
@@ -452,7 +450,7 @@ void playlist_uielement_t::on_items_removing(size_t playlistIndex, const bit_arr
 /// </summary>
 void playlist_uielement_t::on_items_removed(size_t playlistIndex, const bit_array & mask, size_t oldCount, size_t newCount) noexcept
 {
-    auto Id = _PlaylistManager->playlist_get_guid(playlistIndex);
+    const auto Id = _PlaylistManager->playlist_get_guid(playlistIndex);
 
     _TreeView.RefreshItem(Id);
 }
@@ -517,7 +515,7 @@ void playlist_uielement_t::on_playlist_created(size_t index, const char * name, 
 
     const auto Id = _PlaylistManager->playlist_get_guid(index);
 
-    Log.AtTrace().Write(STR_COMPONENT_BASENAME " is adding playlist %s as \"%s\" to the tree.", msc::GUIDToUTF8(Id).c_str(), name);
+    Log.AtTrace().Write(STR_COMPONENT_BASENAME " noticed playlist %s was created as \"%s\".", msc::GUIDToUTF8(Id).c_str(), name);
 
     // Get the data of the item we were hovering over, if any.
     const auto Parent = (node_t *) _TreeView.GetData(_hHighlightedtem);
@@ -563,14 +561,14 @@ void playlist_uielement_t::on_playlists_removing(const bit_array & mask, size_t 
     {
         const auto Id = _PlaylistManager->playlist_get_guid(Index);
 
-        Log.AtTrace().Write(STR_COMPONENT_BASENAME " is removing playlist %s from the tree.", msc::GUIDToUTF8(Id).c_str());
+        Log.AtTrace().Write(STR_COMPONENT_BASENAME " noticed playlist %s is being removed.", msc::GUIDToUTF8(Id).c_str());
 
         _TreeView.RemoveItem(Id);
     }
 }
 
 /// <summary>
-/// Handles a removed playlist.
+/// Handles removed playlists.
 /// </summary>
 void playlist_uielement_t::on_playlists_removed(const bit_array & mask, size_t oldCount, size_t newCount) noexcept
 {
@@ -586,7 +584,7 @@ void playlist_uielement_t::on_playlist_renamed(size_t index, const char * newNam
 
     const auto Id = _PlaylistManager->playlist_get_guid(index);
 
-    Log.AtTrace().Write(STR_COMPONENT_BASENAME " is renaming playlist node %s to \"%s\".", msc::GUIDToUTF8(Id).c_str(), newName);
+    Log.AtTrace().Write(STR_COMPONENT_BASENAME " noticed playlist %s was renamed to \"%s\".", msc::GUIDToUTF8(Id).c_str(), newName);
 
     _TreeView.SetName(Id, newName);
 }
@@ -613,12 +611,17 @@ void playlist_uielement_t::on_playlist_locked(size_t index, bool isLocked) noexc
     if (index == SIZE_MAX)
         return;
 
-    pfc::string LockName;
+    if (isLocked)
+    {
+        pfc::string LockName;
 
-    if (!_PlaylistManager->playlist_lock_query_name(index, LockName))
-        LockName = "<Unknown>";
+        if (!_PlaylistManager->playlist_lock_query_name(index, LockName))
+            LockName = "<Unknown>";
 
-    Log.AtTrace().Write(STR_COMPONENT_BASENAME " noticed playlist %d was %s with lock \"%s\".", index, isLocked ? "locked" : "unlocked", LockName.c_str());
+        Log.AtTrace().Write(STR_COMPONENT_BASENAME " noticed playlist %d was locked with lock \"%s\".", index, LockName.c_str());
+    }
+    else
+        Log.AtTrace().Write(STR_COMPONENT_BASENAME " noticed playlist %d was unlocked.", index);
 
     const auto Id = _PlaylistManager->playlist_get_guid(index);
 
@@ -720,7 +723,6 @@ void playlist_uielement_t::OnFolderRenamed(const GUID & id, const std::string & 
 /// </summary>
 LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
 {
-#ifndef FullCustomDraw
     const auto tvcd = (NMTVCUSTOMDRAW *) nmhd;
 
     const auto hTreeView = tvcd->nmcd.hdr.hwndFrom;
@@ -895,74 +897,6 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
             return CDRF_DODEFAULT;
         }
     }
-#endif
-
-#ifdef SimpleCustomDraw
-    if (_IsDUI)
-        break;
-
-    auto tvcd = (NMTVCUSTOMDRAW *) nmhd;
-
-    const auto hTreeView = tvcd->nmcd.hdr.hwndFrom;
-    const auto hDC       = tvcd->nmcd.hdc;
-
-    switch (tvcd->nmcd.dwDrawStage)
-    {
-        case CDDS_PREPAINT:
-        {
-            // Draw the control background.
-            RECT rc;
-
-            ::GetClientRect(hTreeView, &rc);
-
-            HBRUSH hBrush = ::CreateSolidBrush(_Theme.GetWindowColor());
-
-            ::FillRect(hDC, &rc, hBrush);
-
-            ::DeleteObject(hBrush);
-
-            return CDRF_NOTIFYITEMDRAW; // Request item-specific notifications.
-        }
-
-        case CDDS_ITEMPREPAINT:
-        {
-            const auto hItem = (HTREEITEM) tvcd->nmcd.dwItemSpec;
-
-            const TVITEMEX tvi
-            {
-                .mask       = TVIF_STATE,
-                .hItem      = hItem,
-                .stateMask = 0xFF,
-            };
-
-            TreeView_GetItem(hTreeView, &tvi);
-
-            const auto HasFocus      = (::GetFocus() == hTreeView);
-            const auto IsSelected    = ((tvi.state & TVIS_SELECTED) != 0);
-            const auto IsHighlighted = ((tvi.state & TVIS_DROPHILITED) != 0);
-            const auto IsHot         = ((tvcd->nmcd.uItemState & CDIS_HOT) != 0);
-
-            if (IsSelected || IsHighlighted)
-            {
-                tvcd->clrText   = HasFocus ? _Theme.GetSelectionTextColor() : _Theme.GetInactiveSelectionTextColor();
-                tvcd->clrTextBk = HasFocus ? _Theme.GetSelectionColor()     : _Theme.GetInactiveSelectionColor();
-            }
-            else
-            if (IsHot)
-            {
-                tvcd->clrText   = _Theme.GetHighlightTextColor();
-                tvcd->clrTextBk = _Theme.GetHighlightColor();
-            }
-            else
-            {
-                tvcd->clrText   = _Theme.GetWindowTextColor();
-                tvcd->clrTextBk = _Theme.GetWindowColor();
-            }
-
-            return CDRF_NEWFONT; // Tell the control we've changed colors.
-        }
-    }
-#endif
 }
 
 /// <summary>
@@ -1226,7 +1160,7 @@ LRESULT playlist_uielement_t::OnDeleteItem(NMHDR * nmhd) noexcept
 
     const auto nmtv = (NMTREEVIEWW *) nmhd;
 
-    auto Node = (node_t *) nmtv->itemOld.lParam;
+    const auto Node = (node_t *) nmtv->itemOld.lParam;
 
     if (Node == nullptr)
         return FALSE;
@@ -1274,15 +1208,23 @@ LRESULT playlist_uielement_t::OnBeginLabelEdit(NMHDR * nmhd) noexcept
     if (Node == nullptr)
         return TRUE;
 
-    const size_t Index = _PlaylistManager->find_playlist_by_guid(Node->Id);
+    // Check for a playlist lock.
+    if (!Node->IsFolder)
+    {
+        const size_t Index = _PlaylistManager->find_playlist_by_guid(Node->Id);
 
-    if (Index == SIZE_MAX)
-        return TRUE;
+        if (Index == SIZE_MAX)
+            return TRUE;
 
-    auto FilterMask = _PlaylistManager->playlist_lock_get_filter_mask(Index);
+        const auto FilterMask = _PlaylistManager->playlist_lock_get_filter_mask(Index);
 
-    if (playlist_lock_t::IsRenamePlaylistEnabled(FilterMask))
-        return TRUE;
+        // Ignore the action when the playlist is locked by another component.
+        if ((FilterMask != 0) && !_LockManager->IsLocked(Node->Id))
+            return TRUE;
+
+        if (playlist_lock_t::IsRenamePlaylistEnabled(FilterMask))
+            return TRUE;
+    }
 
     {
         const auto hEdit = _TreeView.GetEditControl();
@@ -1349,16 +1291,22 @@ LRESULT playlist_uielement_t::OnKeyDown(NMHDR * nmhd) noexcept
     if (Node == nullptr)
         return 0;
 
-    const size_t Index = _PlaylistManager->find_playlist_by_guid(Node->Id);
+    uint32_t FilterMask = 0;
 
-    if (Index == SIZE_MAX)
-        return 0;
+    // Check for a playlist lock.
+    if (!Node->IsFolder)
+    {
+        const size_t Index = _PlaylistManager->find_playlist_by_guid(Node->Id);
 
-    auto FilterMask = _PlaylistManager->playlist_lock_get_filter_mask(Index);
+        if (Index == SIZE_MAX)
+            return 0;
 
-    // Ignore the action when the playlist is locked by another component.
-    if ((FilterMask != 0) && !_LockManager->IsLocked(Node->Id))
-        return 0;
+        FilterMask = _PlaylistManager->playlist_lock_get_filter_mask(Index);
+
+        // Ignore the action when the playlist is locked by another component.
+        if ((FilterMask != 0) && !_LockManager->IsLocked(Node->Id))
+            return 0;
+    }
 
     const auto nmkd = (NMTVKEYDOWN *) nmhd;
 
@@ -1545,20 +1493,21 @@ DWORD playlist_uielement_t::GetDropEffect(DWORD keyState, const POINT & pt) noex
 
         _hDropTarget = hItem;
 
-        _TreeView.SetState(_hDropTarget, TVIS_DROPHILITED);
+        _TreeView.SetState(_hDropTarget, TVIS_DROPHILITED, TVIS_DROPHILITED);
     }
 
     // Determine the effect.
     const auto Node = (node_t *) _TreeView.GetData(hItem);
 
-    if (Node != nullptr)
+    if ((Node != nullptr) && !Node->IsFolder)
     {
-        // Handle a lock if present.
+        // The drop target is a playlist.
         const auto Index = _PlaylistManager->find_playlist_by_guid(Node->Id);
 
         if (Index == SIZE_MAX)
             return DROPEFFECT_NONE;
 
+        // Handle a lock if present.
         const auto FilterMask = _PlaylistManager->playlist_lock_get_filter_mask(Index);
 
         // Ignore the action when the playlist is locked by another component.
@@ -1577,12 +1526,17 @@ DWORD playlist_uielement_t::GetDropEffect(DWORD keyState, const POINT & pt) noex
 }
 
 /// <summary>
-/// Drops the specified files an the tree view.
+/// Drops the specified data object on the tree view.
 /// </summary>
 void playlist_uielement_t::DropFiles(IDataObject * dataObject) noexcept
 {
+    _hHighlightedtem = _hDropTarget;
+
     const auto Node = (node_t *) _TreeView.GetData(_hDropTarget);
 
+    _hDropTarget = NULL;
+
+    // Create or find the playlist that will receive the dropped items.
     size_t Index = SIZE_MAX;
 
     {
@@ -1602,15 +1556,12 @@ void playlist_uielement_t::DropFiles(IDataObject * dataObject) noexcept
         dataObject,
         playlist_incoming_item_filter_v2::op_flag_delay_ui,
         core_api::get_main_window(),
-        new service_impl_t<drop_notification_handler_t>(Index, true)
+        new service_impl_t<incoming_item_filter_callback_t>(Index, true)
     );
 
     _PlaylistManager->set_active_playlist(Index);
 
     ::SetCursor(::LoadCursorW(NULL, IDC_ARROW));
-
-    // Redraw the tree view. Note: Only required when using custom draw.
-    _TreeView.Redraw();
 }
 
 /// <summary>

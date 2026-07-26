@@ -120,6 +120,8 @@ Allows you to restore a playlist that has been removed during the current sessio
 
 The `Lock` menu allows you to lock a playlist or inspect an existing lock from another component. When a playlist is locked the name of the lock is displayed at the bottom of the menu.
 
+![Screenshot](assets/Lock-Menu.png?raw=true "Screenshot")
+
 `Add items`
 
 Prevents items from being added to the playlist when enabled.
@@ -194,6 +196,10 @@ You can drag items from Windows Explorer or other applications that process file
 
 A preferences page is used to change all parameters used by the component. You can find it by selecting the **File / Preferences** menu item and then selecting **Display / Playlist Tree** in the dialog.
 
+![Screenshot](assets/Preferences.png?raw=true "Screenshot")
+
+You can configure the colors and fonts on the `Colors and Fonts` page for DUI (Default User Interface) or CUI (Columns User Interface),
+
 `Apply`
 
 Applies the configuration to the component.
@@ -253,14 +259,14 @@ This setting specifies title formatting for the tooltip displayed in the tree vi
 The default is:
 
 ``` foobar2000
-$if(%playlist_size_natural%,%playlist_size_natural%\n$if2(%playlist_duration_natural%,', N/A'),'N/A')
+$if(%node_is_folder%,,$if(%playlist_size_natural%,%playlist_size_natural%\n$if2(%playlist_duration_natural%,', N/A'),'N/A'))
 ```
 
 Leave the text empty to disable the tooltips.
 
 > [!Note]
 > This setting supports title formatting.
-> The text can contain \n to break the text into multiple lines
+> The text can contain \n to break the text into multiple lines.
 
 ### Node Image
 
@@ -333,8 +339,8 @@ This chapter contains some reference material I consulted during the development
 ### Various
 
 - [Windows Icons](https://diymediahome.org/windows-icons-reference-list-with-details-locations-images/)
-- [Using Explorer's fancy drag/drop effects in your own programs](https://devblogs.microsoft.com/oldnewthing/20210512-00/?p=105208), Raymond Che, The Old New Thing, 2021-05-12
-- [Drag/drop effects: The little drop information box](https://devblogs.microsoft.com/oldnewthing/20210513-00/?p=105212), Raymond Che, The Old New Thing, 2021-05-13
+- [Using Explorer's fancy drag/drop effects in your own programs](https://devblogs.microsoft.com/oldnewthing/20210512-00/?p=105208), Raymond Chen, The Old New Thing, 2021-05-12
+- [Drag/drop effects: The little drop information box](https://devblogs.microsoft.com/oldnewthing/20210513-00/?p=105212), Raymond Chen, The Old New Thing, 2021-05-13
 
 ---
 

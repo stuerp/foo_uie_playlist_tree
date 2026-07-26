@@ -42,7 +42,7 @@ public:
     void * GetData(HTREEITEM hItem) const noexcept;
 
     bool SetText(HTREEITEM hItem, const std::string & text) const noexcept;
-    bool SetState(HTREEITEM hItem, UINT state, UINT stateMask = 0xFF) const noexcept;
+    bool SetState(HTREEITEM hItem, UINT state, UINT stateMask) const noexcept;
 
     bool SelectItem(HTREEITEM hTreeItem) const noexcept
     {

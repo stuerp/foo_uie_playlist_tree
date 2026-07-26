@@ -191,20 +191,23 @@ private:
 };
 
 /// <summary>
-/// Implements a notification handler for process_dropped_files_async().
+/// Implements a callback for playlist_incoming_item_filter_v2::process_dropped_files_async().
 /// </summary>
-class drop_notification_handler_t : public process_locations_notify
+class incoming_item_filter_callback_t : public process_locations_notify
 {
 public:
-    drop_notification_handler_t(size_t playlistIndex, bool selectDroppedItems) : _PlaylistIndex(playlistIndex), _SelectDroppedItems(selectDroppedItems) { }
+    incoming_item_filter_callback_t(size_t playlistIndex, bool selectDroppedItems) : _PlaylistIndex(playlistIndex), _SelectDroppedItems(selectDroppedItems) { }
 
-    drop_notification_handler_t(const drop_notification_handler_t &) = delete;
-    drop_notification_handler_t & operator=(const drop_notification_handler_t &) = delete;
-    drop_notification_handler_t(drop_notification_handler_t &&) = delete;
-    drop_notification_handler_t & operator=(drop_notification_handler_t &&) = delete;
+    incoming_item_filter_callback_t(const incoming_item_filter_callback_t &) = delete;
+    incoming_item_filter_callback_t & operator=(const incoming_item_filter_callback_t &) = delete;
+    incoming_item_filter_callback_t(incoming_item_filter_callback_t &&) = delete;
+    incoming_item_filter_callback_t & operator=(incoming_item_filter_callback_t &&) = delete;
 
-    virtual ~drop_notification_handler_t() = default;
+    virtual ~incoming_item_filter_callback_t() = default;
 
+    /// <summary>
+    /// Called when a playlist_incoming_item_filter_v2 object has finished processing dropped files or playlist items.
+    /// </summary>
     void on_completion(const pfc::list_base_const_t<metadb_handle_ptr> & items)
     {
         static_api_ptr_t<playlist_manager> PlaylistManager;
@@ -212,7 +215,13 @@ public:
         PlaylistManager->playlist_add_items(_PlaylistIndex, items, (_SelectDroppedItems ? (const bit_array &) bit_array_true() : (const bit_array &) bit_array_false()));
     }
 
-    void on_aborted() { }
+    /// <summary>
+    /// Called when a playlist_incoming_item_filter_v2 object has aborted processing dropped files or playlist items.
+    /// </summary>
+    void on_aborted()
+    {
+        Log.AtWarn().Write(STR_COMPONENT_BASENAME " was notified that the user aborted processing the dropped items.");
+    }
 
 private:
     size_t _PlaylistIndex;

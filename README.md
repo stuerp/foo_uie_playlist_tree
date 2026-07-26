@@ -77,21 +77,12 @@ To create the component first build the x86 configuration and next the x64 confi
 
 ## Change Log
 
-v1.3.0.0, 2026-07-25
+v1.3.1.0, 2026-07-26
 
-* New: Playlist lock support
-  * Context menu to add or remove fine-grained lock restrictions.
-  * The name of the owner of the lock will be displayed at the bottom of the menu.
-  * New image **Playlist (Locked)**
-  * New custom field: %node_is_locked%
-* New: Font support
-  * DUI uses the **Playlists** font, when enabled.
-  * CUI uses the **Common (list items)** font, when enabled.
-* Fixed: The expanded/collapsed state of a folder was not restored at startup.
-
-## Known Bugs
-
-* A drop operation from an external source causes an expanded tree node to collapse without redrawing correctly.
+* Improved: Dropping files or playlist items on a folder creates a playlist in that folder.
+* Fixed: Font changes not correctly applied at startup.
+* Fixed: Incorrect redraw behavior during a drag & drop operation from outside the tree view.
+* Fixed: Folders could not be renamed. (Regression)
 
 ## Acknowledgements / Credits
 
