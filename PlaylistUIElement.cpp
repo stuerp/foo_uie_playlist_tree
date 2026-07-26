@@ -1544,16 +1544,12 @@ void playlist_uielement_t::DropFiles(IDataObject * dataObject) noexcept
         dataObject,
         playlist_incoming_item_filter_v2::op_flag_delay_ui,
         core_api::get_main_window(),
-        new service_impl_t<drop_notification_handler_t>(Index, true)
+        new service_impl_t<incoming_item_filter_callback_t>(Index, true)
     );
 
     _PlaylistManager->set_active_playlist(Index);
 
     ::SetCursor(::LoadCursorW(NULL, IDC_ARROW));
-/*
-    // Redraw the tree view. Note: Only required when using custom draw.
-    _TreeView.Redraw();
-*/
 }
 
 /// <summary>
