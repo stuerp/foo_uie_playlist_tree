@@ -79,6 +79,7 @@ To create the component first build the x86 configuration and next the x64 confi
 
 v1.4.0.0, 2026-xx-xx
 
+* Improved: Dropping files or playlist items on a folder creates a playlist in that folder.
 * Fixed: Incorrect redraw behavior during a drag & drop operation from outside the tree view.
 
 ## Acknowledgements / Credits

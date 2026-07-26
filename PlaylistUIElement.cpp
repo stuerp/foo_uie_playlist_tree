@@ -1487,14 +1487,15 @@ DWORD playlist_uielement_t::GetDropEffect(DWORD keyState, const POINT & pt) noex
     // Determine the effect.
     const auto Node = (node_t *) _TreeView.GetData(hItem);
 
-    if (Node != nullptr)
+    if ((Node != nullptr) && !Node->IsFolder)
     {
-        // Handle a lock if present.
+        // The drop target is a playlist.
         const auto Index = _PlaylistManager->find_playlist_by_guid(Node->Id);
 
         if (Index == SIZE_MAX)
             return DROPEFFECT_NONE;
 
+        // Handle a lock if present.
         const auto FilterMask = _PlaylistManager->playlist_lock_get_filter_mask(Index);
 
         // Ignore the action when the playlist is locked by another component.
@@ -1513,12 +1514,17 @@ DWORD playlist_uielement_t::GetDropEffect(DWORD keyState, const POINT & pt) noex
 }
 
 /// <summary>
-/// Drops the specified files an the tree view.
+/// Drops the specified data object on the tree view.
 /// </summary>
 void playlist_uielement_t::DropFiles(IDataObject * dataObject) noexcept
 {
+    _hHighlightedtem = _hDropTarget;
+
     const auto Node = (node_t *) _TreeView.GetData(_hDropTarget);
 
+    _hDropTarget = NULL;
+
+    // Create or find the playlist that will receive the dropped items.
     size_t Index = SIZE_MAX;
 
     {
@@ -1544,9 +1550,10 @@ void playlist_uielement_t::DropFiles(IDataObject * dataObject) noexcept
     _PlaylistManager->set_active_playlist(Index);
 
     ::SetCursor(::LoadCursorW(NULL, IDC_ARROW));
-
+/*
     // Redraw the tree view. Note: Only required when using custom draw.
     _TreeView.Redraw();
+*/
 }
 
 /// <summary>
