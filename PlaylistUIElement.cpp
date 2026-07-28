@@ -906,8 +906,44 @@ LRESULT playlist_uielement_t::OnRightClick(NMHDR * nmhd) noexcept
 {
     const DWORD Position = ::GetMessagePos();
 
-    const POINT pt = { GET_X_LPARAM(Position), GET_Y_LPARAM(Position) };
+    POINT pt = { GET_X_LPARAM(Position), GET_Y_LPARAM(Position) };
 
+    // In case the context menu gets called using the keyboard.
+    if ((pt.x == -1) && (pt.y == -1))
+    {
+        RECT rc;
+
+        ::GetWindowRect(m_hWnd, &rc);
+
+        pt = { (rc.right - rc.left) / 2, (rc.bottom - rc.top) / 2 };
+    }
+
+/*
+    {
+        metadb_handle_list Handles;
+
+        _PlaylistManager->activeplaylist_get_all_items(Handles);
+
+        static_api_ptr_t<contextmenu_manager> mgr;
+
+        mgr->init_context(Handles, contextmenu_manager::flag_show_shortcuts | contextmenu_manager::flag_view_full);
+//      mgr->init_context_now_playing(contextmenu_manager::flag_show_shortcuts | contextmenu_manager::flag_view_full);
+//      mgr->init_context_playlist(contextmenu_manager::flag_show_shortcuts | contextmenu_manager::flag_view_full);
+
+        HMENU hMenu = ::CreatePopupMenu(); 
+
+        mgr->win32_build_menu(hMenu, 1, ~0);
+
+        const int cmd = TrackPopupMenu(hMenu, TPM_RETURNCMD | TPM_RIGHTBUTTON | TPM_NONOTIFY, pt.x, pt.y, 0, m_hWnd, nullptr); 
+
+        if (cmd > 0) 
+            mgr->execute_by_id(static_cast<unsigned>(cmd - 1));
+
+        ::DestroyMenu(hMenu); 
+
+        return FALSE;
+    } 
+*/
     // Remember the item we're hovering over, if any.
     _hHighlightedtem = _TreeView.GetHighlightedItem(pt);
 
