@@ -1,5 +1,5 @@
 
-/** $VER: TreeView.cpp (2026.07.25) P. Stuer **/
+/** $VER: TreeView.cpp (2026.07.28) P. Stuer **/
 
 #include "pch.h"
 
@@ -353,7 +353,7 @@ void tree_view_t::BeginDrag(const NMTREEVIEW * nmtv) noexcept
     if (!::ImageList_BeginDrag(_hDragImageList, 0, 0, 0))
         return;
 
-    // Loch the tree view.
+    // Lock the tree view.
     if (!::ImageList_DragEnter(_hTreeView, nmtv->ptDrag.x, nmtv->ptDrag.y))
         return;
 
