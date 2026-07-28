@@ -77,12 +77,9 @@ To create the component first build the x86 configuration and next the x64 confi
 
 ## Change Log
 
-v1.3.1.0, 2026-07-26
+vNext, 2026-xx-xx
 
-* Improved: Dropping files or playlist items on a folder creates a playlist in that folder.
-* Fixed: Font changes not correctly applied at startup.
-* Fixed: Incorrect redraw behavior during a drag & drop operation from outside the tree view.
-* Fixed: Folders could not be renamed. (Regression)
+* New: A `Playlist` submenu will be added to the context menu that contains the standard foobar2000 context menu for a playlist.
 
 ## Acknowledgements / Credits
 

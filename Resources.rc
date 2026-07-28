@@ -83,9 +83,5 @@ IDM_CONTEXT_MENU menu
         menuitem "Save all playlists...",   IDM_SAVE_ALL
         menuitem "Save playlist...",        IDM_SAVE
         menuitem "Load playlist...",        IDM_LOAD
-/*
-        menuitem separator
-        menuitem "Contents",                IDM_CONTENTS, grayed
-*/
     }
 }

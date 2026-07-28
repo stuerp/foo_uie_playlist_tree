@@ -1,5 +1,5 @@
 
-/** $VER: Resources.h (2026.07.26) P. Stuer **/
+/** $VER: Resources.h (2026.07.28) P. Stuer **/
 
 #pragma once
 
@@ -86,15 +86,16 @@
 #define IDM_LOCK_ALL            37
 #define IDM_LOCK_NONE           39
 
-#define IDM_SORT                40
+#define IDM_SORT                50
 
-#define IDM_LOAD                50
-#define IDM_SAVE                51
-#define IDM_SAVE_ALL            52
-
-#define IDM_CONTENTS            60
+#define IDM_LOAD                60
+#define IDM_SAVE                61
+#define IDM_SAVE_ALL            62
 
 #define IDM_DUMP                70
 
-#define IDM_CLEAR_HISTORY       80
+#define IDM_CLEAR_HISTORY     1000
 #define IDM_HISTORY             (IDM_CLEAR_HISTORY + 1)
+
+#define IDM_PLAYLIST          2000
+

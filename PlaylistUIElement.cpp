@@ -918,32 +918,6 @@ LRESULT playlist_uielement_t::OnRightClick(NMHDR * nmhd) noexcept
         pt = { (rc.right - rc.left) / 2, (rc.bottom - rc.top) / 2 };
     }
 
-/*
-    {
-        metadb_handle_list Handles;
-
-        _PlaylistManager->activeplaylist_get_all_items(Handles);
-
-        static_api_ptr_t<contextmenu_manager> mgr;
-
-        mgr->init_context(Handles, contextmenu_manager::flag_show_shortcuts | contextmenu_manager::flag_view_full);
-//      mgr->init_context_now_playing(contextmenu_manager::flag_show_shortcuts | contextmenu_manager::flag_view_full);
-//      mgr->init_context_playlist(contextmenu_manager::flag_show_shortcuts | contextmenu_manager::flag_view_full);
-
-        HMENU hMenu = ::CreatePopupMenu(); 
-
-        mgr->win32_build_menu(hMenu, 1, ~0);
-
-        const int cmd = TrackPopupMenu(hMenu, TPM_RETURNCMD | TPM_RIGHTBUTTON | TPM_NONOTIFY, pt.x, pt.y, 0, m_hWnd, nullptr); 
-
-        if (cmd > 0) 
-            mgr->execute_by_id(static_cast<unsigned>(cmd - 1));
-
-        ::DestroyMenu(hMenu); 
-
-        return FALSE;
-    } 
-*/
     // Remember the item we're hovering over, if any.
     _hHighlightedtem = _TreeView.GetHighlightedItem(pt);
 
@@ -956,6 +930,10 @@ LRESULT playlist_uielement_t::OnRightClick(NMHDR * nmhd) noexcept
 
     if (hPopup != NULL)
     {
+        static_api_ptr_t<contextmenu_manager> cm;
+
+        HMENU hPlaylist = NULL;
+
         const auto OnItem     = (_hHighlightedtem != NULL);
         const auto Node       = (node_t *) _TreeView.GetData(_hHighlightedtem);
         const auto Index      = (Node != nullptr) ? _PlaylistManager->find_playlist_by_guid(Node->Id) : SIZE_MAX;
@@ -1008,6 +986,22 @@ LRESULT playlist_uielement_t::OnRightClick(NMHDR * nmhd) noexcept
                 ::AppendMenuW(hLock, MF_SEPARATOR, 0, NULL);
                 ::AppendMenuW(hLock, MF_STRING | MF_GRAYED | MF_DISABLED, 0, msc::FormatText(L"Locked with %S", LockName.c_str()).c_str());
             }
+
+            // Create and append the Contents submenu.
+            {
+                metadb_handle_list Handles;
+
+                _PlaylistManager->playlist_get_all_items(Index, Handles);
+
+                cm->init_context(Handles, contextmenu_manager::flag_show_shortcuts | contextmenu_manager::flag_view_full);
+
+                hPlaylist = ::CreatePopupMenu();
+
+                cm->win32_build_menu(hPlaylist, IDM_PLAYLIST, ~0);
+
+                ::AppendMenuW(hPopup, MF_SEPARATOR, 0, NULL);
+                ::AppendMenuW(hPopup, MF_STRING | MF_POPUP, (UINT_PTR) hPlaylist, L"Playlist");
+            }
         }
 
         {
@@ -1059,9 +1053,18 @@ LRESULT playlist_uielement_t::OnRightClick(NMHDR * nmhd) noexcept
             ::AppendMenuW(hPopup, MF_STRING, IDM_DUMP, L"Dump configuration");
         }
 
-        ::TrackPopupMenu(hPopup, TPM_RIGHTBUTTON, pt.x, pt.y, 0, m_hWnd, nullptr);
+        const auto Command = (int) ::TrackPopupMenu(hPopup, TPM_RETURNCMD | TPM_RIGHTBUTTON | TPM_NONOTIFY, pt.x, pt.y, 0, m_hWnd, nullptr); 
 
         ::PostMessageW(m_hWnd, WM_NULL, 0, 0);
+
+        if (Command >= IDM_PLAYLIST)
+            cm->execute_by_id((unsigned int) (Command - IDM_PLAYLIST));
+        else
+        if (Command > 0)
+            ::PostMessageW(m_hWnd, WM_COMMAND, MAKEWORD(Command, 0), 0);
+
+        if (hPlaylist != NULL)
+            ::DestroyMenu(hPlaylist);
 
         SetMsgHandled(TRUE);
     }
