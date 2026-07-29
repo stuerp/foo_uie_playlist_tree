@@ -146,6 +146,7 @@ void dui_element_t::GetFonts() noexcept
     _Theme.SetPlaylistFont(m_callback->query_font_ex(ui_font_playlists));
 
     _TreeView.SetFont(_Theme.GetPlaylistFont());
+    _EditBox.SetFont(_Theme.GetPlaylistFont());
 }
 
 static service_factory_single_t<ui_element_impl_withpopup<dui_element_t>> _Factory;

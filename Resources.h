@@ -59,6 +59,7 @@
 /** Controls **/
 
 #define IDC_TREEVIEW        1
+#define IDC_EDITBOX         2
 
 /** Configuration **/
 

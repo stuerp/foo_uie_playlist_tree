@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.h (2026.07.25) P. Stuer **/
+/** $VER: PlaylistsUIElement.h (2026.07.29) P. Stuer **/
 
 #pragma once
 
@@ -7,15 +7,16 @@
 
 #include "EditSubclass.h"
 #include "FolderManager.h"
-#include "PlaylistLockManager.h"
 #include "MultiSelectTreeView.h"
+#include "PlaylistLockManager.h"
 #include "PlaylistTreeView.h"
 #include "Resources.h"
+#include "StringEnumerator.h"
 #include "Tracker.h"
 #include "TreeViewSubclass.h"
 #include "UIElement.h"
 
-#include <SDK\playlist.h>
+#include <sdk/playlist.h>
 
 /// <summary>
 /// Implements the user interface element base class.
@@ -66,9 +67,11 @@ private:
     LRESULT OnGetDisplayInfo(NMHDR * nmhd) noexcept;
     LRESULT OnItemExpanded(NMHDR * nmhd) noexcept;
     LRESULT OnBeginDrag(NMHDR * nmhd) noexcept;
-    LRESULT OnDeleteItem(NMHDR * nmhd) noexcept;
+    LRESULT OnDeletingItem(NMHDR * nmhd) noexcept;
     LRESULT OnBeginLabelEdit(NMHDR * nmhd) noexcept;
     LRESULT OnEndLabelEdit(NMHDR * nmhd) noexcept;
+
+    void OnEditChange(UINT notifyCode, int id, CWindow wnd);
 
     void OnMouseMove(UINT flags, CPoint point) noexcept;
     void OnMouseLeave() noexcept;
@@ -78,6 +81,9 @@ private:
 //      MSG_WM_DESTROY(OnDestroy);
 
         MSG_WM_PAINT(OnPaint);
+
+        COMMAND_HANDLER_EX(IDC_EDITBOX, EN_CHANGE, OnEditChange);
+ 
         MSG_WM_COMMAND(OnCommand);
         MSG_WM_SETFOCUS(OnSetFocus);
 
@@ -91,7 +97,7 @@ private:
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_GETDISPINFO, OnGetDisplayInfo);
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_ITEMEXPANDED, OnItemExpanded);
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_BEGINDRAG, OnBeginDrag);
-        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_DELETEITEM, OnDeleteItem);
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_DELETEITEM, OnDeletingItem);
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_BEGINLABELEDIT, OnBeginLabelEdit);
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_ENDLABELEDIT, OnEndLabelEdit);
 
@@ -155,6 +161,7 @@ private:
 
 	void OnFolderCreated(const GUID & id, const std::string & name) noexcept override;
 	void OnFolderRemoving(const GUID & id) noexcept override;
+	void OnFolderRemoved(const GUID & id) noexcept override;
 	void OnFolderRenamed(const GUID & id, const std::string & oldName, const std::string & newName) noexcept override;
 
     #pragma endregion
@@ -166,9 +173,13 @@ private:
 
     HRESULT InitImageList() noexcept;
     void ModifyFilterMask(uint32_t mask) const noexcept;
+    bool ExamineAutoplaylist(size_t index) noexcept;
+    int CalculateEditHeight(HWND hWnd, HFONT hFont) noexcept;
+    void ResetAutoComplete() noexcept;
 
 protected:
     playlist_tree_view_t _TreeView;
+    CEdit _EditBox;
 
 private:
     himagelist_t _hImageList;
@@ -188,6 +199,7 @@ private:
     bool _IsUser = false;
 
     IDropTarget * _DropTarget = nullptr;
+    string_enumerator_t * _StringEnumerator = nullptr;
 };
 
 /// <summary>

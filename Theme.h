@@ -10,7 +10,7 @@
 #include <SDKDDKVer.h>
 #include <Windows.h>
 
-#include <SDK\coreDarkMode.h>
+#include <sdk/coreDarkMode.h>
 
 class theme_t
 {

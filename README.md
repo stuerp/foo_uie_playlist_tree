@@ -80,6 +80,7 @@ To create the component first build the x86 configuration and next the x64 confi
 vNext, 2026-xx-xx
 
 * New: A `Playlist` submenu will be added to the context menu that contains the standard foobar2000 context menu for a playlist.
+* New: Quick Search text box to quickly highlight a folder or playlist.
 
 ## Acknowledgements / Credits
 

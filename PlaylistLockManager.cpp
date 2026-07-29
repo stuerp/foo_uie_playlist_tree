@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistLockManager.cpp (2026.07.25) P. Stuer **/
+/** $VER: PlaylistLockManager.cpp (2026.07.29) P. Stuer **/
 
 #include "pch.h"
 
@@ -47,11 +47,11 @@ public:
     virtual ~playlist_lock_manager_impl() = default;
 
     /// <summary>
-    /// Adds a lock to the specified playlist.
+    /// Locks the specified playlist. If a lock already exists, modify it with the new filter mask.
     /// </summary>
-    HRESULT Add(const GUID & id, uint32_t mask) noexcept final
+    HRESULT LockPlaylist(const GUID & id, uint32_t filterMask) noexcept final
     {
-        if ((id == GUID_NULL) || (mask == 0u))
+        if ((id == GUID_NULL) || (filterMask == 0u))
             return E_INVALIDARG;
 
         static_api_ptr_t<playlist_manager_v5> pm;
@@ -59,20 +59,20 @@ public:
         const auto Index = pm->find_playlist_by_guid(id);
 
         if (Index == SIZE_MAX)
-            return E_INVALIDARG;
+            return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
 
         if (pm->playlist_lock_is_present(Index))
         {
-            HRESULT hResult = Remove(id);
+            HRESULT hResult = UnlockPlaylist(id);
 
             if (!SUCCEEDED(hResult))
-                return hResult; // Already locked but not by us.
+                return hResult; // Already locked but not by me.
         }
 
-        auto Lock = fb2k::service_new<playlist_lock_t>(mask);
+        auto Lock = fb2k::service_new<playlist_lock_t>(filterMask);
 
         if (!pm->playlist_lock_install(Index, Lock))
-            return ERROR_LOCK_FAILED;
+            return HRESULT_FROM_WIN32(ERROR_LOCK_FAILED);
 
         _Locks.try_emplace(id, Lock);
 
@@ -80,44 +80,9 @@ public:
     }
 
     /// <summary>
-    /// Removes a lock from the specified playlist.
+    /// Unlocks the specified playlist.
     /// </summary>
-    HRESULT Remove(const GUID & id) noexcept final
-    {
-        if (id == GUID_NULL)
-            return E_INVALIDARG;
-
-        const auto Iter = _Locks.find(id);
-
-        if (Iter == _Locks.end())
-            return E_INVALIDARG;
-
-        static_api_ptr_t<playlist_manager_v5> pm;
-
-        const auto Index = pm->find_playlist_by_guid(id);
-
-        if (Index == SIZE_MAX)
-            return E_INVALIDARG;
-
-        const bool Success = pm->playlist_lock_uninstall(Index, Iter->second);
-
-        _Locks.erase(id);
-
-        return Success ? S_OK : ERROR_WAS_UNLOCKED;
-    }
-
-    /// <summary>
-    /// Returns true if the playlist has been locked by this component.
-    /// </summary>
-    bool IsLocked(const GUID & id) const noexcept final
-    {
-        return _Locks.contains(id);
-    }
-
-    /// <summary>
-    /// Returns the filter mask of a lock if present.
-    /// </summary>
-    HRESULT GetFilterMask(const GUID & id, uint32_t & mask) const noexcept final
+    HRESULT UnlockPlaylist(const GUID & id) noexcept final
     {
         if (id == GUID_NULL)
             return E_INVALIDARG;
@@ -127,7 +92,42 @@ public:
         if (Iter == _Locks.end())
             return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
 
-        mask = Iter->second->get_filter_mask();
+        static_api_ptr_t<playlist_manager_v5> pm;
+
+        const auto Index = pm->find_playlist_by_guid(id);
+
+        if (Index == SIZE_MAX)
+            return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
+
+        const bool Success = pm->playlist_lock_uninstall(Index, Iter->second);
+
+        _Locks.erase(id);
+
+        return Success ? S_OK : HRESULT_FROM_WIN32(ERROR_WAS_UNLOCKED);
+    }
+
+    /// <summary>
+    /// Returns true if the playlist has been locked by this component.
+    /// </summary>
+    bool IsLockedByMe(const GUID & id) const noexcept final
+    {
+        return _Locks.contains(id);
+    }
+
+    /// <summary>
+    /// Returns the filter mask of a lock if present.
+    /// </summary>
+    HRESULT GetFilterMask(const GUID & id, uint32_t & filterMask) const noexcept final
+    {
+        if (id == GUID_NULL)
+            return E_INVALIDARG;
+
+        const auto Iter = _Locks.find(id);
+
+        if (Iter == _Locks.end())
+            return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
+
+        filterMask = Iter->second->get_filter_mask();
 
         return S_OK;
     }

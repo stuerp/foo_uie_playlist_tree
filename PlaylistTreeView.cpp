@@ -87,7 +87,7 @@ bool playlist_tree_view_t::RemoveItem(const GUID & id) const noexcept
 }
 
 /// <summary>
-/// Selects the specified item.
+/// Selects the specified id.
 /// </summary>
 bool playlist_tree_view_t::SelectItem(const GUID & id) const noexcept
 {
@@ -96,11 +96,35 @@ bool playlist_tree_view_t::SelectItem(const GUID & id) const noexcept
     if (hItem == NULL)
         return false;
 
-    return __super::SelectItem(hItem);
+    return SelectItem(hItem);
 }
 
 /// <summary>
-/// Find the specified item.
+/// Selects the item with the specified name.
+/// </summary>
+bool playlist_tree_view_t::SelectItem(const std::string & name) const noexcept
+{
+    bool IsSelected = false;
+
+    __super::Walk([&](HTREEITEM hItem, void * context) -> bool
+    {
+        auto Node = (const node_t *) GetData(hItem);
+
+        if (Node->Name == name)
+        {
+            IsSelected = SelectItem(hItem);
+
+            return false;
+        }
+
+        return true; // Continue enumerating.
+    });
+
+    return IsSelected;
+}
+
+/// <summary>
+/// Find the item with the specified id.
 /// </summary>
 HTREEITEM playlist_tree_view_t::FindItem(const GUID & id) const noexcept
 {

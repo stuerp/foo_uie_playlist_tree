@@ -7,7 +7,7 @@
 
 #include "Resources.h"
 
-#include <SDK\coreDarkMode.h>
+#include <sdk/coreDarkMode.h>
 
 /// <summary>
 /// Implements the user interface element base class.

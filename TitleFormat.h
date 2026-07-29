@@ -13,8 +13,8 @@
 
 #include <string>
 
-#include <SDK\foobar2000-lite.h>
-#include <SDK\titleformat.h>
+#include <sdk/foobar2000-lite.h>
+#include <sdk/titleformat.h>
 
 #include "FolderManager.h"
 

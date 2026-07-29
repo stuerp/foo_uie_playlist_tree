@@ -3,10 +3,10 @@
 
 #include "pch.h"
 
-#include <SDK\preferences_page.h>
+#include <sdk/preferences_page.h>
 
-#include <helpers\atl-misc.h>
-#include <helpers\DarkMode.h>
+#include <helpers/atl-misc.h>
+#include <helpers/DarkMode.h>
 
 #include "PlaylistUIElement.h"
 #include "Tracker.h"

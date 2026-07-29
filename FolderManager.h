@@ -1,9 +1,9 @@
 
-/** $VER: FolderManager.h (2026.07.22) P. Stuer **/
+/** $VER: FolderManager.h (2026.07.29) P. Stuer **/
 
 #pragma once
 
-#include <SDK\service.h>
+#include <sdk/service.h>
 
 using namespace msc;
 
@@ -17,6 +17,7 @@ public:
 
     virtual void OnFolderCreated(const GUID & id, const std::string & name) noexcept = 0;
     virtual void OnFolderRemoving(const GUID & id) noexcept = 0;
+    virtual void OnFolderRemoved(const GUID & id) noexcept = 0;
     virtual void OnFolderRenamed(const GUID & id, const std::string & oldName, const std::string & newName) noexcept = 0;
 };
 
@@ -29,7 +30,7 @@ public:
     virtual HRESULT CreateFolder() noexcept = 0;
     virtual HRESULT CreateFolder(const GUID & id, const std::string & name) noexcept = 0;
     virtual HRESULT GetFolderName(const GUID & id, std::string & name) const noexcept = 0;
-    virtual HRESULT SetFolderName(const GUID & id, const std::string & text) noexcept = 0;
+    virtual HRESULT SetFolderName(const GUID & id, const std::string & newName) noexcept = 0;
     virtual HRESULT RemoveFolder(const GUID & id) noexcept = 0;
 
     virtual HRESULT RegisterCallback(folder_manager_callback_t * callback) noexcept = 0;

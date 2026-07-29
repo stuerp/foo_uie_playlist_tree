@@ -17,7 +17,7 @@
 class drop_target_t : public IDropTarget
 {
 public:
-    drop_target_t(HWND hWnd, playlist_uielement_t * uiElement) : _hWnd(hWnd), _UIElement(uiElement)
+    drop_target_t(HWND hWnd, playlist_uielement_t * uiElement) noexcept : _hWnd(hWnd), _UIElement(uiElement)
     {
         HRESULT hResult = ::CoCreateInstance(CLSID_DragDropHelper, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&_DragDropHelper));
 
@@ -25,7 +25,7 @@ public:
             Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to create shell drag/drop helper: 0x%08X", hResult);
     }
 
-    virtual ~drop_target_t()
+    virtual ~drop_target_t() noexcept
     {
         if (_DragDropHelper)
         {
@@ -35,15 +35,15 @@ public:
     }
 
     // IUnknown
-    STDMETHODIMP QueryInterface(REFIID riid, void ** ppv);
-    STDMETHODIMP_(ULONG) AddRef();
-    STDMETHODIMP_(ULONG) Release();
+    STDMETHODIMP QueryInterface(REFIID riid, void ** ppv) noexcept final;
+    STDMETHODIMP_(ULONG) AddRef() noexcept final;
+    STDMETHODIMP_(ULONG) Release() noexcept final;
 
     // IDropTarget
-    STDMETHODIMP DragEnter(IDataObject * dataObject, DWORD keyState, POINTL pt, DWORD * effect);
-    STDMETHODIMP DragOver(DWORD keyState, POINTL pt, DWORD* effect);
-    STDMETHODIMP DragLeave();
-    STDMETHODIMP Drop(IDataObject * dataObject, DWORD keyState, POINTL pt, DWORD * effect);
+    STDMETHODIMP DragEnter(IDataObject * dataObject, DWORD keyState, POINTL pt, DWORD * effect) noexcept final;
+    STDMETHODIMP DragOver(DWORD keyState, POINTL pt, DWORD* effect) noexcept final;
+    STDMETHODIMP DragLeave() noexcept final;
+    STDMETHODIMP Drop(IDataObject * dataObject, DWORD keyState, POINTL pt, DWORD * effect) noexcept final;
 
 private:
     void ExamineDataObject(IDataObject * dataObject) const noexcept;

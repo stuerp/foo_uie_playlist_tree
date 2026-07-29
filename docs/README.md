@@ -67,6 +67,8 @@ You can experiment with the component without modifying your layout by selecting
 
 The first time the component opens it loads all the playlists that are currently open and adds them to the root of the tree.
 
+At the bottom of the panel there's a quick search text box. Typing the name of a folder or playlist will highlight it's node in the tree.
+
 ---
 
 ## Context Menu
@@ -157,6 +159,10 @@ Enables all lock restrictions.
 `None`
 
 Disables all lock restrictions.
+
+### Playlist Submenu
+
+The `Playlist` menu allows you to access the menu items that would appear in a normal playlist context menu.
 
 ---
 
@@ -252,7 +258,7 @@ Here are some examples:
 > [!Note]
 > This setting supports title formatting.
 
-### Tool Tip
+### Tooltip
 
 This setting specifies title formatting for the tooltip displayed in the tree view.
 

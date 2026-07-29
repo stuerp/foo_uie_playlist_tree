@@ -1,5 +1,5 @@
 
-/** $VER: TreeView.cpp (2026.07.28) P. Stuer **/
+/** $VER: TreeView.cpp (2026.07.29) P. Stuer **/
 
 #include "pch.h"
 
@@ -245,20 +245,31 @@ bool tree_view_t::GetText(HTREEITEM hItem, std::string & text) const noexcept
 {
     std::wstring Text;
 
-    Text.resize(256);
+    if (!GetText(hItem, Text))
+        return false;
+
+    text = msc::WideToUTF8(Text);
+
+    return true;
+}
+
+/// <summary>
+/// Gets the text of the specified item.
+/// </summary>
+bool tree_view_t::GetText(HTREEITEM hItem, std::wstring & text) const noexcept
+{
+    text.resize(256);
 
     TVITEMEXW tvi =
     {
         .mask       = TVIF_TEXT,
         .hItem      = hItem,
-        .pszText    = (LPWSTR) Text.c_str(),
-        .cchTextMax = (int) Text.size(),
+        .pszText    = (LPWSTR) text.c_str(),
+        .cchTextMax = (int) text.size(),
     };
 
     if (!TreeView_GetItem(_hTreeView, &tvi))
         return false;
-
-    text = msc::WideToUTF8(Text);
 
     return true;
 }

@@ -1,5 +1,5 @@
 
-/** $VER: TreeView.h (2026.07.25) P. Stuer **/
+/** $VER: TreeView.h (2026.07.29) P. Stuer **/
 
 #pragma once
 
@@ -38,6 +38,7 @@ public:
     HTREEITEM AddItem(HTREEITEM hParent, HTREEITEM hInsertAfter, UINT state, const void * data) const noexcept;
 
     bool GetText(HTREEITEM hItem, std::string & text) const noexcept;
+    bool GetText(HTREEITEM hItem, std::wstring & text) const noexcept;
     bool GetState(HTREEITEM hItem, UINT & state) const noexcept;
     void * GetData(HTREEITEM hItem) const noexcept;
 

@@ -5,7 +5,7 @@
 
 #include "Resources.h"
 
-#include <SDK\playlist.h>
+#include <sdk/playlist.h>
 
 /// <summary>
 /// Implements our lock.
@@ -157,10 +157,10 @@ private:
 class NOVTABLE  playlist_lock_manager_t : public service_base
 {
 public:
-    virtual HRESULT Add(const GUID & id, uint32_t mask) noexcept = 0;
-    virtual HRESULT Remove(const GUID & id) noexcept = 0;
-    virtual bool IsLocked(const GUID & id) const noexcept = 0;
-    virtual HRESULT GetFilterMask(const GUID & id, uint32_t & mask) const noexcept = 0;
+    virtual HRESULT LockPlaylist(const GUID & id, uint32_t filterMask) noexcept = 0;
+    virtual HRESULT UnlockPlaylist(const GUID & id) noexcept = 0;
+    virtual bool IsLockedByMe(const GUID & id) const noexcept = 0;
+    virtual HRESULT GetFilterMask(const GUID & id, uint32_t & filterMask) const noexcept = 0;
 
     FB2K_MAKE_SERVICE_INTERFACE_ENTRYPOINT(playlist_lock_manager_t);
 };
