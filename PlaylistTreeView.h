@@ -44,7 +44,6 @@ public:
     using tree_view_t::SelectItem;  // Adds the base class overload.
 
     HTREEITEM FindItem(const GUID & id) const noexcept;
-    HTREEITEM FindItem(const std::string & name) const noexcept;
 
     HTREEITEM GetHighlightedItem(const POINT & pt) const noexcept;
 
@@ -68,11 +67,27 @@ public:
     }
 
     /// <summary>
-    /// Walks the tree view items.
+    /// Walks the tree view.
     /// </summary>
     template<typename Visitor> bool Walk(Visitor && visitor) const noexcept
     {
         return Walk_(TreeView_GetRoot(Get()), visitor);
+    }
+
+    /// <summary>
+    /// Walks the tree view starting at the specified node.
+    /// </summary>
+    template<typename Visitor> bool Walk(Visitor && visitor, const node_t * startNode) const noexcept
+    {
+        if (startNode == nullptr)
+            return false;
+
+        auto hItem = FindItem(startNode->Id);
+
+        if (hItem == NULL)
+            return false;
+
+        return Walk_(hItem, visitor);
     }
 
 protected:

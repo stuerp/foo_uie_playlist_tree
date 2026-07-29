@@ -81,6 +81,7 @@ vNext, 2026-xx-xx
 
 * New: A `Playlist` submenu will be added to the context menu that contains the standard foobar2000 context menu for a playlist.
 * New: Quick Search text box to quickly highlight a folder or playlist.
+* Improved: Evaluation of lock restrictions.
 
 ## Acknowledgements / Credits
 

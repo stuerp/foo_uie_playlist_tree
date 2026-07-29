@@ -137,15 +137,15 @@ public:
 
     #pragma endregion
 
-    static inline bool IsAddEnabled             (uint32_t filterMask) noexcept { return ((filterMask & playlist_lock::filter_add) != 0); }
-    static inline bool IsRemoveEnabled          (uint32_t filterMask) noexcept { return ((filterMask & playlist_lock::filter_remove) != 0); }
-    static inline bool IsReorderEnabled         (uint32_t filterMask) noexcept { return ((filterMask & playlist_lock::filter_reorder) != 0); }
-    static inline bool IsReplaceEnabled         (uint32_t filterMask) noexcept { return ((filterMask & playlist_lock::filter_replace) != 0); }
+    static inline bool IsAddProhibited              (uint32_t filterMask) noexcept { return ((filterMask & playlist_lock::filter_add) != 0); }
+    static inline bool IsRemoveProhibited           (uint32_t filterMask) noexcept { return ((filterMask & playlist_lock::filter_remove) != 0); }
+    static inline bool IsReorderProhibited          (uint32_t filterMask) noexcept { return ((filterMask & playlist_lock::filter_reorder) != 0); }
+    static inline bool IsReplaceProhibited          (uint32_t filterMask) noexcept { return ((filterMask & playlist_lock::filter_replace) != 0); }
 
-    static inline bool IsRenamePlaylistEnabled  (uint32_t filterMask) noexcept { return ((filterMask & playlist_lock::filter_rename) != 0); }
-    static inline bool IsRemovePlaylistEnabled  (uint32_t filterMask) noexcept { return ((filterMask & playlist_lock::filter_remove_playlist) != 0); }
+    static inline bool IsRenamePlaylistProhibited   (uint32_t filterMask) noexcept { return ((filterMask & playlist_lock::filter_rename) != 0); }
+    static inline bool IsRemovePlaylistProhibited   (uint32_t filterMask) noexcept { return ((filterMask & playlist_lock::filter_remove_playlist) != 0); }
 
-    static inline bool IsDefaultActionEnabled   (uint32_t filterMask) noexcept { return ((filterMask & playlist_lock::filter_default_action) != 0); }
+    static inline bool IsDefaultActionProhibited    (uint32_t filterMask) noexcept { return ((filterMask & playlist_lock::filter_default_action) != 0); }
 
 private:
     uint32_t _Mask;

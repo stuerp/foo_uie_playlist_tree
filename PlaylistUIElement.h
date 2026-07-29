@@ -172,7 +172,10 @@ private:
     void SelectPlaylist(size_t playlistIndex) const noexcept;
 
     HRESULT InitImageList() noexcept;
-    void ModifyFilterMask(uint32_t mask) const noexcept;
+
+    void ModifyFilterMask(uint32_t newFilterMask) const noexcept;
+    bool IsProhibited(const node_t * node, uint32_t filterMask) const noexcept;
+
     bool ExamineAutoplaylist(size_t index) noexcept;
     int CalculateEditHeight(HWND hWnd, HFONT hFont) noexcept;
     void ResetAutoComplete() noexcept;
