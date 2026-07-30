@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.cpp (2026.07.29) P. Stuer **/
+/** $VER: PlaylistsUIElement.cpp (2026.07.30) P. Stuer **/
 
 #include "pch.h"
 
@@ -1493,8 +1493,6 @@ LRESULT playlist_uielement_t::OnGetInfoTip(NMHDR * nmhd) noexcept
 
     if (!SUCCEEDED(hResult))
         return TRUE;
-
-    Text = Text.replace("\\n", "\n");
 
     ::wcscpy_s(nmgi->pszText, (rsize_t) nmgi->cchTextMax, msc::UTF8ToWide(Text.c_str()).c_str());
 

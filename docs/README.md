@@ -265,14 +265,14 @@ This setting specifies title formatting for the tooltip displayed in the tree vi
 The default is:
 
 ``` foobar2000
-$if(%node_is_folder%,,$if(%playlist_size_natural%,%playlist_size_natural%\n$if2(%playlist_duration_natural%,', N/A'),'N/A'))
+$if(%node_is_folder%,,$if(%playlist_size_natural%,%playlist_size_natural%$crlf()$if2(%playlist_duration_natural%,', N/A'),'N/A'))
 ```
 
 Leave the text empty to disable the tooltips.
 
 > [!Note]
 > This setting supports title formatting.
-> The text can contain \n to break the text into multiple lines.
+> $crlf() is a foobar2000 function that inserts a line break in the text.
 
 ### Node Image
 
