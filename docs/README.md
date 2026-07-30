@@ -68,6 +68,7 @@ You can experiment with the component without modifying your layout by selecting
 The first time the component opens it loads all the playlists that are currently open and adds them to the root of the tree.
 
 At the bottom of the panel there's a quick search text box. Typing the name of a folder or playlist will highlight it's node in the tree.
+The text box has an Auto Complete feature that contains all the nodes names of the tree.
 
 ---
 
@@ -85,14 +86,17 @@ If no item is highlighted the new item gets created at the bottom of the tree.
 
 `Rename`
 
-Allows you to rename the highlighted item.
+Allows you to rename the highlighted item. You can not rename a playlist that is [locked for renaming](#rename-playlist). The menu item will be disabled.
 
 `Remove`
 
-Removes the highlighted item.
+Allows you to remove the highlighted item. You can not remove a playlist that is [locked for removal](#remove-playlist). The menu item will be disabled.
+
+A folder that contains at least one playlist that is [locked for removal](#remove-playlist) can not be removed.
 
 > [!Note]
 > Removing a folder also removes all the items it contains.
+> A click with the middle mouse button will also remove the highlighed item.
 
 `Sort`
 
@@ -116,49 +120,51 @@ Allows you to restore a playlist that has been removed during the current sessio
 
 > [!Note]
 > This submenu only appears when one ore more playlists were removed.
-> Ther `Clear history` menu items empties the playlist recycle bin.
+> The `Clear history` menu item empties the playlist recycle bin.
 
 ### Lock Submenu
 
-The `Lock` menu allows you to lock a playlist or inspect an existing lock from another component. When a playlist is locked the name of the lock is displayed at the bottom of the menu.
+The `Lock` submenu allows you to lock a playlist or inspect an existing lock from another component.
+
+The name of the component that lock a playlist is displayed at the bottom of the submenu. If another component has applied the lock the menu items will be disabled. You'll have to use the lock owner component to modify the locks.
 
 ![Screenshot](assets/Lock-Menu.png?raw=true "Screenshot")
 
-`Add items`
+#### Add items
 
 Prevents items from being added to the playlist when enabled.
 
-`Remove items`
+#### Remove items
 
 Prevents items from being removed from the playlist when enabled.
 
-`Reorder items`
+#### Reorder items
 
 Prevents items from being reordered in the playlist when enabled.
 
-`Replace items`
+#### Replace items
 
 Prevents items from being replaced in the playlist when enabled.
 
-`Rename playlist`
+#### Rename playlist
 
 Prevents the playlist from being renamed when enabled.
 
-`Remove playlist`
+#### Remove playlist
 
 Prevents the playlist from being removed when enabled.
 
-`Default action`
+#### Default action
 
 Prevents the playlist from executing its default item action (usually starting playback) when enabled.
 
-`All`
+#### All
 
-Enables all lock restrictions.
+Enables all restrictions.
 
-`None`
+#### None
 
-Disables all lock restrictions.
+Disables all restrictions.
 
 ### Playlist Submenu
 
@@ -188,13 +194,13 @@ Drop an item (folder or playlist) on the bottom zone of an item to insert it aft
 
 You can drag items from any playlist or from the media library.
 
-When you drop one or more tracks on a playlist item the tracks get added to the playlist.
+When you drop one or more tracks on a playlist item the tracks get added to the playlist unless the playlist has been [locked for modification](#add-items).
 
 Drop one or more tracks on a folder item or anywhere on the panel and a new playlist gets created with the dragged tracks.
 
 ### From other applications
 
-You can drag items from Windows Explorer or other applications that process files on the tree.
+You can drag items from Windows Explorer or other applications that process foobar2000 supported files on the tree.
 
 ---
 
@@ -227,20 +233,20 @@ Where noted you can use the foobar2000 [Title Formatting](https://wiki.hydrogena
 
 The component provides the following custom formatting fields:
 
-| Name                             | Description |
-| -------------------------------- | ----------- |
-| %node_name%                      | The name of the item, either a playlist or a folder. |
+| Name                             | Description                                                                           |
+| -------------------------------- | ------------------------------------------------------------------------------------- |
+| %node_name%                      | The name of the item, either a playlist or a folder.                                  |
 | %node_is_folder%                 | Boolean value for use in $if( ...) expressions and is true when the item is a folder. |
-| %node_item_count%                | The number of playlists in a folder or number of items in a playlist. |
-| %node_is_locked%                 | Boolean value for use in $if( ...) expressions and is true when the item is locked. |
-| %node_lock_name%                 | The name of the lock if the item is locked. |
-| %playlist_duration%              | The duration of the playlist (in seconds). |
-| %playlist_duration_natural%      | The duration of the playlist in weeks, days, hours, minutes and seconds. |
-| %playlist_size%                  | The size of the playlist (in bytes). |
-| %playlist_size_natural%          | The size of the playlist in TB, GB, MB, KB or bytes. |
-| %fb2k_path%                      | The directory path of the foobar2000 installation. |
-| %fb2k_component_path%            | The directory path of the component. |
-| %fb2k_profile_path%              | The directory path of the foobar2000 profile. |
+| %node_item_count%                | The number of playlists in a folder or number of items in a playlist.                 |
+| %node_is_locked%                 | Boolean value for use in $if( ...) expressions and is true when the item is locked.   |
+| %node_lock_name%                 | The name of the lock if the item is locked.                                           |
+| %playlist_duration%              | The duration of the playlist (in seconds).                                            |
+| %playlist_duration_natural%      | The duration of the playlist in weeks, days, hours, minutes and seconds.              |
+| %playlist_size%                  | The size of the playlist (in bytes).                                                  |
+| %playlist_size_natural%          | The size of the playlist in TB, GB, MB, KB or bytes.                                  |
+| %fb2k_path%                      | The directory path of the foobar2000 installation.                                    |
+| %fb2k_component_path%            | The directory path of the component.                                                  |
+| %fb2k_profile_path%              | The directory path of the foobar2000 profile.                                         |
 | Any Windows environment variable | For example %UserProfile% or %WinDir% (See [Full List of Environment Variables](https://gist.github.com/RebeccaWhit3/5dad8627b8227142e1bea432db3f8824)) |
 
 ### Text Format
@@ -272,7 +278,7 @@ Leave the text empty to disable the tooltips.
 
 > [!Note]
 > This setting supports title formatting.
-> $crlf() is a foobar2000 function that inserts a line break in the text.
+> `$crlf()` is a foobar2000 function that inserts a line break in the text.
 
 ### Node Image
 
@@ -285,6 +291,7 @@ This setting determines for which node type the image will be selected.
 - Folder: A folder in the tree
 - Playlist: A playlist in the tree
 - Playlist (Playing): The playlist from which foobar2000 is playing audio. This can be different from the currently displayed playlist.
+- Playlist (Locked): The playlist has one or more [restrictions](#lock-submenu) applied to it.
 
 ### Image Size
 
