@@ -81,9 +81,11 @@ vNext, 2026-xx-xx
 
 * New: A `Playlist` submenu will be added to the context menu that contains the standard foobar2000 context menu for a playlist.
 * New: Quick Search text box to quickly highlight a folder or playlist. The text box supports Auto Complete.
-* Improved: Lock restrictions are now applied more fine-grained.
+* New: Image type `Folder (Locked)` for folders that contain playlists that are locked for removal.
+* Improved: Lock restrictions are applied more fine-grained.
 * Improved: A folder that contains at least one playlist that is locked for removal can no longer be removed.
 * Changed: Removed support for `\n`. The foobar2000 function `$crlf()` achieves the same result.
+* Fixed: Resource leak in Preferences dialog.
 
 ## Acknowledgements / Credits
 

@@ -214,7 +214,7 @@ public:
     {
         HTREEITEM hItem = TreeView_GetChild(_hTreeView, hParent);
 
-        while (hItem)
+        while (hItem != NULL)
         {
             if (!visitor(hItem, context))
                 return false;

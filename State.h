@@ -1,12 +1,12 @@
 
-/** $VER: State.h (2026.07.24) P. Stuer **/
+/** $VER: State.h (2026.07.30) P. Stuer **/
 
 #pragma once
 
 #pragma warning(push)
 #pragma warning(disable: 4868) // compiler may not enforce left-to-right evaluation order in braced initializer list
 
-#include <nlohmann\json.hpp>
+#include <nlohmann/json.hpp>
 
 using json = nlohmann::ordered_json;
 
@@ -18,6 +18,9 @@ enum ItemImage : int
     Playlist        = 1,
     PlaylistPlaying = 2,
     PlaylistLocked  = 3,
+    FolderLocked    = 4,
+
+    Count,
 };
 
 struct image_t

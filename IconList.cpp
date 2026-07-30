@@ -1,5 +1,5 @@
 
-/** $VER: IconList.cpp (2026.07.22) P. Stuer **/
+/** $VER: IconList.cpp (2026.07.30) P. Stuer **/
 
 #include "pch.h"
 
@@ -83,6 +83,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
             if (Instance != nullptr)
             {
+                if (Instance->hListView != NULL)
+                {
+                    ::DestroyWindow(Instance->hListView);
+                    Instance->hListView = NULL;
+                }
+
                 ::SetWindowLongPtrW(hWnd, GWLP_USERDATA, 0);
 
                 delete Instance;
@@ -290,9 +296,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
             ListView_DeleteAllItems(Instance->hListView);
 
-            ::ImageList_Destroy(Instance->hImageList);
-
-            Instance->hImageList = (HIMAGELIST) lParam;
+            Instance->hImageList = (HIMAGELIST) lParam; // The parent remains owner of the image list.
 
             if (Instance->hImageList == NULL)
                 return FALSE;

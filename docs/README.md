@@ -289,6 +289,7 @@ You can configure the image that is used for each node type.
 This setting determines for which node type the image will be selected.
 
 - Folder: A folder in the tree
+- Folder (Locked): A folder in the tree that contains one or more playlists that are locked for removal.
 - Playlist: A playlist in the tree
 - Playlist (Playing): The playlist from which foobar2000 is playing audio. This can be different from the currently displayed playlist.
 - Playlist (Locked): The playlist has one or more [restrictions](#lock-submenu) applied to it.

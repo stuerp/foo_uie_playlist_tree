@@ -1,10 +1,11 @@
 
-/** $VER: PlaylistsTreeView.h (2026.07.29) P. Stuer **/
+/** $VER: PlaylistsTreeView.h (2026.07.30) P. Stuer **/
 
 #pragma once
 
 #include "TreeView.h"
 #include "Node.h"
+#include "Log.h"
 
 #pragma warning(push)
 #pragma warning(disable: 4868) // compiler may not enforce left-to-right evaluation order in braced initializer list
@@ -71,7 +72,9 @@ public:
     /// </summary>
     template<typename Visitor> bool Walk(Visitor && visitor) const noexcept
     {
-        return Walk_(TreeView_GetRoot(Get()), visitor);
+        const auto hItem = TreeView_GetRoot(Get());
+
+        return Walk_(hItem, NULL, visitor); // Always walk the complete tree.
     }
 
     /// <summary>
@@ -87,25 +90,11 @@ public:
         if (hItem == NULL)
             return false;
 
-        return Walk_(hItem, visitor);
+        return Walk_(hItem, hItem, visitor);
     }
 
 protected:
-    /// <summary>
-    /// Returns true if a drop is allowed on the target.
-    /// </summary>
-    virtual bool AllowDrop(DropZone dropZone) noexcept override
-    {
-        if (_hDropTarget == NULL)
-            return false;
-
-        auto Node = (const node_t *) GetData(_hDropTarget);
-
-        if (Node == nullptr)
-            return false;
-
-        return Node->IsFolder || (!Node->IsFolder && (dropZone != DropZone::Middle));
-    }
+    virtual bool AllowDrop(DropZone dropZone) noexcept override;
 
 private:
     /// <summary>
@@ -122,7 +111,10 @@ private:
 
             json::array_t Nodes;
 
-            if (!ToJSON_(TreeView_GetChild(Get(), hItem), visitor, &Nodes))
+            // Walk the sub branch if the current item has children.
+            const auto hChild = TreeView_GetChild(Get(), hItem);
+
+            if ((hChild != NULL) && !ToJSON_(hChild, visitor, &Nodes))
                 return false;
 
             if (Nodes.size() != 0)
@@ -139,23 +131,30 @@ private:
     /// <summary>
     /// Walks this instance.
     /// </summary>
-    template<typename Visitor> bool Walk_(HTREEITEM hItem, Visitor && visitor) const noexcept
+    template<typename Visitor> bool Walk_(HTREEITEM hItem, HTREEITEM hStartItem, Visitor && visitor) const noexcept
     {
-        while (hItem != NULL)
+        auto hCurrentItem = hItem;
+
+        while (hCurrentItem != NULL)
         {
-            const auto Node = (node_t *) GetData(hItem);
+            const auto Node = (node_t *) GetData(hCurrentItem);
 
             if (!visitor(Node))
                 return false;
 
-            if (!Walk_(TreeView_GetChild(Get(), hItem), visitor))
+            // Walk the sub branch if the current item has children.
+            const auto hChild = TreeView_GetChild(Get(), hCurrentItem);
+
+            if ((hChild != NULL) && !Walk_(hChild, hStartItem, visitor))
                 return false;
 
-            hItem = TreeView_GetNextSibling(Get(), hItem);
+            hCurrentItem = TreeView_GetNextSibling(Get(), hCurrentItem);
         }
+
+        // Stop walking if we've walked the complete branch downwards. Don't go up.
+        if (TreeView_GetParent(Get(), hItem) == hStartItem)
+            return false;
 
         return true;
     }
-
-public:
 };

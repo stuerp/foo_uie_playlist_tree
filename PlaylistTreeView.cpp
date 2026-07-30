@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsTreeView.cpp (2026.07.24) P. Stuer **/
+/** $VER: PlaylistsTreeView.cpp (2026.07.30) P. Stuer **/
 
 #include "pch.h"
 
@@ -110,14 +110,14 @@ bool playlist_tree_view_t::SelectItem(const std::string & name) const noexcept
     {
         auto Node = (const node_t *) GetData(hItem);
 
-        if (Node->Name == name)
+        if ((Node != nullptr) && (Node->Name == name))
         {
             IsSelected = SelectItem(hItem);
 
             return false;
         }
 
-        return true; // Continue enumerating.
+        return true; // Continue walking.
     });
 
     return IsSelected;
@@ -144,7 +144,7 @@ HTREEITEM playlist_tree_view_t::FindItem(const GUID & id) const noexcept
             return false;
         }
 
-        return true; // Continue enumerating
+        return true; // Continue walking
     });
 
     return hFoundItem;
@@ -206,4 +206,20 @@ bool playlist_tree_view_t::IsExpanded(const GUID & id) const noexcept
         return false;
 
     return ((State & TVIS_EXPANDED) == TVIS_EXPANDED);
+}
+
+/// <summary>
+/// Returns true if a drop is allowed on the target.
+/// </summary>
+bool playlist_tree_view_t::AllowDrop(DropZone dropZone) noexcept
+{
+    if (_hDropTarget == NULL)
+        return false;
+
+    auto Node = (const node_t *) GetData(_hDropTarget);
+
+    if (Node == nullptr)
+        return false;
+
+    return Node->IsFolder || (!Node->IsFolder && (dropZone != DropZone::Middle));
 }

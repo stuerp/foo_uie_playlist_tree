@@ -1,5 +1,5 @@
 
-/** $VER: TreeView.cpp (2026.07.29) P. Stuer **/
+/** $VER: TreeView.cpp (2026.07.30) P. Stuer **/
 
 #include "pch.h"
 
@@ -115,12 +115,14 @@ bool tree_view_t::RefreshItem(HTREEITEM hItem) const noexcept
 
     return (TreeView_SetItem(_hTreeView, &tvi) != 0);
 }
-#include "Log.h"
+
 /// <summary>
 /// Refreshes all items.
 /// </summary>
 bool tree_view_t::RefreshAllItems() const noexcept
 {
+    return (bool) ::RedrawWindow(_hTreeView, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
+/*
     auto hItem = TreeView_GetRoot(_hTreeView);
 
     while (hItem != NULL)
@@ -149,6 +151,7 @@ bool tree_view_t::RefreshAllItems() const noexcept
     }
 
     return (::InvalidateRect(_hTreeView, nullptr, TRUE) != 0);
+*/
 }
 
 /// <summary>

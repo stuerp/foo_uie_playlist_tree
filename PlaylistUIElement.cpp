@@ -75,8 +75,8 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
 
     // Create the edit box.
     {
-        const DWORD Styles = WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_TABSTOP | ES_LEFT | ES_AUTOHSCROLL;
-        const DWORD ExStyles = WS_EX_NOPARENTNOTIFY | WS_EX_CLIENTEDGE;
+        constexpr DWORD Styles = WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_TABSTOP | ES_LEFT | ES_AUTOHSCROLL;
+        constexpr DWORD ExStyles = WS_EX_NOPARENTNOTIFY | WS_EX_CLIENTEDGE;
 
         if (!_EditBox.Create(m_hWnd, NULL, nullptr, Styles, ExStyles, IDC_EDITBOX, nullptr))
             return -1;
@@ -85,6 +85,9 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
 
         // Add Auto Complete to the edit box.
         {
+            // Enumerates the node names for Auto Complete to display.
+            _StringEnumerator = new string_enumerator_t();
+
             IAutoComplete * ac = nullptr;
 
             HRESULT hResult = ::CoCreateInstance(CLSID_AutoComplete, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&ac));
@@ -117,9 +120,6 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
             }
             else
                 Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to install auto complete on edit box: 0x%08X.", hResult);
-
-            // Enumerates the node names for Auto Complete to display.
-            _StringEnumerator = new string_enumerator_t();
         }
     }
 
@@ -316,6 +316,8 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
         {
             ModifyFilterMask(playlist_lock::filter_remove_playlist);
 
+            _TreeView.RefreshAllItems(); // Force the item images to be re-assessed.
+
             return;
         }
 
@@ -330,12 +332,16 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
         {
             ModifyFilterMask(~0u);
 
+            _TreeView.RefreshAllItems(); // Force the item images to be re-assessed.
+
             return;
         }
 
         case IDM_LOCK_NONE:
         {
             ModifyFilterMask(0);
+
+            _TreeView.RefreshAllItems(); // Force the item images to be re-assessed.
 
             return;
         }
@@ -928,7 +934,9 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
                         .crText = _Theme.GetWindowTextColor()
                     };
 
-                    ::DrawThemeTextEx(_Theme.GetTextStyle(), hDC, 0, 0, (tvi.state & TVIS_EXPANDED) ? ChevronDown : ChevronRight, -1, DT_CENTER | DT_VCENTER | DT_SINGLELINE, &rcChev, &Options);
+                    constexpr DWORD Flags = DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX;
+
+                    ::DrawThemeTextEx(_Theme.GetTextStyle(), hDC, 0, 0, (tvi.state & TVIS_EXPANDED) ? ChevronDown : ChevronRight, -1, Flags, &rcChev, &Options);
 
                     ::SelectObject(hDC, hOldFont);
                 }
@@ -992,9 +1000,11 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
 
                 rc.right = rc.left + (rcText.right - rcText.left);
 
-                auto hOldFont = ::SelectObject(hDC, _Theme.GetPlaylistFont());
+                const auto hOldFont = ::SelectObject(hDC, _Theme.GetPlaylistFont());
 
-                ::DrawThemeTextEx(_Theme.GetTextStyle(), hDC, 0, 0, Text, -1, DT_LEFT | DT_SINGLELINE | DT_VCENTER, &rc, &Options);
+                constexpr DWORD Flags = DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_EXPANDTABS | DT_NOPREFIX;
+
+                ::DrawThemeTextEx(_Theme.GetTextStyle(), hDC, 0, 0, Text, -1, Flags, &rc, &Options);
 
                 ::SelectObject(hDC, hOldFont);
             }
@@ -1257,6 +1267,10 @@ LRESULT playlist_uielement_t::OnGetDisplayInfo(NMHDR * nmhd) noexcept
         if (Node->IsFolder)
         {
             Image = ItemImage::Folder;
+
+            // Is the folder locked?
+            if (IsProhibited(Node, playlist_lock::filter_remove_playlist))
+                Image = ItemImage::FolderLocked;
         }
         else
         {
@@ -1741,7 +1755,7 @@ std::string playlist_uielement_t::GetConfiguration() const noexcept
             const auto Node = (node_t *) _TreeView.GetData(hItem);
 
             if ((Node == nullptr) || ((Node != nullptr) && (Node->Id == GUID_NULL)))
-                return true; // Continue enumerating. Should not occur.
+                return true; // Continue walking. Should not occur.
 
             uint32_t FilterMask = 0;
 
@@ -1756,7 +1770,7 @@ std::string playlist_uielement_t::GetConfiguration() const noexcept
 
             (*node)["filterMask"] = FilterMask;
 
-            return true; // Continue enumerating.
+            return true; // Continue walking.
         }, &Nodes);
 
         Object["nodes"] = Nodes;
@@ -1874,10 +1888,11 @@ bool playlist_uielement_t::IsProhibited(const node_t * node, uint32_t filterMask
 {
     if (node->IsFolder)
     {
-        // A folder should not be removed if it contains at least one playlist that should not be removed.
+        // Only check the "Remove Playlist" lock for a folder.
         if ((filterMask & playlist_lock::filter_remove_playlist) == 0)
             return false;
 
+        // A folder should not be removed if it contains at least one playlist that has a removal lock.
         bool Result = false;
 
         auto StartNode = node;
@@ -1894,7 +1909,7 @@ bool playlist_uielement_t::IsProhibited(const node_t * node, uint32_t filterMask
                 return false;
             }
 
-            return true; // Continue enumerating.
+            return true; // Continue walking.
         }, StartNode);
 
         return Result;
@@ -2035,7 +2050,7 @@ void playlist_uielement_t::ResetAutoComplete() noexcept
     {
         _StringEnumerator->AddItem(msc::UTF8ToWide(node->Name));
 
-        return true; // Continue enumerating.
+        return true; // Continue walking.
     });
 
     try { _EditBox.SetWindowTextW(L""); } catch (...) { }

@@ -26,10 +26,12 @@ void state_t::Reset() noexcept
 
     _Images.clear();
 
+    // Important: Don't change the order of these images.
     _Images.push_back({ "imageres.dll",   4 }); // Folder
     _Images.push_back({ "imageres.dll", 126 }); // Playlist
     _Images.push_back({ "imageres.dll", 125 }); // Playlist (Playing)
     _Images.push_back({ "shell32.dll",   47 }); // Playlist (Locked)
+    _Images.push_back({ "imageres.dll",   8 }); // Folder (Locked)
 
     _Object.clear();
 }

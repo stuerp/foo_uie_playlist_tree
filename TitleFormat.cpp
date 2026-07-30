@@ -345,7 +345,7 @@ double custom_titleformat_hook_t::GetPlaylistDuration(size_t index) const noexce
                     Duration += Length;
             }
 
-            return true; // Continue enumerating
+            return true; // Continue walking
         }
 
     public:
@@ -375,7 +375,7 @@ t_filesize custom_titleformat_hook_t::GetPlaylistSize(size_t index) const noexce
             if (item.is_valid())
                 Size += item->get_filesize();
 
-            return true; // Continue enumerating
+            return true; // Continue walking
         }
 
     public:
