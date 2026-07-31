@@ -77,7 +77,7 @@ To create the component first build the x86 configuration and next the x64 confi
 
 ## Change Log
 
-v1.4.0.0, 2026-08-xx
+v1.4.0.0, 2026-07-31
 
 * New: A `Playlist` submenu will be added to the context menu that contains the standard foobar2000 context menu for a playlist when one is selected.
 * New: Quick Search text box to quickly highlight a folder or playlist. The text box supports Auto Complete.
