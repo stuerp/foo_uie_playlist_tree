@@ -1,15 +1,16 @@
 
-/** $VER: PlaylistsTreeView.h (2026.07.24) P. Stuer **/
+/** $VER: PlaylistsTreeView.h (2026.07.30) P. Stuer **/
 
 #pragma once
 
 #include "TreeView.h"
 #include "Node.h"
+#include "Log.h"
 
 #pragma warning(push)
 #pragma warning(disable: 4868) // compiler may not enforce left-to-right evaluation order in braced initializer list
 
-#include <nlohmann\json.hpp>
+#include <nlohmann/json.hpp>
 
 using json = nlohmann::ordered_json;
 
@@ -31,13 +32,17 @@ public:
     virtual ~playlist_tree_view_t() noexcept { };
 
     bool GetText(const GUID & id, std::string & text) const noexcept;
-    bool SetName(const GUID & id, const std::string & name) const noexcept;
 
-    using tree_view_t::SelectItem; // Adds the base class overload.
+    using tree_view_t::GetText;     // Adds the base class overload.
+
+    bool SetName(const GUID & id, const std::string & name) const noexcept;
 
     node_t * AddItem(const GUID & parentId, const GUID & insertAfterId, const GUID & id, const std::string & name, bool isFolder, bool isExpanded) const noexcept;
     bool RemoveItem(const GUID & id) const noexcept;
     bool SelectItem(const GUID & id) const noexcept;
+    bool SelectItem(const std::string & name) const noexcept;
+
+    using tree_view_t::SelectItem;  // Adds the base class overload.
 
     HTREEITEM FindItem(const GUID & id) const noexcept;
 
@@ -54,6 +59,8 @@ public:
         return __super::RemoveItem(hItem);
     }
 
+    size_t GetChildCount(const GUID & id) const noexcept;
+
     /// <summary>
     /// Serializes this instance to JSON.
     /// </summary>
@@ -62,22 +69,34 @@ public:
         return ToJSON_(TreeView_GetRoot(Get()), visitor, nodes);
     }
 
-protected:
     /// <summary>
-    /// Returns true if a drop is allowed on the target.
+    /// Walks the tree view.
     /// </summary>
-    virtual bool AllowDrop(DropZone dropZone) noexcept override
+    template<typename Visitor> bool Walk(Visitor && visitor) const noexcept
     {
-        if (_hDropTarget == NULL)
-            return false;
+        const auto hItem = TreeView_GetRoot(Get());
 
-        auto Node = (const node_t *) GetData(_hDropTarget);
-
-        if (Node == nullptr)
-            return false;
-
-        return Node->IsFolder || (!Node->IsFolder && (dropZone != DropZone::Middle));
+        return Walk_(hItem, NULL, visitor); // Always walk the complete tree.
     }
+
+    /// <summary>
+    /// Walks the tree view starting at the specified node.
+    /// </summary>
+    template<typename Visitor> bool Walk(Visitor && visitor, const node_t * startNode) const noexcept
+    {
+        if (startNode == nullptr)
+            return false;
+
+        auto hItem = FindItem(startNode->Id);
+
+        if (hItem == NULL)
+            return false;
+
+        return Walk_(hItem, hItem, visitor);
+    }
+
+protected:
+    virtual bool AllowDrop(DropZone dropZone) noexcept override;
 
 private:
     /// <summary>
@@ -94,7 +113,10 @@ private:
 
             json::array_t Nodes;
 
-            if (!ToJSON_(TreeView_GetChild(Get(), hItem), visitor, &Nodes))
+            // Walk the sub branch if the current item has children.
+            const auto hChild = TreeView_GetChild(Get(), hItem);
+
+            if ((hChild != NULL) && !ToJSON_(hChild, visitor, &Nodes))
                 return false;
 
             if (Nodes.size() != 0)
@@ -108,5 +130,33 @@ private:
         return true;
     }
 
-public:
+    /// <summary>
+    /// Walks this instance.
+    /// </summary>
+    template<typename Visitor> bool Walk_(HTREEITEM hItem, HTREEITEM hStartItem, Visitor && visitor) const noexcept
+    {
+        auto hCurrentItem = hItem;
+
+        while (hCurrentItem != NULL)
+        {
+            const auto Node = (node_t *) GetData(hCurrentItem);
+
+            if (!visitor(Node))
+                return false;
+
+            // Walk the sub branch if the current item has children.
+            const auto hChild = TreeView_GetChild(Get(), hCurrentItem);
+
+            if ((hChild != NULL) && !Walk_(hChild, hStartItem, visitor))
+                return false;
+
+            hCurrentItem = TreeView_GetNextSibling(Get(), hCurrentItem);
+        }
+
+        // Stop walking if we've walked the complete branch downwards. Don't go up.
+        if (TreeView_GetParent(Get(), hItem) == hStartItem)
+            return false;
+
+        return true;
+    }
 };

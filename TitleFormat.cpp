@@ -15,13 +15,13 @@ template<typename... Pairs> auto dispatcher_t(Pairs &&... pairs)
 /// <summary>
 /// Evaluates a foobar2000 Title Format script.
 /// </summary>
-HRESULT title_formatter_t::Evaluate(const std::string & script, const GUID id, pfc::string & result) noexcept
+HRESULT title_formatter_t::Evaluate(const std::string & script, const playlist_tree_view_t * treeView, const GUID id, pfc::string & result) noexcept
 {
     service_ptr_t<titleformat_object> tfo;
 
     static_api_ptr_t<titleformat_compiler>()->compile_safe_ex(tfo, script.c_str());
 
-    custom_titleformat_hook_t Hook(id);
+    custom_titleformat_hook_t Hook(treeView, id);
 
     tfo->run(&Hook, result, nullptr);
 
@@ -65,7 +65,15 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
 
         std::pair{ "node_item_count", [&]() -> bool
         {
-            const size_t ItemCount = _PlaylistManager->playlist_get_item_count(Index);
+            size_t ItemCount;
+
+            if (IsFolder)
+                ItemCount = (_TreeView != nullptr) ? _TreeView->GetChildCount(_Id) : SIZE_MAX;
+            else
+                ItemCount = _PlaylistManager->playlist_get_item_count(Index);
+
+            if (ItemCount == SIZE_MAX)
+                return false;
 
             std::locale Locale(""); // User default Windows locale.
 
@@ -345,7 +353,7 @@ double custom_titleformat_hook_t::GetPlaylistDuration(size_t index) const noexce
                     Duration += Length;
             }
 
-            return true; // Continue enumerating
+            return true; // Continue walking
         }
 
     public:
@@ -375,7 +383,7 @@ t_filesize custom_titleformat_hook_t::GetPlaylistSize(size_t index) const noexce
             if (item.is_valid())
                 Size += item->get_filesize();
 
-            return true; // Continue enumerating
+            return true; // Continue walking
         }
 
     public:

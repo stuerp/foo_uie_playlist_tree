@@ -1,5 +1,5 @@
 
-/** $VER: State.cpp (2026.07.25) P. Stuer **/
+/** $VER: State.cpp (2026.07.30) P. Stuer **/
 
 #include "pch.h"
 
@@ -21,15 +21,17 @@ state_t::state_t() noexcept
 void state_t::Reset() noexcept
 {
     _TextFormat    = "%node_name%$if(%node_is_folder%,,' ('%node_item_count%')')";
-    _ToolTipFormat = "$if(%node_is_folder%,,$if(%playlist_size_natural%,%playlist_size_natural%\n$if2(%playlist_duration_natural%,', N/A'),'N/A'))";
+    _ToolTipFormat = "$if(%node_is_folder%,,$if(%playlist_size_natural%,%playlist_size_natural%$crlf()$if2(%playlist_duration_natural%,', N/A'),'N/A'))";
     _ImageSize     = (uint32_t) ::GetSystemMetrics(SM_CXSMICON);
 
     _Images.clear();
 
+    // Important: Don't change the order of these images.
     _Images.push_back({ "imageres.dll",   4 }); // Folder
     _Images.push_back({ "imageres.dll", 126 }); // Playlist
     _Images.push_back({ "imageres.dll", 125 }); // Playlist (Playing)
     _Images.push_back({ "shell32.dll",   47 }); // Playlist (Locked)
+    _Images.push_back({ "imageres.dll",   8 }); // Folder (Locked)
 
     _Object.clear();
 }

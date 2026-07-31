@@ -1,5 +1,5 @@
 
-/** $VER: TreeView.cpp (2026.07.25) P. Stuer **/
+/** $VER: TreeView.cpp (2026.07.31) P. Stuer **/
 
 #include "pch.h"
 
@@ -77,6 +77,28 @@ HTREEITEM tree_view_t::AddItem(HTREEITEM hParent, HTREEITEM hInsertAfter, UINT s
 }
 
 /// <summary>
+/// Returns the number of direct children of an item.
+/// </summary>
+size_t tree_view_t::GetChildCount(HTREEITEM hItem) const noexcept
+{
+    auto hChild = TreeView_GetChild(_hTreeView, hItem);
+
+    if (hChild == NULL)
+        return SIZE_MAX;
+
+    size_t Count = 0;
+
+    while (hChild != 0)
+    {
+        ++Count;
+
+        hChild = TreeView_GetNextSibling(_hTreeView, hChild);
+    }
+
+    return Count;
+}
+
+/// <summary>
 /// Redraws the control.
 /// </summary>
 void tree_view_t::Redraw() const noexcept
@@ -95,7 +117,7 @@ bool tree_view_t::RedrawItem(HTREEITEM hItem) const noexcept
     if (!TreeView_GetItemRect(_hTreeView, hItem, &r, FALSE))
         return false;
 
-    return (::InvalidateRect(Get(), &r, TRUE) != 0);
+    return (bool) ::InvalidateRect(Get(), &r, TRUE);
 }
 
 /// <summary>
@@ -113,14 +135,16 @@ bool tree_view_t::RefreshItem(HTREEITEM hItem) const noexcept
 //      .cChildren      = I_CHILDRENCALLBACK
     };
 
-    return (TreeView_SetItem(_hTreeView, &tvi) != 0);
+    return (bool) TreeView_SetItem(_hTreeView, &tvi);
 }
-#include "Log.h"
+
 /// <summary>
 /// Refreshes all items.
 /// </summary>
 bool tree_view_t::RefreshAllItems() const noexcept
 {
+    return (bool) ::RedrawWindow(_hTreeView, nullptr, nullptr, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
+/*
     auto hItem = TreeView_GetRoot(_hTreeView);
 
     while (hItem != NULL)
@@ -149,6 +173,7 @@ bool tree_view_t::RefreshAllItems() const noexcept
     }
 
     return (::InvalidateRect(_hTreeView, nullptr, TRUE) != 0);
+*/
 }
 
 /// <summary>
@@ -245,20 +270,31 @@ bool tree_view_t::GetText(HTREEITEM hItem, std::string & text) const noexcept
 {
     std::wstring Text;
 
-    Text.resize(256);
+    if (!GetText(hItem, Text))
+        return false;
+
+    text = msc::WideToUTF8(Text);
+
+    return true;
+}
+
+/// <summary>
+/// Gets the text of the specified item.
+/// </summary>
+bool tree_view_t::GetText(HTREEITEM hItem, std::wstring & text) const noexcept
+{
+    text.resize(256);
 
     TVITEMEXW tvi =
     {
         .mask       = TVIF_TEXT,
         .hItem      = hItem,
-        .pszText    = (LPWSTR) Text.c_str(),
-        .cchTextMax = (int) Text.size(),
+        .pszText    = (LPWSTR) text.c_str(),
+        .cchTextMax = (int) text.size(),
     };
 
     if (!TreeView_GetItem(_hTreeView, &tvi))
         return false;
-
-    text = msc::WideToUTF8(Text);
 
     return true;
 }
@@ -277,7 +313,7 @@ bool tree_view_t::SetText(HTREEITEM hItem, const std::string & text) const noexc
         .pszText = (LPWSTR) Text.c_str(),
     };
 
-    return (TreeView_SetItem(_hTreeView, &tvi) != 0);
+    return (bool) TreeView_SetItem(_hTreeView, &tvi);
 }
 
 /// <summary>
@@ -353,7 +389,7 @@ void tree_view_t::BeginDrag(const NMTREEVIEW * nmtv) noexcept
     if (!::ImageList_BeginDrag(_hDragImageList, 0, 0, 0))
         return;
 
-    // Loch the tree view.
+    // Lock the tree view.
     if (!::ImageList_DragEnter(_hTreeView, nmtv->ptDrag.x, nmtv->ptDrag.y))
         return;
 

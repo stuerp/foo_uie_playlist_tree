@@ -1,5 +1,5 @@
 
-/** $VER: Resources.h (2026.07.26) P. Stuer **/
+/** $VER: Resources.h (2026.07.30) P. Stuer **/
 
 #pragma once
 
@@ -7,13 +7,13 @@
 #define TOSTRING(x) TOSTRING_IMPL(x)
 
 #define NUM_FILE_MAJOR          1
-#define NUM_FILE_MINOR          3
-#define NUM_FILE_PATCH          1
+#define NUM_FILE_MINOR          4
+#define NUM_FILE_PATCH          0
 #define NUM_FILE_PRERELEASE     0
 
 #define NUM_PRODUCT_MAJOR       1
-#define NUM_PRODUCT_MINOR       3
-#define NUM_PRODUCT_PATCH       1
+#define NUM_PRODUCT_MINOR       4
+#define NUM_PRODUCT_PATCH       0
 #define NUM_PRODUCT_PRERELEASE  0
 
 #define STR_PRERELEASE          ""
@@ -59,6 +59,7 @@
 /** Controls **/
 
 #define IDC_TREEVIEW        1
+#define IDC_EDITBOX         2
 
 /** Configuration **/
 
@@ -86,15 +87,16 @@
 #define IDM_LOCK_ALL            37
 #define IDM_LOCK_NONE           39
 
-#define IDM_SORT                40
+#define IDM_SORT                50
 
-#define IDM_LOAD                50
-#define IDM_SAVE                51
-#define IDM_SAVE_ALL            52
-
-#define IDM_CONTENTS            60
+#define IDM_LOAD                60
+#define IDM_SAVE                61
+#define IDM_SAVE_ALL            62
 
 #define IDM_DUMP                70
 
-#define IDM_CLEAR_HISTORY       80
+#define IDM_CLEAR_HISTORY     1000
 #define IDM_HISTORY             (IDM_CLEAR_HISTORY + 1)
+
+#define IDM_PLAYLIST          2000
+

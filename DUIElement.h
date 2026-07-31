@@ -5,6 +5,9 @@
 
 #include "PlaylistUIElement.h"
 
+namespace
+{
+
 /// <summary>
 /// Implements a Default UI element.
 /// </summary>
@@ -41,3 +44,5 @@ public:
 protected:
     ui_element_instance_callback::ptr m_callback; // Don't rename this. BumpableElement uses it.
 };
+
+}

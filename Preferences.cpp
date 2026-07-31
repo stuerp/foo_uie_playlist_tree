@@ -1,12 +1,17 @@
 
-/** $VER: Preferences.cpp (2026.07.24) P. Stuer **/
+/** $VER: Preferences.cpp (2026.07.30) P. Stuer **/
 
 #include "pch.h"
 
-#include <SDK\preferences_page.h>
+#include <sdk/preferences_page.h>
 
-#include <helpers\atl-misc.h>
-#include <helpers\DarkMode.h>
+#include <helpers/atl-misc.h>
+#include <helpers/DarkMode.h>
+
+#include <ranges>
+#include <cctype>
+
+#include <RAII.h>
 
 #include "PlaylistUIElement.h"
 #include "Tracker.h"
@@ -97,6 +102,7 @@ public:
     // WTL message map
     BEGIN_MSG_MAP_EX(preferences_t)
         MSG_WM_INITDIALOG(OnInitDialog)
+        MSG_WM_DESTROY(OnDestroy)
 
         COMMAND_HANDLER_EX(IDC_TEXT_FORMAT,         EN_CHANGE,      OnEditChange)
         COMMAND_HANDLER_EX(IDC_TOOL_TIP,            EN_CHANGE,      OnEditChange)
@@ -126,6 +132,14 @@ private:
     }
 
     /// <summary>
+    /// Handles WM_DESTROY.
+    /// </summary>
+    void OnDestroy()
+    {
+        _ImageList.Reset();
+    }
+
+    /// <summary>
     /// Initializes the controls.
     /// </summary>
     void InitializeControls()
@@ -148,7 +162,9 @@ private:
 
             w.ResetContent();
 
-            const WCHAR * Labels[] = { L"Folder", L"Playlist", L"Playlist (Playing)", L"Playlist (Locked)" };
+            static const WCHAR * Labels[] = { L"Folder", L"Folder (Locked)", L"Playlist", L"Playlist (Playing)", L"Playlist (Locked)" };
+
+            assert(_countof(Labels) == ((size_t) ItemImage::Count));
 
             for (auto Label : Labels)
                 w.AddString(Label);
@@ -156,11 +172,13 @@ private:
             _SelectedIndex = 0;
 
             w.SetCurSel(_SelectedIndex);
+
+            _SelectedImage = ImageIndexToId(_SelectedIndex);
         }
 
         // File Path and Icon Index
         {
-            auto & Image = _NewState._Images[(size_t) _SelectedIndex];
+            auto & Image = _NewState._Images[_SelectedImage];
 
             SetDlgItemTextW(IDC_FILE_PATH, msc::UTF8ToWide(Image._FilePath).c_str());
 
@@ -188,8 +206,11 @@ private:
 
             _SelectedIndex = cb.GetCurSel();
 
+
             {
-                auto & Image = _NewState._Images[(size_t) _SelectedIndex];
+                _SelectedImage = ImageIndexToId(_SelectedIndex);
+
+                auto & Image = _NewState._Images[_SelectedImage];
 
                 {
                     auto Scope = toggle_t(_IgnoreNotifications, true);
@@ -248,7 +269,7 @@ private:
             {
                 auto Edit = (CEdit) wnd;
 
-                auto & Image = _NewState._Images[(size_t) _SelectedIndex];
+                auto & Image = _NewState._Images[_SelectedImage];
 
                 {
                     Text.resize(MAX_PATH);
@@ -340,7 +361,7 @@ private:
         if (nmhd->code != ILN_SELCHANGE)
             return FALSE;
 
-        auto & Image = _NewState._Images[(size_t) _SelectedIndex];
+        auto & Image = _NewState._Images[_SelectedImage];
 
         Image._IconIndex = (uint32_t) SendDlgItemMessageW(IDC_IMAGE_LIST, ILM_GETSELECTEDITEM);
 
@@ -378,14 +399,14 @@ private:
                 return true;
         }
 
-        auto & Image = _NewState._Images[(size_t) _SelectedIndex];
+        auto & Image = _NewState._Images[_SelectedImage];
 
         // File Path and Icon Index
         {
-            if (Image._FilePath != _State._Images[(size_t) _SelectedIndex]._FilePath)
+            if (Image._FilePath != _State._Images[_SelectedImage]._FilePath)
                 return true;
 
-            if (Image._IconIndex != _State._Images[(size_t) _SelectedIndex]._IconIndex)
+            if (Image._IconIndex != _State._Images[_SelectedImage]._IconIndex)
                 return true;
         }
 
@@ -403,33 +424,76 @@ private:
     /// </summary>
     void UpdateIconList() noexcept
     {
-        const auto & Image = _NewState._Images[(size_t) _SelectedIndex];
+        const auto & Image = _NewState._Images[_SelectedImage];
 
+        // Create the file path.
         pfc::string Text;
 
-        HRESULT hResult = title_formatter_t::Evaluate(Image._FilePath, { }, Text);
+        HRESULT hResult = title_formatter_t::Evaluate(Image._FilePath, nullptr, GUID_NULL, Text);
 
-        auto FilePath = (SUCCEEDED(hResult)) ? Text.c_str() : Image._FilePath;
+        // Create the image list, if necessary.
+        {
+            auto FilePath = (SUCCEEDED(hResult)) ? Text.c_str() : Image._FilePath;
 
-        HIMAGELIST hImageList = image_list_factory_t::Create(FilePath, _NewState._ImageSize);
+            bool AreEqual = std::ranges::equal(FilePath, _ImageListFilePath, std::equal_to<>{}, [](unsigned char c) { return std::tolower(c); }, [](unsigned char c) { return std::tolower(c); });
 
-        if (hImageList == NULL)
-            Log.AtWarn().Write("Failed to create image list from \"%s\": 0x%08X", FilePath.c_str(), ::GetLastError());
+            if (!AreEqual)
+            {
+//              _hImageList.Reset();
 
-        HWND hIconList = GetDlgItem(IDC_IMAGE_LIST);
+                _ImageList = image_list_factory_t::Create(FilePath, _NewState._ImageSize);
 
-        ::SendMessageW(hIconList, ILM_SETIMAGELIST, 0, (LPARAM) hImageList);
+                if (_ImageList == NULL)
+                    Log.AtWarn().Write("Failed to create image list from \"%s\": 0x%08X", FilePath.c_str(), ::GetLastError());
 
-        ::SendMessageW(hIconList, ILM_SELECTITEM, (WPARAM) Image._IconIndex, 0);
+                _ImageListFilePath = FilePath;
+            }
+        }
+
+        // Send the image list to the control. Note: We retain ownership of the image list.
+        {
+            HWND hIconList = GetDlgItem(IDC_IMAGE_LIST);
+
+            if (hIconList == NULL)
+                return;
+
+            ::SendMessageW(hIconList, ILM_SETIMAGELIST, 0, (LPARAM) _ImageList.Get());
+
+            ::SendMessageW(hIconList, ILM_SELECTITEM, (WPARAM) Image._IconIndex, 0);
+        }
+    }
+
+    /// <summary>
+    /// UI helper function to map a combo box index to an image Id.
+    /// </summary>
+    size_t ImageIndexToId(int imageIndex) const noexcept
+    {
+        static const ItemImage Map[] =
+        {
+            ItemImage::Folder,
+            ItemImage::FolderLocked,
+
+            ItemImage::Playlist,
+            ItemImage::PlaylistPlaying,
+            ItemImage::PlaylistLocked,
+        };
+
+        assert(_countof(Map) == ((size_t) ItemImage::Count));
+
+        return (size_t) Map[std::min((size_t) imageIndex, _countof(Map))];
     }
 
 private:
     const preferences_page_callback::ptr _Callback;
 
     int _SelectedIndex;
+    size_t _SelectedImage;
     bool _IgnoreNotifications;
 
     state_t _NewState;
+
+    std::string _ImageListFilePath; // The file path of the last loaded image list.
+    imagelist_t _ImageList;
 
     fb2k::CDarkModeHooks _DarkMode;
 };

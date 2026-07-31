@@ -1,10 +1,10 @@
 
-/** $VER: PlaylistsUIElement.cpp (2026.07.26) P. Stuer **/
+/** $VER: PlaylistsUIElement.cpp (2026.07.31) P. Stuer **/
 
 #include "pch.h"
 
 #include "PlaylistUIElement.h"
-#include "DropTarget.h"
+
 #include "ImageList.h"
 #include "TitleFormat.h"
 #include "Node.h"
@@ -12,8 +12,6 @@
 #include "Theme.h"
 #include "Toggle.h"
 #include "Log.h"
-
-#include <SDK\playlist.h>
 
 #pragma hdrstop
 
@@ -39,8 +37,6 @@ playlist_uielement_t::~playlist_uielement_t()
     _FolderManager->UnregisterCallback(this);
     _PlaylistManager->unregister_callback(this);
 
-//  OnDestroy();
-
     ::OleUninitialize();
 }
 
@@ -49,7 +45,7 @@ playlist_uielement_t::~playlist_uielement_t()
 /// </summary>
 LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
 {
-    auto Result = uielement_t::OnCreate(cs);
+    auto Result = __super::OnCreate(cs);
 
     if (Result != 0)
         return Result;
@@ -63,13 +59,59 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
 
         _TreeViewSubclass.Attach(_TreeView.Get());
 
-        _DarkMode.AddCtrlAuto(_TreeView.Get());
-
         {
             HRESULT hResult = InitImageList();
 
             if (!SUCCEEDED(hResult))
                 Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to initialize image list: 0x%08X.", hResult);
+        }
+    }
+
+    // Create the edit box.
+    {
+        constexpr DWORD Styles = WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_TABSTOP | ES_LEFT | ES_AUTOHSCROLL;
+        constexpr DWORD ExStyles = WS_EX_NOPARENTNOTIFY | WS_EX_CLIENTEDGE;
+
+        if (!_EditBox.Create(m_hWnd, NULL, nullptr, Styles, ExStyles, IDC_EDITBOX, nullptr))
+            return -1;
+
+        // Add Auto Complete to the edit box.
+        {
+            // Enumerates the node names for Auto Complete to display.
+            _StringEnumerator = new string_enumerator_t();
+
+            IAutoComplete * ac = nullptr;
+
+            HRESULT hResult = ::CoCreateInstance(CLSID_AutoComplete, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&ac));
+
+            if (SUCCEEDED(hResult))
+            {
+                hResult = ::SHAutoComplete(_EditBox, 0);
+
+                if (SUCCEEDED(hResult))
+                {
+                    ac->Init(_EditBox, _StringEnumerator, nullptr, nullptr);
+
+                    {
+                        IAutoComplete2 * ac2 = nullptr;
+
+                        hResult = ac->QueryInterface(IID_PPV_ARGS(&ac2));
+
+                        if (SUCCEEDED(hResult))
+                        {
+                            ac2->SetOptions(ACO_AUTOSUGGEST | ACO_UPDOWNKEYDROPSLIST);
+
+                            ac2->Release();
+                        }
+                        else
+                            Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to set auto complete options: 0x%08X.", hResult);
+                    }
+                }
+
+                ac->Release();
+            }
+            else
+                Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to install auto complete on edit box: 0x%08X.", hResult);
         }
     }
 
@@ -83,10 +125,12 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
             Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to register drop target: 0x%08X.", hResult);
     }
 
-    // Deserialize the tree view nodes.
 //  _State._Object.clear(); // Uncomment to reset the state.
 
+    // Deserialize the tree view nodes.
     FromJSON(_State._Object);
+
+    ResetAutoComplete();
 
     // Select the active playlist.
     {
@@ -96,6 +140,8 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
             SelectPlaylist(Index);
     }
 
+    _DarkMode.AddControls(m_hWnd);
+
     return 0;
 }
 
@@ -104,8 +150,6 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
 /// </summary>
 void playlist_uielement_t::OnDestroy() noexcept
 {
-    _UIElementTracker.Remove(this);
-
     // Destroy the drop target.
     {
         if (m_hWnd != NULL)
@@ -118,24 +162,41 @@ void playlist_uielement_t::OnDestroy() noexcept
 
         if (_DropTarget != nullptr)
         {
-            _DropTarget->Release();
+            delete _DropTarget;
+
             _DropTarget = nullptr;
         }
     }
+
+    // Destroy the string enumerator.
+    if (_StringEnumerator != nullptr)
+    {
+        delete _StringEnumerator;
+
+        _StringEnumerator = nullptr;
+    }
+
+    // Destroy the edit box.
+    if (_EditBox.IsWindow())
+        _EditBox.DestroyWindow();
 
     // Destroy the tree view.
     if (_TreeView.Get() != NULL)
     {
         auto Scope = toggle_t(_IgnoreNotifications, true);
 
-        _hImageList.Reset();
+        _ImageList.Reset();
 
         _TreeViewSubclass.Detach(_TreeView.Get());
 
         _TreeView.Destroy();
     }
 
-    uielement_t::OnDestroy();
+    _UIElementTracker.Remove(this);
+
+    __super::OnDestroy();
+
+    SetMsgHandled(TRUE);
 }
 
 /// <summary>
@@ -145,7 +206,16 @@ void playlist_uielement_t::OnSize(UINT type, CSize size) noexcept
 {
     uielement_t::OnSize(type, size);
 
-    ::MoveWindow(_TreeView.Get(), 0, 0, size.cx, size.cy, TRUE);
+    int Height = 0;
+
+    if (_EditBox.IsWindow())
+    {
+        Height = CalculateEditHeight(_EditBox, _Theme.GetPlaylistFont());
+
+        _EditBox.MoveWindow(4, size.cy - Height - 4, size.cx - 8, Height, TRUE);
+    }
+
+    ::MoveWindow(_TreeView.Get(), 0, 0, size.cx, size.cy - Height - 8, TRUE);
 }
 
 /// <summary>
@@ -198,10 +268,13 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
         // Handles the "Remove" command.
         case IDM_REMOVE:
         {
-            auto Scope = toggle_t(_IsUser, true);
+            {
+                auto Scope = toggle_t(_IsUser, true);
 
-            if(!_TreeView.RemoveItem(_hHighlightedtem))
-                Log.AtError().Write(STR_COMPONENT_BASENAME " failed to remove highlighted item.");
+                _TreeView.RemoveItem(_hHighlightedtem);
+            }
+
+            ResetAutoComplete();
 
             return;
         }
@@ -246,6 +319,8 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
         {
             ModifyFilterMask(playlist_lock::filter_remove_playlist);
 
+            _TreeView.RefreshAllItems(); // Force the item images to be re-assessed.
+
             return;
         }
 
@@ -260,12 +335,16 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
         {
             ModifyFilterMask(~0u);
 
+            _TreeView.RefreshAllItems(); // Force the item images to be re-assessed.
+
             return;
         }
 
         case IDM_LOCK_NONE:
         {
             ModifyFilterMask(0);
+
+            _TreeView.RefreshAllItems(); // Force the item images to be re-assessed.
 
             return;
         }
@@ -396,6 +475,21 @@ void playlist_uielement_t::OnSetFocus(CWindow wndOld) noexcept
 }
 
 /// <summary>
+/// Handles the EN_CHANGE notification.
+/// </summary>
+void playlist_uielement_t::OnEditChange(UINT notifyCode, int id, CWindow wnd)
+{
+    wchar_t Text[256] = { };
+
+    if (_EditBox.GetWindowTextW(Text, _countof(Text)) == 0)
+        return;
+
+    _TreeView.SelectItem(msc::WideToUTF8(Text));
+
+    SetMsgHandled(TRUE);
+}
+
+/// <summary>
 /// Handles the WM_MOUSEMOVE message.
 /// </summary>
 void playlist_uielement_t::OnMouseMove(UINT flags, CPoint point) noexcept
@@ -515,7 +609,7 @@ void playlist_uielement_t::on_playlist_created(size_t index, const char * name, 
 
     const auto Id = _PlaylistManager->playlist_get_guid(index);
 
-    Log.AtTrace().Write(STR_COMPONENT_BASENAME " noticed playlist %s was created as \"%s\".", msc::GUIDToUTF8(Id).c_str(), name);
+    Log.AtDebug().Write(STR_COMPONENT_BASENAME " noticed playlist %s was created as \"%s\".", msc::GUIDToUTF8(Id).c_str(), name);
 
     // Get the data of the item we were hovering over, if any.
     const auto Parent = (node_t *) _TreeView.GetData(_hHighlightedtem);
@@ -537,13 +631,13 @@ void playlist_uielement_t::on_playlist_created(size_t index, const char * name, 
     // Activate the newly created playlist.
     _PlaylistManager->set_active_playlist(index);
 
-//  SelectPlaylist(index);
-
     _hHighlightedtem = NULL;
+
+    ResetAutoComplete();
 }
 
 /// <summary>
-/// 
+/// Handles playlists having been reordered.
 /// </summary>
 void playlist_uielement_t::on_playlists_reorder(const size_t * order, size_t count) noexcept
 {
@@ -554,6 +648,8 @@ void playlist_uielement_t::on_playlists_reorder(const size_t * order, size_t cou
 /// </summary>
 void playlist_uielement_t::on_playlists_removing(const bit_array & mask, size_t oldCount, size_t newCount) noexcept
 {
+    Log.AtDebug().Write(STR_COMPONENT_BASENAME " noticed %d playlist(s) are being removed.", oldCount - newCount);
+
     if (_IgnoreNotifications)
         return;
 
@@ -561,9 +657,10 @@ void playlist_uielement_t::on_playlists_removing(const bit_array & mask, size_t 
     {
         const auto Id = _PlaylistManager->playlist_get_guid(Index);
 
-        Log.AtTrace().Write(STR_COMPONENT_BASENAME " noticed playlist %s is being removed.", msc::GUIDToUTF8(Id).c_str());
+        Log.AtDebug().Write(STR_COMPONENT_BASENAME " noticed playlist %s is being removed.", msc::GUIDToUTF8(Id).c_str());
 
-        _TreeView.RemoveItem(Id);
+        if (!_TreeView.RemoveItem(Id))
+            Log.AtError().Write(STR_COMPONENT_BASENAME " failed to remove item %s.", msc::GUIDToUTF8(Id).c_str());
     }
 }
 
@@ -572,6 +669,9 @@ void playlist_uielement_t::on_playlists_removing(const bit_array & mask, size_t 
 /// </summary>
 void playlist_uielement_t::on_playlists_removed(const bit_array & mask, size_t oldCount, size_t newCount) noexcept
 {
+    Log.AtDebug().Write(STR_COMPONENT_BASENAME " noticed %d playlist(s) were removed.", oldCount - newCount);
+
+    ResetAutoComplete();
 }
 
 /// <summary>
@@ -584,9 +684,11 @@ void playlist_uielement_t::on_playlist_renamed(size_t index, const char * newNam
 
     const auto Id = _PlaylistManager->playlist_get_guid(index);
 
-    Log.AtTrace().Write(STR_COMPONENT_BASENAME " noticed playlist %s was renamed to \"%s\".", msc::GUIDToUTF8(Id).c_str(), newName);
+    Log.AtDebug().Write(STR_COMPONENT_BASENAME " noticed playlist %s was renamed to \"%s\".", msc::GUIDToUTF8(Id).c_str(), newName);
 
     _TreeView.SetName(Id, newName);
+
+    ResetAutoComplete();
 }
 
 /// <summary>
@@ -618,10 +720,10 @@ void playlist_uielement_t::on_playlist_locked(size_t index, bool isLocked) noexc
         if (!_PlaylistManager->playlist_lock_query_name(index, LockName))
             LockName = "<Unknown>";
 
-        Log.AtTrace().Write(STR_COMPONENT_BASENAME " noticed playlist %d was locked with lock \"%s\".", index, LockName.c_str());
+        Log.AtDebug().Write(STR_COMPONENT_BASENAME " noticed playlist %d was locked with lock \"%s\".", index, LockName.c_str());
     }
     else
-        Log.AtTrace().Write(STR_COMPONENT_BASENAME " noticed playlist %d was unlocked.", index);
+        Log.AtDebug().Write(STR_COMPONENT_BASENAME " noticed playlist %d was unlocked.", index);
 
     const auto Id = _PlaylistManager->playlist_get_guid(index);
 
@@ -674,7 +776,7 @@ void playlist_uielement_t::OnFolderCreated(const GUID & id, const std::string & 
     if (_IgnoreNotifications || (id == GUID_NULL) || name.empty())
         return;
 
-    Log.AtTrace().Write(STR_COMPONENT_BASENAME " is adding folder %s to the tree.", msc::GUIDToUTF8(id).c_str());
+    Log.AtDebug().Write(STR_COMPONENT_BASENAME " is adding folder %s to the tree.", msc::GUIDToUTF8(id).c_str());
 
     // Get the node we were hovering over, if any.
     const auto Parent = (node_t *) _TreeView.GetData(_hHighlightedtem);
@@ -696,6 +798,8 @@ void playlist_uielement_t::OnFolderCreated(const GUID & id, const std::string & 
     _TreeView.SelectItem(id);
 
     _hHighlightedtem = NULL;
+
+    ResetAutoComplete();
 };
 
 /// <summary>
@@ -703,7 +807,20 @@ void playlist_uielement_t::OnFolderCreated(const GUID & id, const std::string & 
 /// </summary>
 void playlist_uielement_t::OnFolderRemoving(const GUID & id) noexcept
 {
-    Log.AtTrace().Write(STR_COMPONENT_BASENAME " is removing folder %s from the tree.", msc::GUIDToUTF8(id).c_str());
+    Log.AtDebug().Write(STR_COMPONENT_BASENAME " is removing folder %s from the tree.", msc::GUIDToUTF8(id).c_str());
+
+    if (_IgnoreNotifications)
+        return;
+};
+
+/// <summary>
+/// Called when a folder is has been removed.
+/// </summary>
+void playlist_uielement_t::OnFolderRemoved(const GUID & id) noexcept
+{
+    Log.AtDebug().Write(STR_COMPONENT_BASENAME " removed folder %s from the tree.", msc::GUIDToUTF8(id).c_str());
+
+    ResetAutoComplete();
 
     if (_IgnoreNotifications)
         return;
@@ -714,6 +831,12 @@ void playlist_uielement_t::OnFolderRemoving(const GUID & id) noexcept
 /// </summary>
 void playlist_uielement_t::OnFolderRenamed(const GUID & id, const std::string & oldName, const std::string & newName) noexcept
 {
+    Log.AtDebug().Write(STR_COMPONENT_BASENAME " is renamed folder %s from \"%s\" to \"%s\".", msc::GUIDToUTF8(id).c_str(), oldName.c_str(), newName.c_str());
+
+    ResetAutoComplete();
+
+    if (_IgnoreNotifications)
+        return;
 };
 
 #pragma endregion
@@ -814,7 +937,9 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
                         .crText = _Theme.GetWindowTextColor()
                     };
 
-                    ::DrawThemeTextEx(_Theme.GetTextStyle(), hDC, 0, 0, (tvi.state & TVIS_EXPANDED) ? ChevronDown : ChevronRight, -1, DT_CENTER | DT_VCENTER | DT_SINGLELINE, &rcChev, &Options);
+                    constexpr DWORD Flags = DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX;
+
+                    ::DrawThemeTextEx(_Theme.GetTextStyle(), hDC, 0, 0, (tvi.state & TVIS_EXPANDED) ? ChevronDown : ChevronRight, -1, Flags, &rcChev, &Options);
 
                     ::SelectObject(hDC, hOldFont);
                 }
@@ -860,7 +985,7 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
                 const LONG dx = ((1 + ItemHeight + 1) - (LONG) _State._ImageSize) / 2;
                 const LONG dy = (     ItemHeight      - (LONG) _State._ImageSize) / 2;
 
-                ::ImageList_Draw(_hImageList, tvi.iImage, hDC, rc.left + dx, rc.top + dy, ILD_NORMAL);
+                ::ImageList_Draw(_ImageList, tvi.iImage, hDC, rc.left + dx, rc.top + dy, ILD_NORMAL);
 
                 rc.left += (1 + ItemHeight + 1) + 3;
             }
@@ -878,9 +1003,11 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
 
                 rc.right = rc.left + (rcText.right - rcText.left);
 
-                auto hOldFont = ::SelectObject(hDC, _Theme.GetPlaylistFont());
+                const auto hOldFont = ::SelectObject(hDC, _Theme.GetPlaylistFont());
 
-                ::DrawThemeTextEx(_Theme.GetTextStyle(), hDC, 0, 0, Text, -1, DT_LEFT | DT_SINGLELINE | DT_VCENTER, &rc, &Options);
+                constexpr DWORD Flags = DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_EXPANDTABS | DT_NOPREFIX;
+
+                ::DrawThemeTextEx(_Theme.GetTextStyle(), hDC, 0, 0, Text, -1, Flags, &rc, &Options);
 
                 ::SelectObject(hDC, hOldFont);
             }
@@ -906,7 +1033,17 @@ LRESULT playlist_uielement_t::OnRightClick(NMHDR * nmhd) noexcept
 {
     const DWORD Position = ::GetMessagePos();
 
-    const POINT pt = { GET_X_LPARAM(Position), GET_Y_LPARAM(Position) };
+    POINT pt = { GET_X_LPARAM(Position), GET_Y_LPARAM(Position) };
+
+    // In case the context menu gets called using the keyboard.
+    if ((pt.x == -1) && (pt.y == -1))
+    {
+        RECT rc;
+
+        ::GetWindowRect(m_hWnd, &rc);
+
+        pt = { (rc.right - rc.left) / 2, (rc.bottom - rc.top) / 2 };
+    }
 
     // Remember the item we're hovering over, if any.
     _hHighlightedtem = _TreeView.GetHighlightedItem(pt);
@@ -920,6 +1057,10 @@ LRESULT playlist_uielement_t::OnRightClick(NMHDR * nmhd) noexcept
 
     if (hPopup != NULL)
     {
+        static_api_ptr_t<contextmenu_manager> cm;
+
+        HMENU hPlaylist = NULL;
+
         const auto OnItem     = (_hHighlightedtem != NULL);
         const auto Node       = (node_t *) _TreeView.GetData(_hHighlightedtem);
         const auto Index      = (Node != nullptr) ? _PlaylistManager->find_playlist_by_guid(Node->Id) : SIZE_MAX;
@@ -928,49 +1069,69 @@ LRESULT playlist_uielement_t::OnRightClick(NMHDR * nmhd) noexcept
         // Disable the Lock menu when we're not over a playlist.
         ::EnableMenuItem(hPopup, 4, (UINT) (MF_BYPOSITION | (IsPlaylist ? MF_ENABLED : MF_DISABLED | MF_GRAYED)));
 
+        ::EnableMenuItem(hPopup, IDM_REMOVE, !IsProhibited(Node, playlist_lock::filter_remove_playlist) ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+
         if (IsPlaylist)
         {
             const auto FilterMask = _PlaylistManager->playlist_lock_get_filter_mask(Index);
 
             if (FilterMask != 0)
             {
-                ::EnableMenuItem(hPopup, IDM_RENAME, !playlist_lock_t::IsRenamePlaylistEnabled(FilterMask) ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
-                ::EnableMenuItem(hPopup, IDM_REMOVE, !playlist_lock_t::IsRemovePlaylistEnabled(FilterMask) ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+                ::EnableMenuItem(hPopup, IDM_RENAME, !playlist_lock_t::IsRenamePlaylistProhibited(FilterMask) ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
 
-                ::CheckMenuItem(hPopup, IDM_LOCK_ADD_ITEMS,      playlist_lock_t::IsAddEnabled(FilterMask)            ? MF_CHECKED : 0);
-                ::CheckMenuItem(hPopup, IDM_LOCK_REMOVE_ITEMS,   playlist_lock_t::IsRemoveEnabled(FilterMask)         ? MF_CHECKED : 0);
-                ::CheckMenuItem(hPopup, IDM_LOCK_REORDER_ITEMS,  playlist_lock_t::IsReorderEnabled(FilterMask)        ? MF_CHECKED : 0);
-                ::CheckMenuItem(hPopup, IDM_LOCK_REPLACE_ITEMS,  playlist_lock_t::IsReplaceEnabled(FilterMask)        ? MF_CHECKED : 0);
+                // Update the Lock submenu.
+                {
+                    ::CheckMenuItem(hPopup, IDM_LOCK_ADD_ITEMS,      playlist_lock_t::IsAddProhibited(FilterMask)            ? MF_CHECKED : 0);
+                    ::CheckMenuItem(hPopup, IDM_LOCK_REMOVE_ITEMS,   playlist_lock_t::IsRemoveProhibited(FilterMask)         ? MF_CHECKED : 0);
+                    ::CheckMenuItem(hPopup, IDM_LOCK_REORDER_ITEMS,  playlist_lock_t::IsReorderProhibited(FilterMask)        ? MF_CHECKED : 0);
+                    ::CheckMenuItem(hPopup, IDM_LOCK_REPLACE_ITEMS,  playlist_lock_t::IsReplaceProhibited(FilterMask)        ? MF_CHECKED : 0);
 
-                ::CheckMenuItem(hPopup, IDM_LOCK_RENAME,         playlist_lock_t::IsRenamePlaylistEnabled(FilterMask) ? MF_CHECKED : 0);
-                ::CheckMenuItem(hPopup, IDM_LOCK_REMOVE,         playlist_lock_t::IsRemovePlaylistEnabled(FilterMask) ? MF_CHECKED : 0);
+                    ::CheckMenuItem(hPopup, IDM_LOCK_RENAME,         playlist_lock_t::IsRenamePlaylistProhibited(FilterMask) ? MF_CHECKED : 0);
+                    ::CheckMenuItem(hPopup, IDM_LOCK_REMOVE,         playlist_lock_t::IsRemovePlaylistProhibited(FilterMask) ? MF_CHECKED : 0);
 
-                ::CheckMenuItem(hPopup, IDM_LOCK_DEFAULT_ACTION, playlist_lock_t::IsDefaultActionEnabled(FilterMask)  ? MF_CHECKED : 0);
+                    ::CheckMenuItem(hPopup, IDM_LOCK_DEFAULT_ACTION, playlist_lock_t::IsDefaultActionProhibited(FilterMask)  ? MF_CHECKED : 0);
 
-                const auto IsOurLock = _LockManager->IsLocked(Node->Id);
+                    const auto IsOurLock = _LockManager->IsLockedByMe(Node->Id);
 
-                ::EnableMenuItem(hPopup, IDM_LOCK_ADD_ITEMS,      IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
-                ::EnableMenuItem(hPopup, IDM_LOCK_REMOVE_ITEMS,   IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
-                ::EnableMenuItem(hPopup, IDM_LOCK_REORDER_ITEMS,  IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
-                ::EnableMenuItem(hPopup, IDM_LOCK_REPLACE_ITEMS,  IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+                    ::EnableMenuItem(hPopup, IDM_LOCK_ADD_ITEMS,      IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+                    ::EnableMenuItem(hPopup, IDM_LOCK_REMOVE_ITEMS,   IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+                    ::EnableMenuItem(hPopup, IDM_LOCK_REORDER_ITEMS,  IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+                    ::EnableMenuItem(hPopup, IDM_LOCK_REPLACE_ITEMS,  IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
 
-                ::EnableMenuItem(hPopup, IDM_LOCK_RENAME,         IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
-                ::EnableMenuItem(hPopup, IDM_LOCK_REMOVE,         IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+                    ::EnableMenuItem(hPopup, IDM_LOCK_RENAME,         IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+                    ::EnableMenuItem(hPopup, IDM_LOCK_REMOVE,         IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
 
-                ::EnableMenuItem(hPopup, IDM_LOCK_DEFAULT_ACTION, IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+                    ::EnableMenuItem(hPopup, IDM_LOCK_DEFAULT_ACTION, IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
 
-                ::EnableMenuItem(hPopup, IDM_LOCK_ALL,            IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
-                ::EnableMenuItem(hPopup, IDM_LOCK_NONE,           IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+                    ::EnableMenuItem(hPopup, IDM_LOCK_ALL,            IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+                    ::EnableMenuItem(hPopup, IDM_LOCK_NONE,           IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
 
-                pfc::string LockName;
+                    pfc::string LockName;
 
-                if (!_PlaylistManager->playlist_lock_query_name(Index, LockName))
-                    LockName = "<Unknown>";
+                    if (!_PlaylistManager->playlist_lock_query_name(Index, LockName))
+                        LockName = "<Unknown>";
 
-                const HMENU hLock = ::GetSubMenu(hPopup, 4);
+                    const HMENU hLock = ::GetSubMenu(hPopup, 4);
 
-                ::AppendMenuW(hLock, MF_SEPARATOR, 0, NULL);
-                ::AppendMenuW(hLock, MF_STRING | MF_GRAYED | MF_DISABLED, 0, msc::FormatText(L"Locked with %S", LockName.c_str()).c_str());
+                    ::AppendMenuW(hLock, MF_SEPARATOR, 0, NULL);
+                    ::AppendMenuW(hLock, MF_STRING | MF_GRAYED | MF_DISABLED, 0, msc::FormatText(L"Locked with %S", LockName.c_str()).c_str());
+                }
+            }
+
+            // Create and append the "Playlist" submenu. It contains the other foobar2000 context menu items for a playlist.
+            {
+                metadb_handle_list Handles;
+
+                _PlaylistManager->playlist_get_all_items(Index, Handles);
+
+                cm->init_context(Handles, contextmenu_manager::flag_show_shortcuts | contextmenu_manager::flag_view_full);
+
+                hPlaylist = ::CreatePopupMenu();
+
+                cm->win32_build_menu(hPlaylist, IDM_PLAYLIST, ~0);
+
+                ::AppendMenuW(hPopup, MF_SEPARATOR, 0, NULL);
+                ::AppendMenuW(hPopup, MF_STRING | MF_POPUP, (UINT_PTR) hPlaylist, L"Playlist");
             }
         }
 
@@ -1016,6 +1177,9 @@ LRESULT playlist_uielement_t::OnRightClick(NMHDR * nmhd) noexcept
             }
         }
 
+        // Examine an autoplaylist.
+//      ExamineAutoplaylist(Index);
+
         // Append a troubleshooting menu item.
         if ((::GetKeyState(VK_CONTROL) & 0x8000) && (::GetKeyState(VK_SHIFT) & 0x8000))
         {
@@ -1023,9 +1187,18 @@ LRESULT playlist_uielement_t::OnRightClick(NMHDR * nmhd) noexcept
             ::AppendMenuW(hPopup, MF_STRING, IDM_DUMP, L"Dump configuration");
         }
 
-        ::TrackPopupMenu(hPopup, TPM_RIGHTBUTTON, pt.x, pt.y, 0, m_hWnd, nullptr);
+        const auto Command = (int) ::TrackPopupMenu(hPopup, TPM_RETURNCMD | TPM_RIGHTBUTTON | TPM_NONOTIFY, pt.x, pt.y, 0, m_hWnd, nullptr); 
 
         ::PostMessageW(m_hWnd, WM_NULL, 0, 0);
+
+        if (Command >= IDM_PLAYLIST)
+            cm->execute_by_id((unsigned int) (Command - IDM_PLAYLIST));
+        else
+        if (Command > 0)
+            ::PostMessageW(m_hWnd, WM_COMMAND, MAKEWORD(Command, 0), 0);
+
+        if (hPlaylist != NULL)
+            ::DestroyMenu(hPlaylist);
 
         SetMsgHandled(TRUE);
     }
@@ -1049,6 +1222,12 @@ LRESULT playlist_uielement_t::OnMiddleClick(NMHDR * nmhd) noexcept
     if (_hHighlightedtem == NULL)
         return -1;
 
+    auto Node = (const node_t *) _TreeView.GetData(_hHighlightedtem);
+
+    // Check for a playlist lock.
+    if (IsProhibited(Node, playlist_lock::filter_remove_playlist))
+        return -1;
+
     {
         auto Scope = toggle_t(_IsUser, true);
 
@@ -1057,7 +1236,7 @@ LRESULT playlist_uielement_t::OnMiddleClick(NMHDR * nmhd) noexcept
 
     SetMsgHandled(TRUE);
 
-    return FALSE;
+    return 0;
 }
 
 /// <summary>
@@ -1076,7 +1255,7 @@ LRESULT playlist_uielement_t::OnGetDisplayInfo(NMHDR * nmhd) noexcept
     {
         pfc::string Text;
 
-        HRESULT hResult = title_formatter_t::Evaluate(_State._TextFormat, Node->Id, Text);
+        HRESULT hResult = title_formatter_t::Evaluate(_State._TextFormat, &_TreeView, Node->Id, Text);
 
         if (!SUCCEEDED(hResult))
             return FALSE;
@@ -1091,6 +1270,10 @@ LRESULT playlist_uielement_t::OnGetDisplayInfo(NMHDR * nmhd) noexcept
         if (Node->IsFolder)
         {
             Image = ItemImage::Folder;
+
+            // Is the folder locked?
+            if (IsProhibited(Node, playlist_lock::filter_remove_playlist))
+                Image = ItemImage::FolderLocked;
         }
         else
         {
@@ -1152,7 +1335,7 @@ LRESULT playlist_uielement_t::OnSelectionChanged(NMHDR * nmhd) noexcept
 /// <summary>
 /// Handles the TVN_DELETEITEM notification.
 /// </summary>
-LRESULT playlist_uielement_t::OnDeleteItem(NMHDR * nmhd) noexcept
+LRESULT playlist_uielement_t::OnDeletingItem(NMHDR * nmhd) noexcept
 {
     // Don't respond to Delete notifications caused by moving items after a drop.
     if (_TreeView.IsDragging())
@@ -1209,22 +1392,8 @@ LRESULT playlist_uielement_t::OnBeginLabelEdit(NMHDR * nmhd) noexcept
         return TRUE;
 
     // Check for a playlist lock.
-    if (!Node->IsFolder)
-    {
-        const size_t Index = _PlaylistManager->find_playlist_by_guid(Node->Id);
-
-        if (Index == SIZE_MAX)
-            return TRUE;
-
-        const auto FilterMask = _PlaylistManager->playlist_lock_get_filter_mask(Index);
-
-        // Ignore the action when the playlist is locked by another component.
-        if ((FilterMask != 0) && !_LockManager->IsLocked(Node->Id))
-            return TRUE;
-
-        if (playlist_lock_t::IsRenamePlaylistEnabled(FilterMask))
-            return TRUE;
-    }
+    if (IsProhibited(Node, playlist_lock::filter_rename))
+        return TRUE;
 
     {
         const auto hEdit = _TreeView.GetEditControl();
@@ -1291,37 +1460,21 @@ LRESULT playlist_uielement_t::OnKeyDown(NMHDR * nmhd) noexcept
     if (Node == nullptr)
         return 0;
 
-    uint32_t FilterMask = 0;
-
-    // Check for a playlist lock.
-    if (!Node->IsFolder)
-    {
-        const size_t Index = _PlaylistManager->find_playlist_by_guid(Node->Id);
-
-        if (Index == SIZE_MAX)
-            return 0;
-
-        FilterMask = _PlaylistManager->playlist_lock_get_filter_mask(Index);
-
-        // Ignore the action when the playlist is locked by another component.
-        if ((FilterMask != 0) && !_LockManager->IsLocked(Node->Id))
-            return 0;
-    }
-
     const auto nmkd = (NMTVKEYDOWN *) nmhd;
 
     switch (nmkd->wVKey)
     {
         case VK_F2:
         {
-            if (!playlist_lock_t::IsRenamePlaylistEnabled(FilterMask))
-                _TreeView.EditSelectedItem();
+            _TreeView.EditSelectedItem(); // The lock is checked in OnBeginLabelEdit().
             break;
         }
 
         case VK_DELETE:
         {
-            if (!playlist_lock_t::IsRemovePlaylistEnabled(FilterMask))
+            if (IsProhibited(Node, playlist_lock::filter_remove_playlist))
+                return 0;
+
             {
                 auto Scope = toggle_t(_IsUser, true);
 
@@ -1353,12 +1506,10 @@ LRESULT playlist_uielement_t::OnGetInfoTip(NMHDR * nmhd) noexcept
 
     pfc::string Text;
 
-    HRESULT hResult = title_formatter_t::Evaluate(_State._ToolTipFormat, Node->Id, Text);
+    HRESULT hResult = title_formatter_t::Evaluate(_State._ToolTipFormat, &_TreeView, Node->Id, Text);
 
     if (!SUCCEEDED(hResult))
         return TRUE;
-
-    Text = Text.replace("\\n", "\n");
 
     ::wcscpy_s(nmgi->pszText, (rsize_t) nmgi->cchTextMax, msc::UTF8ToWide(Text.c_str()).c_str());
 
@@ -1462,7 +1613,7 @@ void playlist_uielement_t::FromJSON(json object, const GUID & parentId) noexcept
                 continue; // TODO: Use a grayed out image to indicate this playlist was removed when the component was not installed and add a command to restore it.
 
             // Restore our lock.
-            _LockManager->Add(Id, FilterMask);
+            _LockManager->LockPlaylist(Id, FilterMask);
 
             _TreeView.AddItem(parentId, GUID_NULL, Id, Name, IsFolder, IsExpanded);
         }
@@ -1499,25 +1650,8 @@ DWORD playlist_uielement_t::GetDropEffect(DWORD keyState, const POINT & pt) noex
     // Determine the effect.
     const auto Node = (node_t *) _TreeView.GetData(hItem);
 
-    if ((Node != nullptr) && !Node->IsFolder)
-    {
-        // The drop target is a playlist.
-        const auto Index = _PlaylistManager->find_playlist_by_guid(Node->Id);
-
-        if (Index == SIZE_MAX)
-            return DROPEFFECT_NONE;
-
-        // Handle a lock if present.
-        const auto FilterMask = _PlaylistManager->playlist_lock_get_filter_mask(Index);
-
-        // Ignore the action when the playlist is locked by another component.
-        if ((FilterMask != 0) && _LockManager->IsLocked(Node->Id))
-            return DROPEFFECT_NONE;
-
-        // Ignore the action when we're not allowed to add items.
-        if (playlist_lock_t::IsAddEnabled(FilterMask))
-            return DROPEFFECT_NONE;
-    }
+    if (IsProhibited(Node, playlist_lock::filter_add))
+        return DROPEFFECT_NONE;
 
     if (keyState & MK_CONTROL)
         return DROPEFFECT_MOVE;
@@ -1587,6 +1721,7 @@ void playlist_uielement_t::OnFontsChanged() noexcept
     __super::OnFontsChanged();
 
     _TreeView.SetFont(_Theme.GetPlaylistFont());
+    _EditBox.SetFont(_Theme.GetPlaylistFont());
 }
 
 /// <summary>
@@ -1623,7 +1758,7 @@ std::string playlist_uielement_t::GetConfiguration() const noexcept
             const auto Node = (node_t *) _TreeView.GetData(hItem);
 
             if ((Node == nullptr) || ((Node != nullptr) && (Node->Id == GUID_NULL)))
-                return true; // Continue enumerating. Should not occur.
+                return true; // Continue walking. Should not occur.
 
             uint32_t FilterMask = 0;
 
@@ -1638,7 +1773,7 @@ std::string playlist_uielement_t::GetConfiguration() const noexcept
 
             (*node)["filterMask"] = FilterMask;
 
-            return true; // Continue enumerating.
+            return true; // Continue walking.
         }, &Nodes);
 
         Object["nodes"] = Nodes;
@@ -1676,30 +1811,30 @@ std::string playlist_uielement_t::GetDefaultConfiguration() noexcept
 /// </summary>
 HRESULT playlist_uielement_t::InitImageList() noexcept
 {
-    _hImageList.Reset();
+    _ImageList.Reset();
 
-    _hImageList = ::ImageList_Create((int) _State._ImageSize, (int) _State._ImageSize, ILC_COLOR32 | ILC_MASK, (int) _State._Images.size(), 0);
+    _ImageList = ::ImageList_Create((int) _State._ImageSize, (int) _State._ImageSize, ILC_COLOR32 | ILC_MASK, (int) _State._Images.size(), 0);
 
-    if (!_hImageList)
+    if (!_ImageList)
         return HRESULT_FROM_WIN32(::GetLastError());
 
     for (const auto & Image : _State._Images)
     {
-        himagelist_t hSrcImageList = image_list_factory_t::Create(Image._FilePath, _State._ImageSize);
+        imagelist_t hSrcImageList = image_list_factory_t::Create(Image._FilePath, _State._ImageSize);
 
         if (!hSrcImageList)
             return HRESULT_FROM_WIN32(::GetLastError());
 
-        hicon_t hIcon = ::ImageList_GetIcon(hSrcImageList, (int) Image._IconIndex, ILD_TRANSPARENT);
+        icon_t hIcon = ::ImageList_GetIcon(hSrcImageList, (int) Image._IconIndex, ILD_TRANSPARENT);
 
         if (!hIcon)
             return HRESULT_FROM_WIN32(::GetLastError());
 
-        ::ImageList_ReplaceIcon(_hImageList, -1, hIcon);
+        ::ImageList_ReplaceIcon(_ImageList, -1, hIcon);
     }
 
-    _TreeView.SetNormalImageList(_hImageList);
-    _TreeView.SetStateImageList(_hImageList);
+    _TreeView.SetNormalImageList(_ImageList);
+    _TreeView.SetStateImageList(_ImageList);
 
     return S_OK;
 }
@@ -1721,36 +1856,213 @@ void playlist_uielement_t::ModifyFilterMask(uint32_t newFilterMask) const noexce
 
     auto FilterMask = _PlaylistManager->playlist_lock_get_filter_mask(Index);
 
-    // Leave the lock as-is if it's not ours.
-    if ((FilterMask != 0) && !_LockManager->IsLocked(Node->Id))
+    if ((FilterMask != 0u) && !_LockManager->IsLockedByMe(Node->Id))
+        return; // The playlist is locked but not by me.
+
+    // Modify the lock.
+    if ((newFilterMask == 0u) || (newFilterMask == ~0u))
+        FilterMask = newFilterMask;
+    else
+    if (FilterMask & newFilterMask)
+        FilterMask &= ~newFilterMask;
+    else
+        FilterMask |= newFilterMask;
+
+    if (FilterMask != 0u)
+    {
+        HRESULT hResult = _LockManager->LockPlaylist(Node->Id, FilterMask);
+
+        if (!SUCCEEDED(hResult))
+            Log.AtError().Write(STR_COMPONENT_BASENAME " failed to lock playlist %d: 0x%08X.", Index, hResult);
+    }
+    else
+    {
+        HRESULT hResult = _LockManager->UnlockPlaylist(Node->Id);
+
+        if (!SUCCEEDED(hResult))
+            Log.AtError().Write(STR_COMPONENT_BASENAME " failed to unlock playlist %d: 0x%08X.", Index, hResult);
+    }
+}
+
+/// <summary>
+/// Returns true if the specified action is prohibited.
+/// </summary>
+bool playlist_uielement_t::IsProhibited(const node_t * node, uint32_t filterMask) const noexcept
+{
+    if (node == nullptr)
+        return false;
+
+    if (node->IsFolder)
+    {
+        // Only check the "Remove Playlist" lock for a folder.
+        if ((filterMask & playlist_lock::filter_remove_playlist) == 0)
+            return false;
+
+        // A folder should not be removed if it contains at least one playlist that has a removal lock.
+        bool Result = false;
+
+        auto StartNode = node;
+
+        _TreeView.Walk([&](node_t * node) -> bool
+        {
+            if (StartNode == node)
+                return true;
+
+            if (IsProhibited(node, playlist_lock::filter_remove_playlist))
+            {
+                Result = true;
+
+                return false;
+            }
+
+            return true; // Continue walking.
+        }, StartNode);
+
+        return Result;
+    }
+    else
+    {
+        const size_t Index = _PlaylistManager->find_playlist_by_guid(node->Id);
+
+        if (Index == SIZE_MAX)
+            return false;
+
+        const auto FilterMask = _PlaylistManager->playlist_lock_get_filter_mask(Index);
+
+        return ((FilterMask & filterMask) != 0);
+    }
+}
+
+/// <summary>
+/// Examines the configuration of an autoplaylist. Experimental code. Not used yet.
+/// </summary>
+bool playlist_uielement_t::ExamineAutoplaylist(size_t index) noexcept
+{
+    static_api_ptr_t<autoplaylist_manager_v2> am;
+
+    autoplaylist_client_ptr Client;
+
+    try
+    {
+        Client = am->query_client(index);
+
+        if (Client.is_empty())
+            return false;
+    }
+    catch (...)
+    {
+        return false; // Not an autoplaylist.
+    }
+
+    pfc::array_t<t_uint8> Config;
+
+    Client->get_configuration(Config);
+
+    if (Config.size() < (sizeof(t_uint32) * 2))
+        return false;
+
+    stream_reader_memblock_ref Reader(Config.get_ptr(), Config.get_size());
+
+    try
+    {
+        t_uint32 Version = 0;
+
+        Reader.read_lendian_t(Version, fb2k::noAbort);
+
+        // Some builds store flags right after the Version, some do not. Try to detect a reasonable version number.
+        if (Version <= 10)
+        {
+            t_uint32 Flags = 0;
+
+            if (Reader.get_remaining() >= 4)
+                Reader.read_lendian_t(Flags, fb2k::noAbort); // Read and ignore.
+        }
+        else
+            Reader.reset(); // Probably not a version field. Rewind and treat the whole blob as starting with the query string.
+
+        // Read the query string.
+        t_uint32 Length = 0;
+
+        Reader.read_lendian_t(Length, fb2k::noAbort);
+
+        if (Length > Reader.get_remaining())
+            return false;
+
+        pfc::string QueryText;
+
+        Reader.read_string_ex(QueryText, Length, fb2k::noAbort);
+
+        // Read the sort string.
+        if (Reader.get_remaining() < 4)
+            return false;
+
+        Reader.read_lendian_t(Length, fb2k::noAbort);
+
+        if (Length > Reader.get_remaining())
+            return false;
+
+        pfc::string SortText;
+
+        Reader.read_string_ex(SortText, Length, fb2k::noAbort);
+
+        return true;
+    }
+    catch (...)
+    {
+        return false;
+    }
+}
+
+/// <summary>
+/// Calculates the ideal height of the edit box.
+/// </summary>
+int playlist_uielement_t::CalculateEditHeight(HWND hWnd, HFONT hFont) noexcept
+{
+    HDC hDC = ::GetDC(hWnd);
+
+    auto hOldFont = ::SelectObject(hDC, hFont);
+
+    TEXTMETRIC tmFont = {};
+
+    ::GetTextMetricsW(hDC, &tmFont);
+
+    auto hSysFont = (HFONT) ::GetStockObject(SYSTEM_FONT);
+
+    ::SelectObject(hDC, hSysFont);
+
+    TEXTMETRIC tmSysFont = {};
+
+    ::GetTextMetricsW(hDC, &tmSysFont);
+
+    ::SelectObject(hDC, hOldFont);
+
+    ::ReleaseDC(hWnd, hDC);
+
+    const int Height = tmFont.tmHeight + (std::min(tmFont.tmHeight, tmSysFont.tmHeight) / 2) + (::GetSystemMetrics(SM_CYEDGE) * 2);
+
+    return Height;
+}
+
+/// <summary>
+/// Resets AutoComplete.
+/// </summary>
+void playlist_uielement_t::ResetAutoComplete() noexcept
+{
+    if (_StringEnumerator == nullptr)
         return;
 
-    if ((newFilterMask == 0) || (newFilterMask == ~0))
-    {
-        FilterMask = newFilterMask;
-    }
-    else
-    {
-        if (FilterMask & newFilterMask)
-            FilterMask &= ~newFilterMask;
-        else
-            FilterMask |= newFilterMask;
-    }
+    Log.AtDebug().Write("Resetting auto complete.");
 
-    if (FilterMask != 0)
-    {
-        HRESULT hResult = _LockManager->Add(Node->Id, FilterMask);
+    _StringEnumerator->Clear();
 
-        if (!SUCCEEDED(hResult))
-            Log.AtError().Write(STR_COMPONENT_BASENAME " failed to add lock: 0x%08X.", hResult);
-    }
-    else
+    _TreeView.Walk([&](node_t * node) -> bool
     {
-        HRESULT hResult = _LockManager->Remove(Node->Id);
+        _StringEnumerator->AddItem(msc::UTF8ToWide(node->Name));
 
-        if (!SUCCEEDED(hResult))
-            Log.AtError().Write(STR_COMPONENT_BASENAME " failed to remove lock: 0x%08X.", hResult);
-    }
+        return true; // Continue walking.
+    });
+
+    try { _EditBox.SetWindowTextW(L""); } catch (...) { }
 }
 
 tracker_t<playlist_uielement_t> _UIElementTracker;

@@ -5,10 +5,12 @@
 
 #include "DropTarget.h"
 
+#include "PlaylistUIElement.h"
+
 #pragma hdrstop
 
 // IUnknown
-STDMETHODIMP drop_target_t::QueryInterface(REFIID riid, void ** ppv)
+STDMETHODIMP drop_target_t::QueryInterface(REFIID riid, void ** ppv) noexcept
 {
     if (riid == IID_IUnknown || riid == IID_IDropTarget)
     {
@@ -24,23 +26,23 @@ STDMETHODIMP drop_target_t::QueryInterface(REFIID riid, void ** ppv)
     return E_NOINTERFACE;
 }
 
-STDMETHODIMP_(ULONG) drop_target_t::AddRef()
+STDMETHODIMP_(ULONG) drop_target_t::AddRef() noexcept
 {
     return (ULONG) ::InterlockedIncrement(&_ReferenceCount);
 }
 
-STDMETHODIMP_(ULONG) drop_target_t::Release()
+STDMETHODIMP_(ULONG) drop_target_t::Release() noexcept
 {
-    auto NewReferenceCount = (ULONG) InterlockedDecrement(&_ReferenceCount);
+    const auto NewReferenceCount = InterlockedDecrement(&_ReferenceCount);
 
     if (NewReferenceCount == 0)
         delete this;
 
-    return NewReferenceCount;
+    return (ULONG) NewReferenceCount;
 }
 
 // IDropTarget
-STDMETHODIMP drop_target_t::DragEnter(IDataObject * dataObject, DWORD keyState, POINTL pt, DWORD * effect)
+STDMETHODIMP drop_target_t::DragEnter(IDataObject * dataObject, DWORD keyState, POINTL pt, DWORD * effect) noexcept
 {
     POINT Point{ pt.x, pt.y };
 
@@ -53,7 +55,7 @@ STDMETHODIMP drop_target_t::DragEnter(IDataObject * dataObject, DWORD keyState, 
     return S_OK;
 }
 
-STDMETHODIMP drop_target_t::DragOver(DWORD keyState, POINTL pt, DWORD* effect)
+STDMETHODIMP drop_target_t::DragOver(DWORD keyState, POINTL pt, DWORD* effect) noexcept
 {
     POINT Point{ pt.x, pt.y };
 
@@ -64,14 +66,14 @@ STDMETHODIMP drop_target_t::DragOver(DWORD keyState, POINTL pt, DWORD* effect)
     return S_OK;
 }
 
-STDMETHODIMP drop_target_t::DragLeave()
+STDMETHODIMP drop_target_t::DragLeave() noexcept
 {
     (void) _DragDropHelper->DragLeave();
 
     return S_OK;
 }
 
-STDMETHODIMP drop_target_t::Drop(IDataObject * dataObject, DWORD keyState, POINTL pt, DWORD * effect)
+STDMETHODIMP drop_target_t::Drop(IDataObject * dataObject, DWORD keyState, POINTL pt, DWORD * effect) noexcept
 {
     POINT Point{ pt.x, pt.y };
 

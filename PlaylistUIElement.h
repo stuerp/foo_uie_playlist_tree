@@ -1,21 +1,23 @@
 
-/** $VER: PlaylistsUIElement.h (2026.07.25) P. Stuer **/
+/** $VER: PlaylistsUIElement.h (2026.07.31) P. Stuer **/
 
 #pragma once
 
 #include "pch.h"
 
+#include "DropTarget.h"
 #include "EditSubclass.h"
 #include "FolderManager.h"
-#include "PlaylistLockManager.h"
 #include "MultiSelectTreeView.h"
+#include "PlaylistLockManager.h"
 #include "PlaylistTreeView.h"
 #include "Resources.h"
+#include "StringEnumerator.h"
 #include "Tracker.h"
 #include "TreeViewSubclass.h"
 #include "UIElement.h"
 
-#include <SDK\playlist.h>
+#include <sdk/playlist.h>
 
 /// <summary>
 /// Implements the user interface element base class.
@@ -66,38 +68,41 @@ private:
     LRESULT OnGetDisplayInfo(NMHDR * nmhd) noexcept;
     LRESULT OnItemExpanded(NMHDR * nmhd) noexcept;
     LRESULT OnBeginDrag(NMHDR * nmhd) noexcept;
-    LRESULT OnDeleteItem(NMHDR * nmhd) noexcept;
+    LRESULT OnDeletingItem(NMHDR * nmhd) noexcept;
     LRESULT OnBeginLabelEdit(NMHDR * nmhd) noexcept;
     LRESULT OnEndLabelEdit(NMHDR * nmhd) noexcept;
+
+    void OnEditChange(UINT notifyCode, int id, CWindow wnd);
 
     void OnMouseMove(UINT flags, CPoint point) noexcept;
     void OnMouseLeave() noexcept;
     void OnLButtonUp(UINT flags, CPoint point) noexcept;
 
     BEGIN_MSG_MAP_EX(playlist_uielement_t)
-//      MSG_WM_DESTROY(OnDestroy);
+        MSG_WM_PAINT(OnPaint)
+        MSG_WM_SETFOCUS(OnSetFocus)
 
-        MSG_WM_PAINT(OnPaint);
-        MSG_WM_COMMAND(OnCommand);
-        MSG_WM_SETFOCUS(OnSetFocus);
+        COMMAND_HANDLER_EX(IDC_EDITBOX, EN_CHANGE, OnEditChange)
 
-        NOTIFY_HANDLER_EX(IDC_TREEVIEW, NM_CUSTOMDRAW, OnCustomDraw);
-        NOTIFY_HANDLER_EX(IDC_TREEVIEW, NM_RCLICK, OnRightClick);
-        NOTIFY_HANDLER_EX(IDC_TREEVIEW, NM_MCLICK, OnMiddleClick);
+        MSG_WM_COMMAND(OnCommand)
 
-        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_KEYDOWN, OnKeyDown);
-        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_GETINFOTIP, OnGetInfoTip);
-        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_SELCHANGED, OnSelectionChanged);
-        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_GETDISPINFO, OnGetDisplayInfo);
-        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_ITEMEXPANDED, OnItemExpanded);
-        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_BEGINDRAG, OnBeginDrag);
-        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_DELETEITEM, OnDeleteItem);
-        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_BEGINLABELEDIT, OnBeginLabelEdit);
-        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_ENDLABELEDIT, OnEndLabelEdit);
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, NM_CUSTOMDRAW, OnCustomDraw)
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, NM_RCLICK, OnRightClick)
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, NM_MCLICK, OnMiddleClick)
 
-        MSG_WM_MOUSEMOVE(OnMouseMove);
-        MSG_WM_MOUSELEAVE(OnMouseLeave);
-        MSG_WM_LBUTTONUP(OnLButtonUp);
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_KEYDOWN, OnKeyDown)
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_GETINFOTIP, OnGetInfoTip)
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_SELCHANGED, OnSelectionChanged)
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_GETDISPINFO, OnGetDisplayInfo)
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_ITEMEXPANDED, OnItemExpanded)
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_BEGINDRAG, OnBeginDrag)
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_DELETEITEM, OnDeletingItem)
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_BEGINLABELEDIT, OnBeginLabelEdit)
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_ENDLABELEDIT, OnEndLabelEdit)
+
+        MSG_WM_MOUSEMOVE(OnMouseMove)
+        MSG_WM_MOUSELEAVE(OnMouseLeave)
+        MSG_WM_LBUTTONUP(OnLButtonUp)
 
 //      CHAIN_MSG_MAP(multi_select_tree_view_t)
         CHAIN_MSG_MAP(uielement_t)
@@ -155,6 +160,7 @@ private:
 
 	void OnFolderCreated(const GUID & id, const std::string & name) noexcept override;
 	void OnFolderRemoving(const GUID & id) noexcept override;
+	void OnFolderRemoved(const GUID & id) noexcept override;
 	void OnFolderRenamed(const GUID & id, const std::string & oldName, const std::string & newName) noexcept override;
 
     #pragma endregion
@@ -165,13 +171,20 @@ private:
     void SelectPlaylist(size_t playlistIndex) const noexcept;
 
     HRESULT InitImageList() noexcept;
-    void ModifyFilterMask(uint32_t mask) const noexcept;
+
+    void ModifyFilterMask(uint32_t newFilterMask) const noexcept;
+    bool IsProhibited(const node_t * node, uint32_t filterMask) const noexcept;
+
+    bool ExamineAutoplaylist(size_t index) noexcept;
+    int CalculateEditHeight(HWND hWnd, HFONT hFont) noexcept;
+    void ResetAutoComplete() noexcept;
 
 protected:
     playlist_tree_view_t _TreeView;
+    CEdit _EditBox;
 
 private:
-    himagelist_t _hImageList;
+    imagelist_t _ImageList;
 
     static_api_ptr_t<folder_manager_t> _FolderManager;
     static_api_ptr_t<playlist_manager_v5> _PlaylistManager;
@@ -187,7 +200,8 @@ private:
     bool _IgnoreNotifications = false;
     bool _IsUser = false;
 
-    IDropTarget * _DropTarget = nullptr;
+    drop_target_t * _DropTarget = nullptr;
+    string_enumerator_t * _StringEnumerator = nullptr;
 };
 
 /// <summary>

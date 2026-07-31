@@ -1,5 +1,5 @@
 
-/** $VER: FolderManager.cpp (2026.07.25) P. Stuer **/
+/** $VER: FolderManager.cpp (2026.07.29) P. Stuer **/
 
 #include "pch.h"
 
@@ -69,18 +69,18 @@ public:
     /// <summary>
     /// Gets the name of the specified folder.
     /// </summary>
-    HRESULT GetFolderName(const GUID & id, std::string & text) const noexcept final
+    HRESULT GetFolderName(const GUID & id, std::string & name) const noexcept final
     {
         auto Iter = _Items.find(id);
 
         if (Iter == _Items.end())
         {
-            text.clear();
+            name.clear();
 
             return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
         }
 
-        text = Iter->second.Name;
+        name = Iter->second.Name;
 
         return S_OK;
     }
@@ -88,14 +88,19 @@ public:
     /// <summary>
     /// Sets the name of the specified folder.
     /// </summary>
-    HRESULT SetFolderName(const GUID & id, const std::string & text) noexcept final
+    HRESULT SetFolderName(const GUID & id, const std::string & newName) noexcept final
     {
         auto Iter = _Items.find(id);
 
         if (Iter == _Items.end())
             return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
 
-        Iter->second.Name = text;
+        const std::string OldName = Iter->second.Name;
+
+        Iter->second.Name = newName;
+
+        for (auto Callback : _Callbacks)
+            Callback->OnFolderRenamed(id, OldName, newName);
 
         return S_OK;
     }
@@ -109,6 +114,9 @@ public:
             Callback->OnFolderRemoving(id);
 
         _Items.erase(id);
+
+        for (auto Callback : _Callbacks)
+            Callback->OnFolderRemoved(id);
 
         return S_OK;
     }

@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsTreeView.cpp (2026.07.24) P. Stuer **/
+/** $VER: PlaylistsTreeView.cpp (2026.07.30) P. Stuer **/
 
 #include "pch.h"
 
@@ -87,7 +87,7 @@ bool playlist_tree_view_t::RemoveItem(const GUID & id) const noexcept
 }
 
 /// <summary>
-/// Selects the specified item.
+/// Selects the specified id.
 /// </summary>
 bool playlist_tree_view_t::SelectItem(const GUID & id) const noexcept
 {
@@ -96,11 +96,35 @@ bool playlist_tree_view_t::SelectItem(const GUID & id) const noexcept
     if (hItem == NULL)
         return false;
 
-    return __super::SelectItem(hItem);
+    return SelectItem(hItem);
 }
 
 /// <summary>
-/// Find the specified item.
+/// Selects the item with the specified name.
+/// </summary>
+bool playlist_tree_view_t::SelectItem(const std::string & name) const noexcept
+{
+    bool IsSelected = false;
+
+    __super::Walk([&](HTREEITEM hItem, void * context) -> bool
+    {
+        auto Node = (const node_t *) GetData(hItem);
+
+        if ((Node != nullptr) && (Node->Name == name))
+        {
+            IsSelected = SelectItem(hItem);
+
+            return false;
+        }
+
+        return true; // Continue walking.
+    });
+
+    return IsSelected;
+}
+
+/// <summary>
+/// Find the item with the specified id.
 /// </summary>
 HTREEITEM playlist_tree_view_t::FindItem(const GUID & id) const noexcept
 {
@@ -120,7 +144,7 @@ HTREEITEM playlist_tree_view_t::FindItem(const GUID & id) const noexcept
             return false;
         }
 
-        return true; // Continue enumerating
+        return true; // Continue walking
     });
 
     return hFoundItem;
@@ -182,4 +206,33 @@ bool playlist_tree_view_t::IsExpanded(const GUID & id) const noexcept
         return false;
 
     return ((State & TVIS_EXPANDED) == TVIS_EXPANDED);
+}
+
+/// <summary>
+/// Returns the number of direct children of a node.
+/// </summary>
+size_t playlist_tree_view_t::GetChildCount(const GUID & id) const noexcept
+{
+    HTREEITEM hItem = FindItem(id);
+
+    if (hItem == NULL)
+        return SIZE_MAX;
+
+    return __super::GetChildCount(hItem);
+}
+
+/// <summary>
+/// Returns true if a drop is allowed on the target.
+/// </summary>
+bool playlist_tree_view_t::AllowDrop(DropZone dropZone) noexcept
+{
+    if (_hDropTarget == NULL)
+        return false;
+
+    auto Node = (const node_t *) GetData(_hDropTarget);
+
+    if (Node == nullptr)
+        return false;
+
+    return Node->IsFolder || (!Node->IsFolder && (dropZone != DropZone::Middle));
 }

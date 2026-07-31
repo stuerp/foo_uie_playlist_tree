@@ -7,7 +7,7 @@
 
 #include "Resources.h"
 
-#include <SDK\coreDarkMode.h>
+#include <sdk/coreDarkMode.h>
 
 /// <summary>
 /// Implements the user interface element base class.
@@ -47,16 +47,19 @@ protected:
     virtual void GetColors() noexcept = 0;
     virtual void GetFonts() noexcept = 0;
 
-protected:
     #pragma region CWindowImpl
 
+protected:
     virtual LRESULT OnCreate(CREATESTRUCT * cs) noexcept;
     virtual void OnDestroy() noexcept;
+
     virtual void OnSize(UINT nType, CSize size) noexcept;
 
+private:
     BEGIN_MSG_MAP_EX(uielement_t)
         MSG_WM_CREATE(OnCreate)
-        MSG_WM_DESTROY(OnDestroy)
+//      MSG_WM_DESTROY(OnDestroy)
+
         MSG_WM_SIZE(OnSize)
     END_MSG_MAP()
 

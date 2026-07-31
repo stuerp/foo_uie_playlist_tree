@@ -3,7 +3,7 @@
 
 #include "pch.h"
 
-#include <SDK\componentversion.h>
+#include <sdk/componentversion.h>
 
 #include "Resources.h"
 #include "Log.h"
