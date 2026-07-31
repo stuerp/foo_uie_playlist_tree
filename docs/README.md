@@ -237,7 +237,7 @@ The component provides the following custom formatting fields:
 | -------------------------------- | ------------------------------------------------------------------------------------- |
 | %node_name%                      | The name of the item, either a playlist or a folder.                                  |
 | %node_is_folder%                 | Boolean value for use in $if( ...) expressions and is true when the item is a folder. |
-| %node_item_count%                | The number of playlists in a folder or number of items in a playlist.                 |
+| %node_item_count%                | The number of nodes in a folder or the number of items in a playlist.                 |
 | %node_is_locked%                 | Boolean value for use in $if( ...) expressions and is true when the item is locked.   |
 | %node_lock_name%                 | The name of the lock if the item is locked.                                           |
 | %playlist_duration%              | The duration of the playlist (in seconds).                                            |

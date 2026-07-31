@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.cpp (2026.07.30) P. Stuer **/
+/** $VER: PlaylistsUIElement.cpp (2026.07.31) P. Stuer **/
 
 #include "pch.h"
 
@@ -185,7 +185,7 @@ void playlist_uielement_t::OnDestroy() noexcept
     {
         auto Scope = toggle_t(_IgnoreNotifications, true);
 
-        _hImageList.Reset();
+        _ImageList.Reset();
 
         _TreeViewSubclass.Detach(_TreeView.Get());
 
@@ -985,7 +985,7 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
                 const LONG dx = ((1 + ItemHeight + 1) - (LONG) _State._ImageSize) / 2;
                 const LONG dy = (     ItemHeight      - (LONG) _State._ImageSize) / 2;
 
-                ::ImageList_Draw(_hImageList, tvi.iImage, hDC, rc.left + dx, rc.top + dy, ILD_NORMAL);
+                ::ImageList_Draw(_ImageList, tvi.iImage, hDC, rc.left + dx, rc.top + dy, ILD_NORMAL);
 
                 rc.left += (1 + ItemHeight + 1) + 3;
             }
@@ -1255,7 +1255,7 @@ LRESULT playlist_uielement_t::OnGetDisplayInfo(NMHDR * nmhd) noexcept
     {
         pfc::string Text;
 
-        HRESULT hResult = title_formatter_t::Evaluate(_State._TextFormat, Node->Id, Text);
+        HRESULT hResult = title_formatter_t::Evaluate(_State._TextFormat, &_TreeView, Node->Id, Text);
 
         if (!SUCCEEDED(hResult))
             return FALSE;
@@ -1506,7 +1506,7 @@ LRESULT playlist_uielement_t::OnGetInfoTip(NMHDR * nmhd) noexcept
 
     pfc::string Text;
 
-    HRESULT hResult = title_formatter_t::Evaluate(_State._ToolTipFormat, Node->Id, Text);
+    HRESULT hResult = title_formatter_t::Evaluate(_State._ToolTipFormat, &_TreeView, Node->Id, Text);
 
     if (!SUCCEEDED(hResult))
         return TRUE;
@@ -1811,30 +1811,30 @@ std::string playlist_uielement_t::GetDefaultConfiguration() noexcept
 /// </summary>
 HRESULT playlist_uielement_t::InitImageList() noexcept
 {
-    _hImageList.Reset();
+    _ImageList.Reset();
 
-    _hImageList = ::ImageList_Create((int) _State._ImageSize, (int) _State._ImageSize, ILC_COLOR32 | ILC_MASK, (int) _State._Images.size(), 0);
+    _ImageList = ::ImageList_Create((int) _State._ImageSize, (int) _State._ImageSize, ILC_COLOR32 | ILC_MASK, (int) _State._Images.size(), 0);
 
-    if (!_hImageList)
+    if (!_ImageList)
         return HRESULT_FROM_WIN32(::GetLastError());
 
     for (const auto & Image : _State._Images)
     {
-        himagelist_t hSrcImageList = image_list_factory_t::Create(Image._FilePath, _State._ImageSize);
+        imagelist_t hSrcImageList = image_list_factory_t::Create(Image._FilePath, _State._ImageSize);
 
         if (!hSrcImageList)
             return HRESULT_FROM_WIN32(::GetLastError());
 
-        hicon_t hIcon = ::ImageList_GetIcon(hSrcImageList, (int) Image._IconIndex, ILD_TRANSPARENT);
+        icon_t hIcon = ::ImageList_GetIcon(hSrcImageList, (int) Image._IconIndex, ILD_TRANSPARENT);
 
         if (!hIcon)
             return HRESULT_FROM_WIN32(::GetLastError());
 
-        ::ImageList_ReplaceIcon(_hImageList, -1, hIcon);
+        ::ImageList_ReplaceIcon(_ImageList, -1, hIcon);
     }
 
-    _TreeView.SetNormalImageList(_hImageList);
-    _TreeView.SetStateImageList(_hImageList);
+    _TreeView.SetNormalImageList(_ImageList);
+    _TreeView.SetStateImageList(_ImageList);
 
     return S_OK;
 }

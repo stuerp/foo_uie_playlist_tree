@@ -1,5 +1,5 @@
 
-/** $VER: TreeView.cpp (2026.07.30) P. Stuer **/
+/** $VER: TreeView.cpp (2026.07.31) P. Stuer **/
 
 #include "pch.h"
 
@@ -74,6 +74,28 @@ HTREEITEM tree_view_t::AddItem(HTREEITEM hParent, HTREEITEM hInsertAfter, UINT s
     auto hTreeItem = TreeView_InsertItem(_hTreeView, &tvis);
 
     return hTreeItem;
+}
+
+/// <summary>
+/// Returns the number of direct children of an item.
+/// </summary>
+size_t tree_view_t::GetChildCount(HTREEITEM hItem) const noexcept
+{
+    auto hChild = TreeView_GetChild(_hTreeView, hItem);
+
+    if (hChild == NULL)
+        return SIZE_MAX;
+
+    size_t Count = 0;
+
+    while (hChild != 0)
+    {
+        ++Count;
+
+        hChild = TreeView_GetNextSibling(_hTreeView, hChild);
+    }
+
+    return Count;
 }
 
 /// <summary>

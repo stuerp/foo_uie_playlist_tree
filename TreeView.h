@@ -1,5 +1,5 @@
 
-/** $VER: TreeView.h (2026.07.30) P. Stuer **/
+/** $VER: TreeView.h (2026.07.31) P. Stuer **/
 
 #pragma once
 
@@ -146,6 +146,8 @@ public:
     {
         ::SendMessageW(_hTreeView, WM_SETFONT, (WPARAM) hFont, (LPARAM) TRUE);
     }
+
+    size_t GetChildCount(HTREEITEM hItem) const noexcept;
 
     void Redraw() const noexcept;
     bool RedrawItem(HTREEITEM hItem) const noexcept;

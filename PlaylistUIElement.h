@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.h (2026.07.30) P. Stuer **/
+/** $VER: PlaylistsUIElement.h (2026.07.31) P. Stuer **/
 
 #pragma once
 
@@ -184,7 +184,7 @@ protected:
     CEdit _EditBox;
 
 private:
-    himagelist_t _hImageList;
+    imagelist_t _ImageList;
 
     static_api_ptr_t<folder_manager_t> _FolderManager;
     static_api_ptr_t<playlist_manager_v5> _PlaylistManager;

@@ -59,6 +59,8 @@ public:
         return __super::RemoveItem(hItem);
     }
 
+    size_t GetChildCount(const GUID & id) const noexcept;
+
     /// <summary>
     /// Serializes this instance to JSON.
     /// </summary>

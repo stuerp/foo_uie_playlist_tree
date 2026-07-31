@@ -8,6 +8,11 @@
 #include <helpers/atl-misc.h>
 #include <helpers/DarkMode.h>
 
+#include <ranges>
+#include <cctype>
+
+#include <RAII.h>
+
 #include "PlaylistUIElement.h"
 #include "Tracker.h"
 #include "Resources.h"
@@ -17,9 +22,6 @@
 #include "ImageList.h"
 #include "Theme.h"
 #include "TitleFormat.h"
-
-#include <ranges>
-#include <cctype>
 
 #pragma hdrstop
 
@@ -134,11 +136,7 @@ private:
     /// </summary>
     void OnDestroy()
     {
-        if (_hImageList != NULL)
-        {
-            ImageList_Destroy(_hImageList);
-            _hImageList = NULL;
-        }
+        _ImageList.Reset();
     }
 
     /// <summary>
@@ -431,7 +429,7 @@ private:
         // Create the file path.
         pfc::string Text;
 
-        HRESULT hResult = title_formatter_t::Evaluate(Image._FilePath, { }, Text);
+        HRESULT hResult = title_formatter_t::Evaluate(Image._FilePath, nullptr, GUID_NULL, Text);
 
         // Create the image list, if necessary.
         {
@@ -441,12 +439,11 @@ private:
 
             if (!AreEqual)
             {
-                if (_hImageList != NULL)
-                    ImageList_Destroy(_hImageList);
+//              _hImageList.Reset();
 
-                _hImageList = image_list_factory_t::Create(FilePath, _NewState._ImageSize);
+                _ImageList = image_list_factory_t::Create(FilePath, _NewState._ImageSize);
 
-                if (_hImageList == NULL)
+                if (_ImageList == NULL)
                     Log.AtWarn().Write("Failed to create image list from \"%s\": 0x%08X", FilePath.c_str(), ::GetLastError());
 
                 _ImageListFilePath = FilePath;
@@ -460,7 +457,7 @@ private:
             if (hIconList == NULL)
                 return;
 
-            ::SendMessageW(hIconList, ILM_SETIMAGELIST, 0, (LPARAM) _hImageList);
+            ::SendMessageW(hIconList, ILM_SETIMAGELIST, 0, (LPARAM) _ImageList.Get());
 
             ::SendMessageW(hIconList, ILM_SELECTITEM, (WPARAM) Image._IconIndex, 0);
         }
@@ -496,7 +493,7 @@ private:
     state_t _NewState;
 
     std::string _ImageListFilePath; // The file path of the last loaded image list.
-    HIMAGELIST _hImageList = NULL;
+    imagelist_t _ImageList;
 
     fb2k::CDarkModeHooks _DarkMode;
 };

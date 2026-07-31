@@ -1,5 +1,5 @@
 
-/** $VER: RAII.h (2026.07.22) P. Stuer - RAII wrappers **/
+/** $VER: RAII.h (2026.07.31) P. Stuer - RAII wrappers **/
 
 #pragma once
 
@@ -118,20 +118,20 @@ private:
 /// <summary>
 /// Implements a RAII wrapper for HMODULE.
 /// </summary>
-class hmodule_t
+class module_t
 {
 public:
-    explicit hmodule_t(const std::wstring filePath) noexcept : _hModule(::LoadLibraryExW(filePath.c_str(), NULL, LOAD_LIBRARY_AS_DATAFILE)) { }
+    explicit module_t(const std::wstring filePath) noexcept : _hModule(::LoadLibraryExW(filePath.c_str(), NULL, LOAD_LIBRARY_AS_DATAFILE)) { }
 
-    explicit hmodule_t(HMODULE hModule) noexcept : _hModule(hModule) { }
+    explicit module_t(HMODULE hModule) noexcept : _hModule(hModule) { }
 
     // Move-only type
-    hmodule_t(const hmodule_t & other) = delete;
-    hmodule_t & operator=(const hmodule_t & other) = delete;
+    module_t(const module_t & other) = delete;
+    module_t & operator=(const module_t & other) = delete;
 
-    hmodule_t(hmodule_t && other) noexcept : _hModule(other.Release()) { }
+    module_t(module_t && other) noexcept : _hModule(other.Release()) { }
 
-    hmodule_t & operator=(hmodule_t && other) noexcept
+    module_t & operator=(module_t && other) noexcept
     {
         if (this != &other)
         {
@@ -143,7 +143,7 @@ public:
         return *this;
     }
 
-    ~hmodule_t()
+    ~module_t()
     {
         Reset();
     }
@@ -187,26 +187,28 @@ private:
 /// <summary>
 /// Implements a RAII wrapper for HIMAGELIST.
 /// </summary>
-class himagelist_t
+class imagelist_t
 {
 public:
-    himagelist_t() noexcept : _hImageList(nullptr) { }
-    himagelist_t(HIMAGELIST hImageList) noexcept : _hImageList(hImageList) { }
+    imagelist_t() noexcept : _hImageList(nullptr) { }
+    imagelist_t(HIMAGELIST hImageList) noexcept : _hImageList(hImageList) { }
 
     // Move-only type
-    himagelist_t(const himagelist_t & other) = delete;
-    himagelist_t & operator=(const himagelist_t & other) = delete;
+    imagelist_t(const imagelist_t & other) = delete;
+    imagelist_t & operator=(const imagelist_t & other) = delete;
 
-    himagelist_t(himagelist_t && other) noexcept : _hImageList(other.Release()) { }
+    imagelist_t(imagelist_t && other) noexcept : _hImageList(other.Release()) { }
 
-    himagelist_t & operator =(HIMAGELIST hImageList) noexcept
+    imagelist_t & operator =(HIMAGELIST hImageList) noexcept
     {
+        Reset();
+
         _hImageList = hImageList;
 
         return *this;
     }
 
-    himagelist_t & operator =(himagelist_t && other) noexcept
+    imagelist_t & operator =(imagelist_t && other) noexcept
     {
         if (this != &other)
         {
@@ -218,7 +220,7 @@ public:
         return *this;
     }
 
-    ~himagelist_t()
+    ~imagelist_t()
     {
         Reset();
     }
@@ -262,26 +264,28 @@ private:
 /// <summary>
 /// Implements a RAII wrapper for HICON.
 /// </summary>
-class hicon_t
+class icon_t
 {
 public:
-    hicon_t() noexcept : _hIcon(nullptr) { }
-    hicon_t(HICON hIcon) noexcept : _hIcon(hIcon) { } // Take ownership
+    icon_t() noexcept : _hIcon(nullptr) { }
+    icon_t(HICON hIcon) noexcept : _hIcon(hIcon) { } // Take ownership
 
     // Move-only type
-    hicon_t(const hicon_t & other) = delete;
-    hicon_t & operator=(const hicon_t & other) = delete;
+    icon_t(const icon_t & other) = delete;
+    icon_t & operator=(const icon_t & other) = delete;
 
-    hicon_t(hicon_t && other) noexcept : _hIcon(other.Release()) { }
+    icon_t(icon_t && other) noexcept : _hIcon(other.Release()) { }
 
-    hicon_t & operator =(HICON hIcon) noexcept
+    icon_t & operator =(HICON hIcon) noexcept
     {
+        Reset();
+
         _hIcon = hIcon;
 
         return *this;
     }
 
-    hicon_t & operator =(hicon_t && other) noexcept
+    icon_t & operator =(icon_t && other) noexcept
     {
         if (this != &other)
         {
@@ -293,7 +297,7 @@ public:
         return *this;
     }
 
-    ~hicon_t()
+    ~icon_t()
     {
         Reset();
     }
@@ -361,7 +365,6 @@ public:
     brush_t & operator=(const brush_t & other) = delete;
 
     brush_t(brush_t && other) noexcept : _hBrush(std::exchange(other._hBrush, nullptr)) { }
-
     brush_t & operator =(brush_t && other) noexcept
     {
         if (this != &other)
@@ -441,7 +444,6 @@ public:
     pen_t & operator=(const pen_t & other) = delete;
 
     pen_t(pen_t && other) noexcept : _hPen(std::exchange(other._hPen, nullptr)) { }
-
     pen_t & operator =(pen_t && other) noexcept
     {
         if (this != &other)
@@ -453,7 +455,6 @@ public:
 
         return *this;
     }
-
 
     ~pen_t() noexcept
     {

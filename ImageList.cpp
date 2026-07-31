@@ -17,7 +17,7 @@ HIMAGELIST image_list_factory_t::Create(const std::string & filePath, uint32_t i
 
     std::wstring FilePath = msc::UTF8ToWide(filePath);
 
-    msc::hmodule_t hModule(FilePath);
+    msc::module_t hModule(FilePath);
 
     if (!hModule)
         return NULL;

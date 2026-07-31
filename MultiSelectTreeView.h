@@ -327,7 +327,7 @@ private:
         SetMsgHandled(FALSE);
 
         if (_OwnSelectionChangeNotification)
-            SetMsgHandled(FALSE);
+            return 0;
 
         return 0;
     }
@@ -348,8 +348,6 @@ private:
             if (DeselectChildren(Tree, nmtv->itemNew.hItem))
                 SendSelectionChangedNotification(Tree, nmtv->itemNew.hItem);
         }
-
-        SetMsgHandled(FALSE);
 
         return 0;
     }

@@ -17,6 +17,7 @@
 #include <sdk/titleformat.h>
 
 #include "FolderManager.h"
+#include "PlaylistTreeView.h"
 
 using namespace msc;
 
@@ -29,7 +30,7 @@ private:
     title_formatter_t();
 
 public:
-    static HRESULT Evaluate(const std::string & script, const GUID id, pfc::string & result) noexcept;
+    static HRESULT Evaluate(const std::string & script, const playlist_tree_view_t * treeView, const GUID id, pfc::string & result) noexcept;
 };
 
 /// <summary>
@@ -38,7 +39,7 @@ public:
 class custom_titleformat_hook_t : public titleformat_hook
 {
 public:
-    custom_titleformat_hook_t(const GUID & id) : _Id(id) { }
+    custom_titleformat_hook_t(const playlist_tree_view_t * treeView, const GUID & id) : _TreeView(treeView), _Id(id) { }
 
     virtual ~custom_titleformat_hook_t() noexcept { }
 
@@ -59,5 +60,6 @@ private:
     static_api_ptr_t<playlist_manager_v5> _PlaylistManager;
     static_api_ptr_t<folder_manager_t> _FolderManager;
 
+    const playlist_tree_view_t * _TreeView;
     const GUID & _Id;
 };

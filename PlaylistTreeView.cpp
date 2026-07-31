@@ -209,6 +209,19 @@ bool playlist_tree_view_t::IsExpanded(const GUID & id) const noexcept
 }
 
 /// <summary>
+/// Returns the number of direct children of a node.
+/// </summary>
+size_t playlist_tree_view_t::GetChildCount(const GUID & id) const noexcept
+{
+    HTREEITEM hItem = FindItem(id);
+
+    if (hItem == NULL)
+        return SIZE_MAX;
+
+    return __super::GetChildCount(hItem);
+}
+
+/// <summary>
 /// Returns true if a drop is allowed on the target.
 /// </summary>
 bool playlist_tree_view_t::AllowDrop(DropZone dropZone) noexcept

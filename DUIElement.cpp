@@ -10,6 +10,9 @@
 
 #pragma hdrstop
 
+namespace
+{
+
 /// <summary>
 /// Initializes a new instance.
 /// </summary>
@@ -152,3 +155,5 @@ void dui_element_t::GetFonts() noexcept
 static service_factory_single_t<ui_element_impl_withpopup<dui_element_t>> _Factory;
 
 #pragma endregion
+
+}
