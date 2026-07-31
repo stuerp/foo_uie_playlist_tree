@@ -1,10 +1,11 @@
 
-/** $VER: PlaylistsUIElement.h (2026.07.29) P. Stuer **/
+/** $VER: PlaylistsUIElement.h (2026.07.30) P. Stuer **/
 
 #pragma once
 
 #include "pch.h"
 
+#include "DropTarget.h"
 #include "EditSubclass.h"
 #include "FolderManager.h"
 #include "MultiSelectTreeView.h"
@@ -78,32 +79,30 @@ private:
     void OnLButtonUp(UINT flags, CPoint point) noexcept;
 
     BEGIN_MSG_MAP_EX(playlist_uielement_t)
-//      MSG_WM_DESTROY(OnDestroy);
+        MSG_WM_PAINT(OnPaint)
+        MSG_WM_SETFOCUS(OnSetFocus)
 
-        MSG_WM_PAINT(OnPaint);
+        COMMAND_HANDLER_EX(IDC_EDITBOX, EN_CHANGE, OnEditChange)
 
-        COMMAND_HANDLER_EX(IDC_EDITBOX, EN_CHANGE, OnEditChange);
- 
-        MSG_WM_COMMAND(OnCommand);
-        MSG_WM_SETFOCUS(OnSetFocus);
+        MSG_WM_COMMAND(OnCommand)
 
-        NOTIFY_HANDLER_EX(IDC_TREEVIEW, NM_CUSTOMDRAW, OnCustomDraw);
-        NOTIFY_HANDLER_EX(IDC_TREEVIEW, NM_RCLICK, OnRightClick);
-        NOTIFY_HANDLER_EX(IDC_TREEVIEW, NM_MCLICK, OnMiddleClick);
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, NM_CUSTOMDRAW, OnCustomDraw)
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, NM_RCLICK, OnRightClick)
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, NM_MCLICK, OnMiddleClick)
 
-        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_KEYDOWN, OnKeyDown);
-        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_GETINFOTIP, OnGetInfoTip);
-        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_SELCHANGED, OnSelectionChanged);
-        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_GETDISPINFO, OnGetDisplayInfo);
-        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_ITEMEXPANDED, OnItemExpanded);
-        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_BEGINDRAG, OnBeginDrag);
-        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_DELETEITEM, OnDeletingItem);
-        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_BEGINLABELEDIT, OnBeginLabelEdit);
-        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_ENDLABELEDIT, OnEndLabelEdit);
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_KEYDOWN, OnKeyDown)
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_GETINFOTIP, OnGetInfoTip)
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_SELCHANGED, OnSelectionChanged)
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_GETDISPINFO, OnGetDisplayInfo)
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_ITEMEXPANDED, OnItemExpanded)
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_BEGINDRAG, OnBeginDrag)
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_DELETEITEM, OnDeletingItem)
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_BEGINLABELEDIT, OnBeginLabelEdit)
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_ENDLABELEDIT, OnEndLabelEdit)
 
-        MSG_WM_MOUSEMOVE(OnMouseMove);
-        MSG_WM_MOUSELEAVE(OnMouseLeave);
-        MSG_WM_LBUTTONUP(OnLButtonUp);
+        MSG_WM_MOUSEMOVE(OnMouseMove)
+        MSG_WM_MOUSELEAVE(OnMouseLeave)
+        MSG_WM_LBUTTONUP(OnLButtonUp)
 
 //      CHAIN_MSG_MAP(multi_select_tree_view_t)
         CHAIN_MSG_MAP(uielement_t)
@@ -201,7 +200,7 @@ private:
     bool _IgnoreNotifications = false;
     bool _IsUser = false;
 
-    IDropTarget * _DropTarget = nullptr;
+    drop_target_t * _DropTarget = nullptr;
     string_enumerator_t * _StringEnumerator = nullptr;
 };
 

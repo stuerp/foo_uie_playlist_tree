@@ -144,8 +144,11 @@ void cui_element_t::GetFonts() noexcept
 
     _Theme.SetPlaylistFont(Helper.get_font());
 
-    _TreeView.SetFont(_Theme.GetPlaylistFont());
-    _EditBox.SetFont(_Theme.GetPlaylistFont());
+    if (_TreeView.Get() != NULL)
+        _TreeView.SetFont(_Theme.GetPlaylistFont());
+
+    if (_EditBox.IsWindow())
+        _EditBox.SetFont(_Theme.GetPlaylistFont());
 }
 
 }

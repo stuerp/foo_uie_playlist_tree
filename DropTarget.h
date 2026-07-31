@@ -7,9 +7,10 @@
 #include <shlobj.h>
 #include <shobjidl.h> // For IDropTargetHelper
 
-#include "PlaylistUIElement.h"
 #include "Resources.h"
 #include "Log.h"
+
+class playlist_uielement_t;
 
 /// <summary>
 /// Implements an OLE2 drop target.

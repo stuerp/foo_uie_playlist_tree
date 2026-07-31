@@ -80,7 +80,7 @@ CWndClassInfo & uielement_t::GetWndClassInfo()
             NULL, // Instance,
             NULL, // Icon
             NULL, // Cursor
-            ::GetSysColorBrush(COLOR_3DFACE),
+            NULL, // Background
             NULL, // Menu
             TEXT(STR_WINDOW_CLASS_NAME), // Class name
             NULL // Small Icon

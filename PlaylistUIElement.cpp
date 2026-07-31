@@ -4,7 +4,7 @@
 #include "pch.h"
 
 #include "PlaylistUIElement.h"
-#include "DropTarget.h"
+
 #include "ImageList.h"
 #include "TitleFormat.h"
 #include "Node.h"
@@ -12,8 +12,6 @@
 #include "Theme.h"
 #include "Toggle.h"
 #include "Log.h"
-
-#include <sdk/playlist.h>
 
 #pragma hdrstop
 
@@ -39,8 +37,6 @@ playlist_uielement_t::~playlist_uielement_t()
     _FolderManager->UnregisterCallback(this);
     _PlaylistManager->unregister_callback(this);
 
-//  OnDestroy();
-
     ::OleUninitialize();
 }
 
@@ -49,7 +45,7 @@ playlist_uielement_t::~playlist_uielement_t()
 /// </summary>
 LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
 {
-    auto Result = uielement_t::OnCreate(cs);
+    auto Result = __super::OnCreate(cs);
 
     if (Result != 0)
         return Result;
@@ -62,8 +58,6 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
             return -1;
 
         _TreeViewSubclass.Attach(_TreeView.Get());
-
-        _DarkMode.AddCtrlAuto(_TreeView.Get());
 
         {
             HRESULT hResult = InitImageList();
@@ -80,8 +74,6 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
 
         if (!_EditBox.Create(m_hWnd, NULL, nullptr, Styles, ExStyles, IDC_EDITBOX, nullptr))
             return -1;
-
-        _EditBox.EnableWindow(TRUE);
 
         // Add Auto Complete to the edit box.
         {
@@ -133,9 +125,9 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
             Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to register drop target: 0x%08X.", hResult);
     }
 
-    // Deserialize the tree view nodes.
 //  _State._Object.clear(); // Uncomment to reset the state.
 
+    // Deserialize the tree view nodes.
     FromJSON(_State._Object);
 
     ResetAutoComplete();
@@ -148,6 +140,8 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
             SelectPlaylist(Index);
     }
 
+    _DarkMode.AddControls(m_hWnd);
+
     return 0;
 }
 
@@ -156,8 +150,6 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
 /// </summary>
 void playlist_uielement_t::OnDestroy() noexcept
 {
-    _UIElementTracker.Remove(this);
-
     // Destroy the drop target.
     {
         if (m_hWnd != NULL)
@@ -170,17 +162,19 @@ void playlist_uielement_t::OnDestroy() noexcept
 
         if (_DropTarget != nullptr)
         {
-            _DropTarget->Release();
+            delete _DropTarget;
+
             _DropTarget = nullptr;
         }
     }
 
+    // Destroy the string enumerator.
     if (_StringEnumerator != nullptr)
     {
-        _StringEnumerator->Release(); // AutoComplete keeps its own reference.
+        delete _StringEnumerator;
+
         _StringEnumerator = nullptr;
     }
-
 
     // Destroy the edit box.
     if (_EditBox.IsWindow())
@@ -198,7 +192,11 @@ void playlist_uielement_t::OnDestroy() noexcept
         _TreeView.Destroy();
     }
 
-    uielement_t::OnDestroy();
+    _UIElementTracker.Remove(this);
+
+    __super::OnDestroy();
+
+    SetMsgHandled(TRUE);
 }
 
 /// <summary>
@@ -208,9 +206,14 @@ void playlist_uielement_t::OnSize(UINT type, CSize size) noexcept
 {
     uielement_t::OnSize(type, size);
 
-    const int Height = CalculateEditHeight(_EditBox, _Theme.GetPlaylistFont());
+    int Height = 0;
 
-    _EditBox.MoveWindow(4, size.cy - Height - 4, size.cx - 8, Height, TRUE);
+    if (_EditBox.IsWindow())
+    {
+        Height = CalculateEditHeight(_EditBox, _Theme.GetPlaylistFont());
+
+        _EditBox.MoveWindow(4, size.cy - Height - 4, size.cx - 8, Height, TRUE);
+    }
 
     ::MoveWindow(_TreeView.Get(), 0, 0, size.cx, size.cy - Height - 8, TRUE);
 }
@@ -1886,6 +1889,9 @@ void playlist_uielement_t::ModifyFilterMask(uint32_t newFilterMask) const noexce
 /// </summary>
 bool playlist_uielement_t::IsProhibited(const node_t * node, uint32_t filterMask) const noexcept
 {
+    if (node == nullptr)
+        return false;
+
     if (node->IsFolder)
     {
         // Only check the "Remove Playlist" lock for a folder.
@@ -1995,7 +2001,7 @@ bool playlist_uielement_t::ExamineAutoplaylist(size_t index) noexcept
         if (Length > Reader.get_remaining())
             return false;
 
-        pfc::string8 SortText;
+        pfc::string SortText;
 
         Reader.read_string_ex(SortText, Length, fb2k::noAbort);
 
@@ -2042,6 +2048,9 @@ int playlist_uielement_t::CalculateEditHeight(HWND hWnd, HFONT hFont) noexcept
 /// </summary>
 void playlist_uielement_t::ResetAutoComplete() noexcept
 {
+    if (_StringEnumerator == nullptr)
+        return;
+
     Log.AtDebug().Write("Resetting auto complete.");
 
     _StringEnumerator->Clear();

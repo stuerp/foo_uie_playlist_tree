@@ -95,7 +95,7 @@ bool tree_view_t::RedrawItem(HTREEITEM hItem) const noexcept
     if (!TreeView_GetItemRect(_hTreeView, hItem, &r, FALSE))
         return false;
 
-    return (::InvalidateRect(Get(), &r, TRUE) != 0);
+    return (bool) ::InvalidateRect(Get(), &r, TRUE);
 }
 
 /// <summary>
@@ -113,7 +113,7 @@ bool tree_view_t::RefreshItem(HTREEITEM hItem) const noexcept
 //      .cChildren      = I_CHILDRENCALLBACK
     };
 
-    return (TreeView_SetItem(_hTreeView, &tvi) != 0);
+    return (bool) TreeView_SetItem(_hTreeView, &tvi);
 }
 
 /// <summary>
@@ -291,7 +291,7 @@ bool tree_view_t::SetText(HTREEITEM hItem, const std::string & text) const noexc
         .pszText = (LPWSTR) Text.c_str(),
     };
 
-    return (TreeView_SetItem(_hTreeView, &tvi) != 0);
+    return (bool) TreeView_SetItem(_hTreeView, &tvi);
 }
 
 /// <summary>

@@ -5,6 +5,8 @@
 
 #include "DropTarget.h"
 
+#include "PlaylistUIElement.h"
+
 #pragma hdrstop
 
 // IUnknown

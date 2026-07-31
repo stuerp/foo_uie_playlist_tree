@@ -1,5 +1,5 @@
 
-/** $VER: TreeView.h (2026.07.29) P. Stuer **/
+/** $VER: TreeView.h (2026.07.30) P. Stuer **/
 
 #pragma once
 
@@ -89,12 +89,12 @@ public:
 
     bool RemoveSelectedItem() const noexcept
     {
-        return RemoveItem(GetSelectedItem());
+        return (bool) RemoveItem(GetSelectedItem());
     }
 
     bool RemoveItem(HTREEITEM hItem) const noexcept
     {
-        return !TreeView_DeleteItem(_hTreeView, hItem);
+        return (bool) TreeView_DeleteItem(_hTreeView, hItem);
     }
 
     HWND EditSelectedItem() const noexcept
@@ -109,27 +109,27 @@ public:
 
     bool DeleteAllItems() const noexcept
     {
-        return !TreeView_DeleteAllItems(_hTreeView);
+        return (bool) TreeView_DeleteAllItems(_hTreeView);
     }
 
     bool ExpandItem(HTREEITEM hItem) const noexcept
     {
-        return (TreeView_Expand(_hTreeView, hItem, TVE_EXPAND) != 0);
+        return (bool) TreeView_Expand(_hTreeView, hItem, TVE_EXPAND);
     }
 
     bool CollapseItem(HTREEITEM hItem) const noexcept
     {
-        return (TreeView_Expand(_hTreeView, hItem, TVE_COLLAPSE) != 0);
+        return (bool) TreeView_Expand(_hTreeView, hItem, TVE_COLLAPSE);
     }
 
     bool ToggleItem(HTREEITEM hItem) const noexcept
     {
-        return (TreeView_Expand(_hTreeView, hItem, TVE_TOGGLE) != 0);
+        return (bool) TreeView_Expand(_hTreeView, hItem, TVE_TOGGLE);
     }
 
     bool Sort(HTREEITEM hParent = TVI_ROOT) const noexcept
     {
-        return !TreeView_SortChildren(_hTreeView, hParent, FALSE);
+        return (bool) TreeView_SortChildren(_hTreeView, hParent, FALSE);
     }
 
     HIMAGELIST SetNormalImageList(HIMAGELIST hImageList) const noexcept
@@ -172,9 +172,9 @@ public:
     /// <summary>
     /// Removes the insert marker.
     /// </summary>
-    void RemoveInsertMarker() const noexcept
+    bool RemoveInsertMarker() const noexcept
     {
-        TreeView_SetInsertMark(_hTreeView, NULL, FALSE);
+        return (bool) TreeView_SetInsertMark(_hTreeView, NULL, FALSE);
     }
 
     /// <summary>
