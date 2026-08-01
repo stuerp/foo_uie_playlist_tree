@@ -67,7 +67,7 @@ You can experiment with the component without modifying your layout by selecting
 
 The first time the component opens it loads all the playlists that are currently open and adds them to the root of the tree.
 
-At the bottom of the panel there's a quick search text box. Typing the name of a folder or playlist will highlight it's node in the tree.
+At the bottom of the panel there's a Quick Search text box. Typing the name of a folder or playlist will highlight it's node in the tree.
 The text box has an Auto Complete feature that contains all the nodes names of the tree.
 
 ---
@@ -315,6 +315,10 @@ Here are some examples:
 ### Image List
 
 Select the image for the selected node type from this list.
+
+### Quick Search
+
+Enable this setting to display the Quick Search text box at the bottom of the panel.
 
 ---
 

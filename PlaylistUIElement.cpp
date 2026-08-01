@@ -248,6 +248,9 @@ void playlist_uielement_t::OnPaint(CDCHandle dc) noexcept
 /// </summary>
 void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexcept
 {
+    if (notifyCode != 0)
+        return;
+
     switch (id)
     {
         // Handles the "New Folder" command.
@@ -1208,7 +1211,7 @@ LRESULT playlist_uielement_t::OnRightClick(NMHDR * nmhd) noexcept
             cm->execute_by_id((unsigned int) (Command - IDM_PLAYLIST));
         else
         if (Command > 0)
-            ::PostMessageW(m_hWnd, WM_COMMAND, MAKEWORD(Command, 0), 0);
+            ::PostMessageW(m_hWnd, WM_COMMAND, MAKEWPARAM(Command, 0), 0);
 
         if (hPlaylist != NULL)
             ::DestroyMenu(hPlaylist);

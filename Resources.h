@@ -95,8 +95,7 @@
 
 #define IDM_DUMP                70
 
-#define IDM_CLEAR_HISTORY     1000
+#define IDM_CLEAR_HISTORY       1000
 #define IDM_HISTORY             (IDM_CLEAR_HISTORY + 1)
 
-#define IDM_PLAYLIST          2000
-
+#define IDM_PLAYLIST            2000
