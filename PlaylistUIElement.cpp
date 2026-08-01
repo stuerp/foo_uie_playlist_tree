@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.cpp (2026.07.31) P. Stuer **/
+/** $VER: PlaylistsUIElement.cpp (2026.08.01) P. Stuer **/
 
 #include "pch.h"
 
@@ -113,6 +113,8 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
             else
                 Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to install auto complete on edit box: 0x%08X.", hResult);
         }
+
+        _EditBox.ShowWindow(_State._IsQuickSearchVisible ? SW_SHOW : SW_HIDE);
     }
 
     // Create the drop target.
@@ -139,6 +141,15 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
         if (Index != SIZE_MAX)
             SelectPlaylist(Index);
     }
+
+    // Set the horizontal scroll position to 0 to start with. Items with long texts tend to force scrolling.
+    SCROLLINFO si =
+    {
+        .cbSize = sizeof(si),
+        .fMask = SIF_POS,
+    };
+
+    ::SetScrollInfo(_TreeView.Get(), SB_HORZ, &si, TRUE);
 
     _DarkMode.AddControls(m_hWnd);
 
@@ -206,16 +217,20 @@ void playlist_uielement_t::OnSize(UINT type, CSize size) noexcept
 {
     uielement_t::OnSize(type, size);
 
-    int Height = 0;
+    LONG Height = 0;
 
-    if (_EditBox.IsWindow())
+    if (_State._IsQuickSearchVisible)
     {
+        constexpr LONG Gap = 4;
+
         Height = CalculateEditHeight(_EditBox, _Theme.GetPlaylistFont());
 
-        _EditBox.MoveWindow(4, size.cy - Height - 4, size.cx - 8, Height, TRUE);
+        _EditBox.MoveWindow(4, size.cy - Height - Gap, size.cx - (Gap * 2), Height, TRUE);
+
+        Height += (Gap * 2);
     }
 
-    ::MoveWindow(_TreeView.Get(), 0, 0, size.cx, size.cy - Height - 8, TRUE);
+    ::MoveWindow(_TreeView.Get(), 0, 0, size.cx, size.cy - Height, TRUE);
 }
 
 /// <summary>
@@ -233,6 +248,9 @@ void playlist_uielement_t::OnPaint(CDCHandle dc) noexcept
 /// </summary>
 void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexcept
 {
+    if (notifyCode != 0)
+        return;
+
     switch (id)
     {
         // Handles the "New Folder" command.
@@ -850,34 +868,31 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
 
     const auto hTreeView = tvcd->nmcd.hdr.hwndFrom;
     const auto hDC       = tvcd->nmcd.hdc;
+    const RECT & rcItem  = tvcd->nmcd.rc;
 
     switch (tvcd->nmcd.dwDrawStage)
     {
         case CDDS_PREPAINT:
         {
-            // Draw the control background ourselves because a light/dark switch is not handled by fb2k::CCoreDarkModeHooks.
-            {
-                const RECT & rcItem = tvcd->nmcd.rc;
-
-                ::FillRect(hDC, &rcItem, _Theme.GetWindowBrush());
-            }
-
             SetMsgHandled(TRUE);
+
+            // Draw the control background ourselves because a light/dark switch is not handled by fb2k::CCoreDarkModeHooks.
+            ::FillRect(hDC, &rcItem, _Theme.GetWindowBrush());
 
             return CDRF_NOTIFYITEMDRAW; // Request item-specific notifications.
         }
 
         case CDDS_ITEMPREPAINT:
         {
-            const RECT & rcItem = tvcd->nmcd.rc;
+            SetMsgHandled(TRUE);
 
-            if ((rcItem.right - rcItem.left) == 0)
+            if ((rcItem.right - rcItem.left) <= 0)
                 return CDRF_DODEFAULT;
 
             const auto hItem = (HTREEITEM) tvcd->nmcd.dwItemSpec;
 
             // Get information about the item.
-            wchar_t Text[512];
+            wchar_t Text[512] = { };
 
             const TVITEMEX tvi
             {
@@ -903,19 +918,22 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
             TreeView_GetItemRect(hTreeView, hItem, &rcText, TRUE);
 
             const LONG ItemHeight = rcText.bottom - rcText.top;
-/*
-            // Clear the background of the full item.
-            {
-                auto & hBrush = _Theme.GetWindowBrush();
 
-                ::FillRect(hDC, &rcItem, hBrush);
-            }
-*/
+            // Adjust for horizontal scrolling.
+            SCROLLINFO si
+            {
+                .cbSize = sizeof(si),
+                .fMask = SIF_POS
+            };
+
+            ::GetScrollInfo(hTreeView, SB_HORZ, &si);
+
+            // Calculate the start position of the item content.
             RECT rc = rcItem;
 
-            rc.left += ItemHeight * tvcd->iLevel;
+            rc.left += (ItemHeight * tvcd->iLevel) - si.nPos;
 
-            // Draw a chevron for a Folder node.
+            // Draw a chevron for a Folder item.
             {
                 if (HasChildren)
                 {
@@ -960,10 +978,10 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
                     // Draw the focus rectangle.
                     if (IsFocused)
                     {
-                        auto & hPen = _Theme.GetHighlightPen();
+                        const auto & hPen = _Theme.GetHighlightPen();
 
-                        auto hOldBrush = ::SelectObject(hDC, hBrush);
-                        auto hOldPen = ::SelectObject(hDC, hPen);
+                        const auto hOldBrush = ::SelectObject(hDC, hBrush);
+                        const auto hOldPen = ::SelectObject(hDC, hPen);
 
                         ::RoundRect(hDC, rc.left, rc.top, rc.right, rc.bottom, 2, 2);
 
@@ -1011,8 +1029,6 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
 
                 ::SelectObject(hDC, hOldFont);
             }
-
-            SetMsgHandled(TRUE);
 
             return CDRF_SKIPDEFAULT; // Skip all other stages because we've drawn the complete item.
         }
@@ -1195,7 +1211,7 @@ LRESULT playlist_uielement_t::OnRightClick(NMHDR * nmhd) noexcept
             cm->execute_by_id((unsigned int) (Command - IDM_PLAYLIST));
         else
         if (Command > 0)
-            ::PostMessageW(m_hWnd, WM_COMMAND, MAKEWORD(Command, 0), 0);
+            ::PostMessageW(m_hWnd, WM_COMMAND, MAKEWPARAM(Command, 0), 0);
 
         if (hPlaylist != NULL)
             ::DestroyMenu(hPlaylist);
@@ -1711,6 +1727,17 @@ void playlist_uielement_t::Refresh() noexcept
         Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to initialize image list: 0x%08X.", hResult);
 
     _TreeView.RefreshAllItems();
+
+    // Quick Search visible or not?
+    {
+        _EditBox.ShowWindow(_State._IsQuickSearchVisible ? SW_SHOW : SW_HIDE);
+
+        RECT rc;
+
+        ::GetClientRect(m_hWnd, &rc);
+
+        ::SendMessageW(m_hWnd, WM_SIZE, SIZE_RESTORED, MAKELPARAM(rc.right, rc.bottom));
+    }
 }
 
 /// <summary>
@@ -1818,12 +1845,21 @@ HRESULT playlist_uielement_t::InitImageList() noexcept
     if (!_ImageList)
         return HRESULT_FROM_WIN32(::GetLastError());
 
+    imagelist_t hSrcImageList;
+    std::string LastFilePath;
+
     for (const auto & Image : _State._Images)
     {
-        imagelist_t hSrcImageList = image_list_factory_t::Create(Image._FilePath, _State._ImageSize);
+        bool AreEqual = std::ranges::equal(Image._FilePath, LastFilePath, std::equal_to<>{}, [](unsigned char c) { return std::tolower(c); }, [](unsigned char c) { return std::tolower(c); });
 
-        if (!hSrcImageList)
-            return HRESULT_FROM_WIN32(::GetLastError());
+        // Only load the image list if the file path is different from the last one.
+        if (!AreEqual)
+        {
+            hSrcImageList = image_list_factory_t::Create(Image._FilePath, _State._ImageSize);
+
+            if (!hSrcImageList)
+                return HRESULT_FROM_WIN32(::GetLastError());
+        }
 
         icon_t hIcon = ::ImageList_GetIcon(hSrcImageList, (int) Image._IconIndex, ILD_TRANSPARENT);
 
@@ -1831,6 +1867,8 @@ HRESULT playlist_uielement_t::InitImageList() noexcept
             return HRESULT_FROM_WIN32(::GetLastError());
 
         ::ImageList_ReplaceIcon(_ImageList, -1, hIcon);
+
+        LastFilePath = Image._FilePath;
     }
 
     _TreeView.SetNormalImageList(_ImageList);
@@ -2016,7 +2054,7 @@ bool playlist_uielement_t::ExamineAutoplaylist(size_t index) noexcept
 /// <summary>
 /// Calculates the ideal height of the edit box.
 /// </summary>
-int playlist_uielement_t::CalculateEditHeight(HWND hWnd, HFONT hFont) noexcept
+LONG playlist_uielement_t::CalculateEditHeight(HWND hWnd, HFONT hFont) noexcept
 {
     HDC hDC = ::GetDC(hWnd);
 
@@ -2038,7 +2076,7 @@ int playlist_uielement_t::CalculateEditHeight(HWND hWnd, HFONT hFont) noexcept
 
     ::ReleaseDC(hWnd, hDC);
 
-    const int Height = tmFont.tmHeight + (std::min(tmFont.tmHeight, tmSysFont.tmHeight) / 2) + (::GetSystemMetrics(SM_CYEDGE) * 2);
+    const LONG Height = tmFont.tmHeight + (std::min(tmFont.tmHeight, tmSysFont.tmHeight) / 2) + (::GetSystemMetrics(SM_CYEDGE) * 2);
 
     return Height;
 }

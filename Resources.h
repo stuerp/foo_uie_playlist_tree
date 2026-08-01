@@ -8,12 +8,12 @@
 
 #define NUM_FILE_MAJOR          1
 #define NUM_FILE_MINOR          4
-#define NUM_FILE_PATCH          0
+#define NUM_FILE_PATCH          1
 #define NUM_FILE_PRERELEASE     0
 
 #define NUM_PRODUCT_MAJOR       1
 #define NUM_PRODUCT_MINOR       4
-#define NUM_PRODUCT_PATCH       0
+#define NUM_PRODUCT_PATCH       1
 #define NUM_PRODUCT_PRERELEASE  0
 
 #define STR_PRERELEASE          ""
@@ -95,8 +95,7 @@
 
 #define IDM_DUMP                70
 
-#define IDM_CLEAR_HISTORY     1000
+#define IDM_CLEAR_HISTORY       1000
 #define IDM_HISTORY             (IDM_CLEAR_HISTORY + 1)
 
-#define IDM_PLAYLIST          2000
-
+#define IDM_PLAYLIST            2000

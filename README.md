@@ -77,15 +77,12 @@ To create the component first build the x86 configuration and next the x64 confi
 
 ## Change Log
 
-v1.4.0.0, 2026-07-31
+v1.4.1.0, 2026-08-01
 
-* New: A `Playlist` submenu will be added to the context menu that contains the standard foobar2000 context menu for a playlist when one is selected.
-* New: Quick Search text box to quickly highlight a folder or playlist. The text box supports Auto Complete.
-* New: Image type `Folder (Locked)` for folders that contain playlists that are locked for removal.
-* Improved: Lock restrictions are applied more fine-grained.
-* Improved: A folder that contains at least one playlist that is locked for removal can no longer be removed.
-* Changed: Removed support for `\n`. The foobar2000 function `$crlf()` achieves the same result.
-* Fixed: Resource leak in Preferences dialog.
+* New: Option to hide the Quick Search text box.
+* Improved: Optimized startup a little bit.
+* Fixed: Rendering a horizontally scrolled treeview.
+* Fixed: Playlist Restore menu was broken. (Regression)
 
 ## Acknowledgements / Credits
 

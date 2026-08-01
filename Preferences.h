@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.h (2026.07.23) **/
+/** $VER: Preferences.h (2026.08.01) **/
 
 #pragma once
 
@@ -10,6 +10,7 @@
 #define IDC_FILE_PATH           1004
 #define IDC_FILE_PATH_SELECT    1005
 #define IDC_IMAGE_LIST          1006
+#define IDC_QUICK_SEARCH        1007
 
 #define W_A00   332 // Dialog width as set by foobar2000, in dialog units
 #define H_A00   288 // Dialog height as set by foobar2000, in dialog units
@@ -115,3 +116,11 @@
 #define Y_A18   Y_A16 + H_A16 + IY
 #define W_A18   (W_A00 - (W_A15) - IX)
 #define H_A18   64
+
+/** Quick Search **/
+
+// Checkbox: Quick Search
+#define W_A24   70
+#define H_A24   H_CHB
+#define X_A24   X_A18
+#define Y_A24   Y_A18 + H_A18 + IY
