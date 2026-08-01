@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.cpp (2026.07.31) P. Stuer **/
+/** $VER: PlaylistsUIElement.cpp (2026.08.01) P. Stuer **/
 
 #include "pch.h"
 
@@ -113,6 +113,8 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
             else
                 Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to install auto complete on edit box: 0x%08X.", hResult);
         }
+
+        _EditBox.ShowWindow(_State._IsQuickSearchVisible ? SW_SHOW : SW_HIDE);
     }
 
     // Create the drop target.
@@ -139,6 +141,15 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
         if (Index != SIZE_MAX)
             SelectPlaylist(Index);
     }
+
+    // Set the horizontal scroll position to 0 to start with. Items with long texts tend to force scrolling.
+    SCROLLINFO si =
+    {
+        .cbSize = sizeof(si),
+        .fMask = SIF_POS,
+    };
+
+    ::SetScrollInfo(_TreeView.Get(), SB_HORZ, &si, TRUE);
 
     _DarkMode.AddControls(m_hWnd);
 
@@ -206,16 +217,20 @@ void playlist_uielement_t::OnSize(UINT type, CSize size) noexcept
 {
     uielement_t::OnSize(type, size);
 
-    int Height = 0;
+    LONG Height = 0;
 
-    if (_EditBox.IsWindow())
+    if (_State._IsQuickSearchVisible)
     {
+        constexpr LONG Gap = 4;
+
         Height = CalculateEditHeight(_EditBox, _Theme.GetPlaylistFont());
 
-        _EditBox.MoveWindow(4, size.cy - Height - 4, size.cx - 8, Height, TRUE);
+        _EditBox.MoveWindow(4, size.cy - Height - Gap, size.cx - (Gap * 2), Height, TRUE);
+
+        Height += (Gap * 2);
     }
 
-    ::MoveWindow(_TreeView.Get(), 0, 0, size.cx, size.cy - Height - 8, TRUE);
+    ::MoveWindow(_TreeView.Get(), 0, 0, size.cx, size.cy - Height, TRUE);
 }
 
 /// <summary>
@@ -1709,6 +1724,17 @@ void playlist_uielement_t::Refresh() noexcept
         Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to initialize image list: 0x%08X.", hResult);
 
     _TreeView.RefreshAllItems();
+
+    // Quick Search visible or not?
+    {
+        _EditBox.ShowWindow(_State._IsQuickSearchVisible ? SW_SHOW : SW_HIDE);
+
+        RECT rc;
+
+        ::GetClientRect(m_hWnd, &rc);
+
+        ::SendMessageW(m_hWnd, WM_SIZE, SIZE_RESTORED, MAKELPARAM(rc.right, rc.bottom));
+    }
 }
 
 /// <summary>
@@ -1816,12 +1842,21 @@ HRESULT playlist_uielement_t::InitImageList() noexcept
     if (!_ImageList)
         return HRESULT_FROM_WIN32(::GetLastError());
 
+    imagelist_t hSrcImageList;
+    std::string LastFilePath;
+
     for (const auto & Image : _State._Images)
     {
-        imagelist_t hSrcImageList = image_list_factory_t::Create(Image._FilePath, _State._ImageSize);
+        bool AreEqual = std::ranges::equal(Image._FilePath, LastFilePath, std::equal_to<>{}, [](unsigned char c) { return std::tolower(c); }, [](unsigned char c) { return std::tolower(c); });
 
-        if (!hSrcImageList)
-            return HRESULT_FROM_WIN32(::GetLastError());
+        // Only load the image list if the file path is different from the last one.
+        if (!AreEqual)
+        {
+            hSrcImageList = image_list_factory_t::Create(Image._FilePath, _State._ImageSize);
+
+            if (!hSrcImageList)
+                return HRESULT_FROM_WIN32(::GetLastError());
+        }
 
         icon_t hIcon = ::ImageList_GetIcon(hSrcImageList, (int) Image._IconIndex, ILD_TRANSPARENT);
 
@@ -1829,6 +1864,8 @@ HRESULT playlist_uielement_t::InitImageList() noexcept
             return HRESULT_FROM_WIN32(::GetLastError());
 
         ::ImageList_ReplaceIcon(_ImageList, -1, hIcon);
+
+        LastFilePath = Image._FilePath;
     }
 
     _TreeView.SetNormalImageList(_ImageList);
@@ -2014,7 +2051,7 @@ bool playlist_uielement_t::ExamineAutoplaylist(size_t index) noexcept
 /// <summary>
 /// Calculates the ideal height of the edit box.
 /// </summary>
-int playlist_uielement_t::CalculateEditHeight(HWND hWnd, HFONT hFont) noexcept
+LONG playlist_uielement_t::CalculateEditHeight(HWND hWnd, HFONT hFont) noexcept
 {
     HDC hDC = ::GetDC(hWnd);
 
@@ -2036,7 +2073,7 @@ int playlist_uielement_t::CalculateEditHeight(HWND hWnd, HFONT hFont) noexcept
 
     ::ReleaseDC(hWnd, hDC);
 
-    const int Height = tmFont.tmHeight + (std::min(tmFont.tmHeight, tmSysFont.tmHeight) / 2) + (::GetSystemMetrics(SM_CYEDGE) * 2);
+    const LONG Height = tmFont.tmHeight + (std::min(tmFont.tmHeight, tmSysFont.tmHeight) / 2) + (::GetSystemMetrics(SM_CYEDGE) * 2);
 
     return Height;
 }

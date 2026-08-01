@@ -104,6 +104,10 @@ public:
         MSG_WM_INITDIALOG(OnInitDialog)
         MSG_WM_DESTROY(OnDestroy)
 
+    #ifdef _DEBUG
+        MSG_WM_CTLCOLORDLG(OnCtlColorDlg)
+    #endif
+
         COMMAND_HANDLER_EX(IDC_TEXT_FORMAT,         EN_CHANGE,      OnEditChange)
         COMMAND_HANDLER_EX(IDC_TOOL_TIP,            EN_CHANGE,      OnEditChange)
         COMMAND_HANDLER_EX(IDC_FILE_PATH,           EN_CHANGE,      OnEditChange)
@@ -112,6 +116,7 @@ public:
         COMMAND_HANDLER_EX(IDC_NODE_TYPE,           CBN_SELCHANGE,  OnSelectionChange)
 
         COMMAND_HANDLER_EX(IDC_FILE_PATH_SELECT,    BN_CLICKED,     OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_QUICK_SEARCH,        BN_CLICKED,     OnButtonClick)
 
         MSG_WM_NOTIFY(OnNotify);
     END_MSG_MAP()
@@ -138,6 +143,16 @@ private:
     {
         _ImageList.Reset();
     }
+
+    #ifdef _DEBUG
+    /// <summary>
+    /// Returns a brush that the system uses to draw the dialog background. For layout debugging purposes.
+    /// </summary>
+    HBRUSH OnCtlColorDlg(HDC, HWND) const noexcept
+    {
+        return ::CreateSolidBrush(RGB(220, 220, 220));
+    }
+    #endif
 
     /// <summary>
     /// Initializes the controls.
@@ -192,6 +207,11 @@ private:
             _itow_s(std::clamp((int) _NewState._ImageSize, 16, 256), Text, _countof(Text), 10);
 
             SetDlgItemTextW(IDC_IMAGE_SIZE, Text);
+        }
+
+        // Quick Search
+        {
+            SendDlgItemMessageW(IDC_QUICK_SEARCH, BM_SETCHECK, _NewState._IsQuickSearchVisible);
         }
     }
 
@@ -332,16 +352,26 @@ private:
     /// </summary>
     void OnButtonClick(UINT, int id, CWindow w) noexcept
     {
-        if (id == IDC_FILE_PATH_SELECT)
+        switch (id)
         {
-            std::wstring FilePath;
+            case IDC_FILE_PATH_SELECT:
+            {
+                std::wstring FilePath;
 
-            FilePath.resize(MAX_PATH);
+                FilePath.resize(MAX_PATH);
 
-            GetDlgItemTextW(IDC_FILE_PATH, FilePath.data(), (int) FilePath.size());
+                GetDlgItemTextW(IDC_FILE_PATH, FilePath.data(), (int) FilePath.size());
 
-            if (msc::OpenFileDialog(m_hWnd, { { L"All files (*.*)", L"*.*" }}, 0, L"dll", L"Choose the icon file...", msc::GetFullPath(FilePath).c_str(), FilePath))
-                SetDlgItemTextW(IDC_FILE_PATH, FilePath.c_str());
+                if (msc::OpenFileDialog(m_hWnd, { { L"All files (*.*)", L"*.*" }}, 0, L"dll", L"Choose the icon file...", msc::GetFullPath(FilePath).c_str(), FilePath))
+                    SetDlgItemTextW(IDC_FILE_PATH, FilePath.c_str());
+                break;
+            }
+
+            case IDC_QUICK_SEARCH:
+            {
+                _NewState._IsQuickSearchVisible = (bool) SendDlgItemMessageW(id, BM_GETCHECK);
+                break;
+            }
         }
 
         OnChanged();
@@ -413,6 +443,12 @@ private:
         // Image Size
         {
             if (_NewState._ImageSize != _State._ImageSize)
+                return true;
+        }
+
+        // Quick Search
+        {
+            if (_NewState._IsQuickSearchVisible != _State._IsQuickSearchVisible)
                 return true;
         }
 

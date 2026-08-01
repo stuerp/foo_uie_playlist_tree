@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.rc (2026.07.23) P. Stuer **/
+/** $VER: Preferences.rc (2026.08.01) P. Stuer **/
 
 #include "Resources.h"
 
@@ -32,4 +32,6 @@ font 8, "MS Shell Dlg", 400, 0, 1
     pushbutton  "...",          IDC_FILE_PATH_SELECT,   X_A17, Y_A17,     W_A17, H_A17
 
     control     "",             IDC_IMAGE_LIST,         WC_ICON_LIST, WS_CHILD | WS_VISIBLE | WS_TABSTOP, X_A18, Y_A18, W_A18, H_A18
+
+    control     "Quick Search", IDC_QUICK_SEARCH, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A24, Y_A24, W_A24, H_A24
 }

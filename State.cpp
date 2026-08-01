@@ -1,5 +1,5 @@
 
-/** $VER: State.cpp (2026.07.30) P. Stuer **/
+/** $VER: State.cpp (2026.08.01) P. Stuer **/
 
 #include "pch.h"
 
@@ -20,9 +20,10 @@ state_t::state_t() noexcept
 /// </summary>
 void state_t::Reset() noexcept
 {
-    _TextFormat    = "%node_name%$if(%node_is_folder%,,' ('%node_item_count%')')";
-    _ToolTipFormat = "$if(%node_is_folder%,,$if(%playlist_size_natural%,%playlist_size_natural%$crlf()$if2(%playlist_duration_natural%,', N/A'),'N/A'))";
-    _ImageSize     = (uint32_t) ::GetSystemMetrics(SM_CXSMICON);
+    _TextFormat           = "%node_name%$if(%node_is_folder%,,' ('%node_item_count%')')";
+    _ToolTipFormat        = "$if(%node_is_folder%,,$if(%playlist_size_natural%,%playlist_size_natural%$crlf()$if2(%playlist_duration_natural%,', N/A'),'N/A'))";
+    _ImageSize            = (uint32_t) ::GetSystemMetrics(SM_CXSMICON);
+    _IsQuickSearchVisible = true;
 
     _Images.clear();
 
@@ -41,11 +42,12 @@ void state_t::Reset() noexcept
 /// </summary>
 state_t & state_t::operator=(const state_t & other) noexcept
 {
-    _TextFormat    = other._TextFormat;
-    _ToolTipFormat = other._ToolTipFormat;
-    _ImageSize     = other._ImageSize;
+    _TextFormat           = other._TextFormat;
+    _ToolTipFormat        = other._ToolTipFormat;
+    _ImageSize            = other._ImageSize;
+    _IsQuickSearchVisible = other._IsQuickSearchVisible;
 
-    _Images        = other._Images;
+    _Images               = other._Images;
 
     return *this;
 }
@@ -60,9 +62,13 @@ void state_t::FromJSON(const char * data, size_t size) noexcept
 
     const json Object = json::parse(data, data + size, nullptr, true);
 
-    _TextFormat    = Object.value("nameFormat", _TextFormat).c_str();
-    _ToolTipFormat = Object.value("toolTip",    _ToolTipFormat).c_str();
-    _ImageSize     = Object.value("imageSize",  _ImageSize);
+    _TextFormat           = Object.value("nameFormat", _TextFormat).c_str();
+    _ToolTipFormat        = Object.value("toolTip",    _ToolTipFormat).c_str();
+    _ImageSize            = Object.value("imageSize",  _ImageSize);
+
+    const auto & QuickSearch = Object.value("quickSearch", json::object());
+
+    _IsQuickSearchVisible = QuickSearch.value("visible", _IsQuickSearchVisible);
 
     size_t Index = 0;
 
@@ -103,6 +109,14 @@ json state_t::ToJSON() const noexcept
         { "nameFormat", _TextFormat },
         { "toolTip", _ToolTipFormat },
         { "imageSize", _ImageSize },
+
+        json::object_t::value_type
+        (
+            "quickSearch", json::object
+            ({
+                { "visible", _IsQuickSearchVisible },
+            })
+        ),
     };
 
     json::array_t Images;
