@@ -850,34 +850,31 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
 
     const auto hTreeView = tvcd->nmcd.hdr.hwndFrom;
     const auto hDC       = tvcd->nmcd.hdc;
+    const RECT & rcItem  = tvcd->nmcd.rc;
 
     switch (tvcd->nmcd.dwDrawStage)
     {
         case CDDS_PREPAINT:
         {
-            // Draw the control background ourselves because a light/dark switch is not handled by fb2k::CCoreDarkModeHooks.
-            {
-                const RECT & rcItem = tvcd->nmcd.rc;
-
-                ::FillRect(hDC, &rcItem, _Theme.GetWindowBrush());
-            }
-
             SetMsgHandled(TRUE);
+
+            // Draw the control background ourselves because a light/dark switch is not handled by fb2k::CCoreDarkModeHooks.
+            ::FillRect(hDC, &rcItem, _Theme.GetWindowBrush());
 
             return CDRF_NOTIFYITEMDRAW; // Request item-specific notifications.
         }
 
         case CDDS_ITEMPREPAINT:
         {
-            const RECT & rcItem = tvcd->nmcd.rc;
+            SetMsgHandled(TRUE);
 
-            if ((rcItem.right - rcItem.left) == 0)
+            if ((rcItem.right - rcItem.left) <= 0)
                 return CDRF_DODEFAULT;
 
             const auto hItem = (HTREEITEM) tvcd->nmcd.dwItemSpec;
 
             // Get information about the item.
-            wchar_t Text[512];
+            wchar_t Text[512] = { };
 
             const TVITEMEX tvi
             {
@@ -903,19 +900,22 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
             TreeView_GetItemRect(hTreeView, hItem, &rcText, TRUE);
 
             const LONG ItemHeight = rcText.bottom - rcText.top;
-/*
-            // Clear the background of the full item.
-            {
-                auto & hBrush = _Theme.GetWindowBrush();
 
-                ::FillRect(hDC, &rcItem, hBrush);
-            }
-*/
+            // Adjust for horizontal scrolling.
+            SCROLLINFO si
+            {
+                .cbSize = sizeof(si),
+                .fMask = SIF_POS
+            };
+
+            ::GetScrollInfo(hTreeView, SB_HORZ, &si);
+
+            // Calculate the start position of the item content.
             RECT rc = rcItem;
 
-            rc.left += ItemHeight * tvcd->iLevel;
+            rc.left += (ItemHeight * tvcd->iLevel) - si.nPos;
 
-            // Draw a chevron for a Folder node.
+            // Draw a chevron for a Folder item.
             {
                 if (HasChildren)
                 {
@@ -960,10 +960,10 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
                     // Draw the focus rectangle.
                     if (IsFocused)
                     {
-                        auto & hPen = _Theme.GetHighlightPen();
+                        const auto & hPen = _Theme.GetHighlightPen();
 
-                        auto hOldBrush = ::SelectObject(hDC, hBrush);
-                        auto hOldPen = ::SelectObject(hDC, hPen);
+                        const auto hOldBrush = ::SelectObject(hDC, hBrush);
+                        const auto hOldPen = ::SelectObject(hDC, hPen);
 
                         ::RoundRect(hDC, rc.left, rc.top, rc.right, rc.bottom, 2, 2);
 
@@ -1011,8 +1011,6 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
 
                 ::SelectObject(hDC, hOldFont);
             }
-
-            SetMsgHandled(TRUE);
 
             return CDRF_SKIPDEFAULT; // Skip all other stages because we've drawn the complete item.
         }

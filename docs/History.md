@@ -1,6 +1,16 @@
 
 # foo_uie_playlist_tree History
 
+v1.4.0.0, 2026-07-31
+
+* New: A `Playlist` submenu will be added to the context menu that contains the standard foobar2000 context menu for a playlist when one is selected.
+* New: Quick Search text box to quickly highlight a folder or playlist. The text box supports Auto Complete.
+* New: Image type `Folder (Locked)` for folders that contain playlists that are locked for removal.
+* Improved: Lock restrictions are applied more fine-grained.
+* Improved: A folder that contains at least one playlist that is locked for removal can no longer be removed.
+* Changed: Removed support for `\n`. The foobar2000 function `$crlf()` achieves the same result.
+* Fixed: Resource leak in Preferences dialog.
+
 v1.3.1.0, 2026-07-26
 
 * Improved: Dropping files or playlist items on a folder creates a playlist in that folder.
