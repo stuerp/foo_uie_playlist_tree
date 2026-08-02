@@ -45,10 +45,10 @@ public:
 
         GUID Id;
 
-        HRESULT hResult = ::CoCreateGuid(&Id);
+        HRESULT hr = ::CoCreateGuid(&Id);
 
-        if (!SUCCEEDED(hResult))
-            return hResult;
+        if (!SUCCEEDED(hr))
+            return hr;
 
         return CreateFolder(Id, Name);
     }

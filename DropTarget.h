@@ -20,10 +20,10 @@ class drop_target_t : public IDropTarget
 public:
     drop_target_t(HWND hWnd, playlist_uielement_t * uiElement) noexcept : _hWnd(hWnd), _UIElement(uiElement)
     {
-        HRESULT hResult = ::CoCreateInstance(CLSID_DragDropHelper, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&_DragDropHelper));
+        HRESULT hr = ::CoCreateInstance(CLSID_DragDropHelper, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&_DragDropHelper));
 
-        if (!SUCCEEDED(hResult))
-            Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to create shell drag/drop helper: 0x%08X", hResult);
+        if (!SUCCEEDED(hr))
+            Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to create shell drag/drop helper: 0x%08X", hr);
     }
 
     virtual ~drop_target_t() noexcept

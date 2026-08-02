@@ -22,6 +22,7 @@
     <ClCompile Include="PlaylistLockManager.cpp" />
     <ClCompile Include="CUIFontClient.cpp" />
     <ClCompile Include="StringEnumerator.cpp" />
+    <ClCompile Include="WIC.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DUIElement.h" />
@@ -51,6 +52,7 @@
     <ClInclude Include="PlaylistLockManager.h" />
     <ClInclude Include="CUIFontClient.h" />
     <ClInclude Include="StringEnumerator.h" />
+    <ClInclude Include="WIC.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />

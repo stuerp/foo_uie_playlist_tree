@@ -465,13 +465,18 @@ private:
         // Create the file path.
         pfc::string Text;
 
-        HRESULT hResult = title_formatter_t::Evaluate(Image._FilePath, nullptr, GUID_NULL, Text);
+        HRESULT hr = title_formatter_t::Evaluate(Image._FilePath, nullptr, GUID_NULL, Text);
+
+        const auto FilePath = SUCCEEDED(hr) ? Text.c_str() : Image._FilePath;
 
         // Create the image list, if necessary.
         {
-            const auto FilePath = SUCCEEDED(hResult) ? Text.c_str() : Image._FilePath;
+            int Width = 0, Height = 0;
 
-            const bool AreEqual = std::ranges::equal(FilePath, _ImageListFilePath, std::equal_to<>{}, [](unsigned char c) { return std::tolower(c); }, [](unsigned char c) { return std::tolower(c); });
+            if ((_ImageList != NULL) && !::ImageList_GetIconSize(_ImageList, &Width, &Height))
+                return;
+
+            const bool AreEqual = (Width == (int) _NewState._ImageSize) && std::ranges::equal(FilePath, _ImageListFilePath, std::equal_to<>{}, [](unsigned char c) { return std::tolower(c); }, [](unsigned char c) { return std::tolower(c); });
 
             if (!AreEqual)
             {

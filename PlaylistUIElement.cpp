@@ -22,10 +22,10 @@
 /// </summary>
 playlist_uielement_t::playlist_uielement_t() : multi_select_tree_view_t(IDC_TREEVIEW)
 {
-    HRESULT hResult = ::OleInitialize(nullptr);
+    HRESULT hr = ::OleInitialize(nullptr);
 
-    if (!SUCCEEDED(hResult))
-        Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to initialize OLE: 0x%08X.", hResult);
+    if (!SUCCEEDED(hr))
+        Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to initialize OLE: 0x%08X.", hr);
 
     _PlaylistManager->register_callback(this, (t_uint32) playlist_callback::flag_all);
     _FolderManager->RegisterCallback(this);
@@ -62,10 +62,10 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
         _TreeViewSubclass.Attach(_TreeView.Get());
 
         {
-            HRESULT hResult = InitImageList();
+            HRESULT hr = InitImageList();
 
-            if (!SUCCEEDED(hResult))
-                Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to initialize image list: 0x%08X.", hResult);
+            if (!SUCCEEDED(hr))
+                Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to initialize image list: 0x%08X.", hr);
         }
     }
 
@@ -84,36 +84,36 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
 
             IAutoComplete * ac = nullptr;
 
-            HRESULT hResult = ::CoCreateInstance(CLSID_AutoComplete, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&ac));
+            HRESULT hr = ::CoCreateInstance(CLSID_AutoComplete, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&ac));
 
-            if (SUCCEEDED(hResult))
+            if (SUCCEEDED(hr))
             {
-                hResult = ::SHAutoComplete(_EditBox, 0);
+                hr = ::SHAutoComplete(_EditBox, 0);
 
-                if (SUCCEEDED(hResult))
+                if (SUCCEEDED(hr))
                 {
                     ac->Init(_EditBox, _StringEnumerator, nullptr, nullptr);
 
                     {
                         IAutoComplete2 * ac2 = nullptr;
 
-                        hResult = ac->QueryInterface(IID_PPV_ARGS(&ac2));
+                        hr = ac->QueryInterface(IID_PPV_ARGS(&ac2));
 
-                        if (SUCCEEDED(hResult))
+                        if (SUCCEEDED(hr))
                         {
                             ac2->SetOptions(ACO_AUTOSUGGEST | ACO_UPDOWNKEYDROPSLIST);
 
                             ac2->Release();
                         }
                         else
-                            Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to set auto complete options: 0x%08X.", hResult);
+                            Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to set auto complete options: 0x%08X.", hr);
                     }
                 }
 
                 ac->Release();
             }
             else
-                Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to install auto complete on edit box: 0x%08X.", hResult);
+                Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to install auto complete on edit box: 0x%08X.", hr);
         }
 
         _EditBox.ShowWindow(_State._IsQuickSearchVisible ? SW_SHOW : SW_HIDE);
@@ -123,10 +123,10 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
     {
         _DropTarget = new drop_target_t(_TreeView.Get(), this);
 
-        HRESULT hResult = ::RegisterDragDrop(m_hWnd, _DropTarget);
+        HRESULT hr = ::RegisterDragDrop(m_hWnd, _DropTarget);
 
-        if (!SUCCEEDED(hResult))
-            Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to register drop target: 0x%08X.", hResult);
+        if (!SUCCEEDED(hr))
+            Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to register drop target: 0x%08X.", hr);
     }
 
 //  _State._Object.clear(); // Uncomment to reset the state.
@@ -167,10 +167,10 @@ void playlist_uielement_t::OnDestroy() noexcept
     {
         if (m_hWnd != NULL)
         {
-            HRESULT hResult = ::RevokeDragDrop(m_hWnd);
+            HRESULT hr = ::RevokeDragDrop(m_hWnd);
 
-            if (!SUCCEEDED(hResult))
-                Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to revoke drop target: 0x%08X.", hResult);
+            if (!SUCCEEDED(hr))
+                Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to revoke drop target: 0x%08X.", hr);
         }
 
         if (_DropTarget != nullptr)
@@ -258,10 +258,10 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
         // Handles the "New Folder" command.
         case IDM_NEW_FOLDER:
         {
-            HRESULT hResult = _FolderManager->CreateFolder();
+            HRESULT hr = _FolderManager->CreateFolder();
 
-            if (!SUCCEEDED(hResult))
-                Log.AtError().Write(STR_COMPONENT_BASENAME " failed to create folder: 0x%08X.", hResult);
+            if (!SUCCEEDED(hr))
+                Log.AtError().Write(STR_COMPONENT_BASENAME " failed to create folder: 0x%08X.", hr);
 
             return;
         }
@@ -1273,9 +1273,9 @@ LRESULT playlist_uielement_t::OnGetDisplayInfo(NMHDR * nmhd) noexcept
     {
         pfc::string Text;
 
-        HRESULT hResult = title_formatter_t::Evaluate(_State._TextFormat, &_TreeView, Node->Id, Text);
+        HRESULT hr = title_formatter_t::Evaluate(_State._TextFormat, &_TreeView, Node->Id, Text);
 
-        if (!SUCCEEDED(hResult))
+        if (!SUCCEEDED(hr))
             return FALSE;
 
         ::wcscpy_s(tvi.pszText, (size_t) tvi.cchTextMax, msc::UTF8ToWide(Text.c_str()).c_str());
@@ -1524,9 +1524,9 @@ LRESULT playlist_uielement_t::OnGetInfoTip(NMHDR * nmhd) noexcept
 
     pfc::string Text;
 
-    HRESULT hResult = title_formatter_t::Evaluate(_State._ToolTipFormat, &_TreeView, Node->Id, Text);
+    HRESULT hr = title_formatter_t::Evaluate(_State._ToolTipFormat, &_TreeView, Node->Id, Text);
 
-    if (!SUCCEEDED(hResult))
+    if (!SUCCEEDED(hr))
         return TRUE;
 
     ::wcscpy_s(nmgi->pszText, (rsize_t) nmgi->cchTextMax, msc::UTF8ToWide(Text.c_str()).c_str());
@@ -1723,10 +1723,10 @@ void playlist_uielement_t::Refresh() noexcept
 {
     _Theme.Initialize(m_hWnd);
 
-    HRESULT hResult = InitImageList();
+    HRESULT hr = InitImageList();
 
-    if (!SUCCEEDED(hResult))
-        Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to initialize image list: 0x%08X.", hResult);
+    if (!SUCCEEDED(hr))
+        Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to initialize image list: 0x%08X.", hr);
 
     _TreeView.RefreshAllItems();
 
@@ -1919,17 +1919,17 @@ void playlist_uielement_t::ModifyFilterMask(uint32_t newFilterMask) const noexce
 
     if (FilterMask != 0u)
     {
-        HRESULT hResult = _LockManager->LockPlaylist(Node->Id, FilterMask);
+        HRESULT hr = _LockManager->LockPlaylist(Node->Id, FilterMask);
 
-        if (!SUCCEEDED(hResult))
-            Log.AtError().Write(STR_COMPONENT_BASENAME " failed to lock playlist %d: 0x%08X.", Index, hResult);
+        if (!SUCCEEDED(hr))
+            Log.AtError().Write(STR_COMPONENT_BASENAME " failed to lock playlist %d: 0x%08X.", Index, hr);
     }
     else
     {
-        HRESULT hResult = _LockManager->UnlockPlaylist(Node->Id);
+        HRESULT hr = _LockManager->UnlockPlaylist(Node->Id);
 
-        if (!SUCCEEDED(hResult))
-            Log.AtError().Write(STR_COMPONENT_BASENAME " failed to unlock playlist %d: 0x%08X.", Index, hResult);
+        if (!SUCCEEDED(hr))
+            Log.AtError().Write(STR_COMPONENT_BASENAME " failed to unlock playlist %d: 0x%08X.", Index, hr);
     }
 }
 

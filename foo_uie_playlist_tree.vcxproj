@@ -350,6 +350,7 @@
     <ClCompile Include="TitleFormat.cpp" />
     <ClCompile Include="TreeView.cpp" />
     <ClCompile Include="UIElement.cpp" />
+    <ClCompile Include="WIC.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CUIColorClient.h" />
@@ -379,6 +380,7 @@
     <ClInclude Include="TreeViewSubclass.h" />
     <ClInclude Include="UIElement.h" />
     <ClInclude Include="Tracker.h" />
+    <ClInclude Include="WIC.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Preferences.rc" />

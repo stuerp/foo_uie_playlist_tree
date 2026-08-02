@@ -79,6 +79,7 @@ To create the component first build the x86 configuration and next the x64 confi
 
 vNext, 2026-xx-xx
 
+* New: The images can be loaded from all Windows Imaging Component (WIC) supported formats (JPEG, GIF, PNG, TIFF, ICO, etc...).
 * Fixed: The size of some playlists was not calculated correctly.
 
 ## Acknowledgements / Credits

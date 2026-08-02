@@ -82,10 +82,10 @@ STDMETHODIMP drop_target_t::Drop(IDataObject * dataObject, DWORD keyState, POINT
     if (*effect == DROPEFFECT_NONE)
         return S_OK;
 
-    HRESULT hResult = _DragDropHelper->Drop(dataObject, &Point, *effect);
+    HRESULT hr = _DragDropHelper->Drop(dataObject, &Point, *effect);
 
-    if (!SUCCEEDED(hResult))
-        return hResult;
+    if (!SUCCEEDED(hr))
+        return hr;
 
 #ifdef _DEBUG
     ExamineDataObject(dataObject);
@@ -104,10 +104,10 @@ STDMETHODIMP drop_target_t::Drop(IDataObject * dataObject, DWORD keyState, POINT
 
     STGMEDIUM StgMedium = { };
 
-    hResult = dataObject->GetData(&FormatEtc, &StgMedium);
+    hr = dataObject->GetData(&FormatEtc, &StgMedium);
 
-    if (!SUCCEEDED(hResult))
-        return hResult;
+    if (!SUCCEEDED(hr))
+        return hr;
 
     // Enumerate all files.
     {
@@ -171,9 +171,9 @@ void drop_target_t::ExamineDataObject(IDataObject * dataObject) const noexcept
 
     IEnumFORMATETC * EnumFORMATETC = nullptr;
 
-    HRESULT hResult = dataObject->EnumFormatEtc(DATADIR_GET, &EnumFORMATETC);
+    HRESULT hr = dataObject->EnumFormatEtc(DATADIR_GET, &EnumFORMATETC);
 
-    if (!SUCCEEDED(hResult))
+    if (!SUCCEEDED(hr))
         return;
 
     FORMATETC fmt = { };
