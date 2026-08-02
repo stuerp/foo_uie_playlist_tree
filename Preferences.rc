@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.rc (2026.08.01) P. Stuer **/
+/** $VER: Preferences.rc (2026.08.02) P. Stuer **/
 
 #include "Resources.h"
 
@@ -34,4 +34,9 @@ font 8, "MS Shell Dlg", 400, 0, 1
     control     "",             IDC_IMAGE_LIST,         WC_ICON_LIST, WS_CHILD | WS_VISIBLE | WS_TABSTOP, X_A18, Y_A18, W_A18, H_A18
 
     control     "Quick Search", IDC_QUICK_SEARCH, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A24, Y_A24, W_A24, H_A24
+
+    groupbox "Component", IDC_STATIC, X_A99, Y_A99, W_A99, H_A99, BS_GROUPBOX, WS_EX_TRANSPARENT
+
+        rtext           "Log level:"                IDC_STATIC,                     X_A98, Y_A98 + 2, W_A98, H_A98
+        combobox                                    IDC_LOG_LEVEL,                  X_A97, Y_A97,     W_A97, H_A97, CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 }

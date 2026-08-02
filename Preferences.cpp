@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.cpp (2026.07.30) P. Stuer **/
+/** $VER: Preferences.cpp (2026.08.02) P. Stuer **/
 
 #include "pch.h"
 
@@ -114,6 +114,7 @@ public:
         COMMAND_HANDLER_EX(IDC_IMAGE_SIZE,          EN_KILLFOCUS,   OnEditKillFocus)
 
         COMMAND_HANDLER_EX(IDC_NODE_TYPE,           CBN_SELCHANGE,  OnSelectionChange)
+        COMMAND_HANDLER_EX(IDC_LOG_LEVEL,           CBN_SELCHANGE,  OnSelectionChange)
 
         COMMAND_HANDLER_EX(IDC_FILE_PATH_SELECT,    BN_CLICKED,     OnButtonClick)
         COMMAND_HANDLER_EX(IDC_QUICK_SEARCH,        BN_CLICKED,     OnButtonClick)
@@ -127,6 +128,38 @@ private:
     /// </summary>
     BOOL OnInitDialog(CWindow, LPARAM) noexcept
     {
+        const std::unordered_map<int, const char *> Tips =
+        {
+            { IDC_TEXT_FORMAT, "Determines how the text of a tree node gets formatted using Title Formatting." },
+            { IDC_TOOL_TIP, "Specifies Title Formatting for the tooltip displayed in the tree view." },
+
+            { IDC_NODE_TYPE, "Determines for which node type the image will be selected." },
+            { IDC_IMAGE_SIZE, "Specififies the size of the image in the tree view in pixels.\nThe default is 16 for a 16x16 image. The valid range is 16 to 256 pixels." },
+
+            { IDC_FILE_PATH, "Determines which file will be used to create node images." },
+            { IDC_FILE_PATH_SELECT, "Allows you to select the file using a standard Windows dialog box." },
+
+            { IDC_IMAGE_LIST, "Selects the image for the selected node type from this list." },
+
+            { IDC_QUICK_SEARCH, "Enable this setting to display the Quick Search text box at the bottom of the panel." },
+
+            // Component
+            { IDC_LOG_LEVEL, "Sets the verbosity of the log information that gets written to the console." },
+        };
+
+        // Create the tooltip control.
+        _ToolTipControl.Create(m_hWnd, nullptr, nullptr, TTS_ALWAYSTIP | TTS_NOANIMATE);
+
+        if (_ToolTipControl.IsWindow())
+        {
+            _ToolTipControl.SetMaxTipWidth(200);
+
+            ::SetWindowTheme(_ToolTipControl, _DarkMode ? L"DarkMode_Explorer" : nullptr, nullptr);
+        }
+
+        for (const auto & [Id, Text] : Tips)
+            _ToolTipControl.AddTool(CToolInfo(TTF_IDISHWND | TTF_SUBCLASS, m_hWnd, (UINT_PTR) GetDlgItem(Id).m_hWnd, nullptr, (LPWSTR) msc::UTF8ToWide(Text).c_str()));
+
         _DarkMode.AddDialogWithControls(*this);
 
         _NewState = _State;
@@ -184,11 +217,9 @@ private:
             for (auto Label : Labels)
                 w.AddString(Label);
 
-            _SelectedIndex = 0;
+            w.SetCurSel(0);
 
-            w.SetCurSel(_SelectedIndex);
-
-            _SelectedImage = ImageIndexToId(_SelectedIndex);
+            _SelectedImage = ImageIndexToId(0);
         }
 
         // File Path and Icon Index
@@ -213,6 +244,23 @@ private:
         {
             SendDlgItemMessageW(IDC_QUICK_SEARCH, BM_SETCHECK, _NewState._IsQuickSearchVisible);
         }
+
+        // Component
+        {
+            auto w = (CComboBox) GetDlgItem(IDC_LOG_LEVEL);
+
+            w.ResetContent();
+
+            int i = -1;
+
+            for (const auto & Text : { L"Never", L"Fatal", L"Error", L"Warn", L"Info", L"Debug", L"Trace", L"Always", })
+            {
+                w.AddString(Text);
+
+                if (++i == CfgLogLevel)
+                    w.SetCurSel((int) i);
+            }
+        }
     }
 
     /// <summary>
@@ -220,17 +268,17 @@ private:
     /// </summary>
     void OnSelectionChange(UINT, int id, CWindow w) noexcept
     {
-        if (id == IDC_NODE_TYPE)
+        auto cb = (CComboBox) w;
+
+        const auto SelectedIndex = cb.GetCurSel();
+
+        switch (id)
         {
-            auto cb = (CComboBox) w;
-
-            _SelectedIndex = cb.GetCurSel();
-
-
+            case IDC_NODE_TYPE:
             {
-                _SelectedImage = ImageIndexToId(_SelectedIndex);
+                _SelectedImage = ImageIndexToId(SelectedIndex);
 
-                auto & Image = _NewState._Images[_SelectedImage];
+                const auto & Image = _NewState._Images[_SelectedImage];
 
                 {
                     auto Scope = toggle_t(_IgnoreNotifications, true);
@@ -239,6 +287,16 @@ private:
                 }
 
                 UpdateIconList();
+                break;
+            }
+
+            case IDC_LOG_LEVEL:
+            {
+                CfgLogLevel = (int64_t) SelectedIndex;
+
+                Log.SetLevel((LogLevel) CfgLogLevel.get());
+
+                return;
             }
         }
 
@@ -525,7 +583,6 @@ private:
 private:
     const preferences_page_callback::ptr _Callback;
 
-    int _SelectedIndex;
     size_t _SelectedImage;
     bool _IgnoreNotifications;
 
@@ -535,6 +592,7 @@ private:
     imagelist_t _ImageList;
 
     fb2k::CDarkModeHooks _DarkMode;
+    CToolTipCtrl _ToolTipControl;
 };
 
 #pragma region PreferencesPage
