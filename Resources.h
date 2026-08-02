@@ -1,5 +1,5 @@
 
-/** $VER: Resources.h (2026.07.30) P. Stuer **/
+/** $VER: Resources.h (2026.08.02) P. Stuer **/
 
 #pragma once
 
@@ -8,12 +8,12 @@
 
 #define NUM_FILE_MAJOR          1
 #define NUM_FILE_MINOR          4
-#define NUM_FILE_PATCH          1
+#define NUM_FILE_PATCH          2
 #define NUM_FILE_PRERELEASE     0
 
 #define NUM_PRODUCT_MAJOR       1
 #define NUM_PRODUCT_MINOR       4
-#define NUM_PRODUCT_PATCH       1
+#define NUM_PRODUCT_PATCH       2
 #define NUM_PRODUCT_PRERELEASE  0
 
 #define STR_PRERELEASE          ""
@@ -93,7 +93,9 @@
 #define IDM_SAVE                61
 #define IDM_SAVE_ALL            62
 
-#define IDM_DUMP                70
+#define IDM_AUTOPLAYLIST        70
+
+#define IDM_DUMP                80
 
 #define IDM_CLEAR_HISTORY       1000
 #define IDM_HISTORY             (IDM_CLEAR_HISTORY + 1)

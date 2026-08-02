@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.h (2026.08.01) P. Stuer **/
+/** $VER: PlaylistsUIElement.h (2026.08.02) P. Stuer **/
 
 #pragma once
 
@@ -175,7 +175,6 @@ private:
     void ModifyFilterMask(uint32_t newFilterMask) const noexcept;
     bool IsProhibited(const node_t * node, uint32_t filterMask) const noexcept;
 
-    bool ExamineAutoplaylist(size_t index) noexcept;
     LONG CalculateEditHeight(HWND hWnd, HFONT hFont) noexcept;
     void ResetAutoComplete() noexcept;
 

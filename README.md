@@ -77,9 +77,11 @@ To create the component first build the x86 configuration and next the x64 confi
 
 ## Change Log
 
-vNext, 2026-xx-xx
+v1.4.2.0, 2026-08-02
 
 * New: The images can be loaded from all Windows Imaging Component (WIC) supported formats (JPEG, GIF, PNG, TIFF, ICO, etc...).
+* New: Context menu item to show the autoplaylist UI if available.
+* New: The left margin will adjust itself depending on folders being used or not.
 * Fixed: The size of some playlists was not calculated correctly.
 
 ## Acknowledgements / Credits

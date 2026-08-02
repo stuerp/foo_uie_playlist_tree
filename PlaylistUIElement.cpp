@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.cpp (2026.08.01) P. Stuer **/
+/** $VER: PlaylistsUIElement.cpp (2026.08.02) P. Stuer **/
 
 #include "pch.h"
 
@@ -253,6 +253,8 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
     if (notifyCode != 0)
         return;
 
+    SetMsgHandled(TRUE);
+
     switch (id)
     {
         // Handles the "New Folder" command.
@@ -451,6 +453,32 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
         {
             if (!standard_commands::main_load_playlist())
                 Log.AtError().Write(STR_COMPONENT_BASENAME " failed to load playlist.");
+
+            return;
+        }
+
+        // Handles the "Autoplaylist..." command.
+        case IDM_AUTOPLAYLIST:
+        {
+            const auto Node = (node_t *) _TreeView.GetData(_hHighlightedtem);
+
+            if (Node == nullptr)
+                return;
+
+            const auto Index = _PlaylistManager->find_playlist_by_guid(Node->Id);
+
+            if (Index == SIZE_MAX)
+                return;
+
+            const auto apm = autoplaylist_manager::get();
+
+            if (apm->is_client_present(Index))
+            {
+                auto Client = apm->query_client(Index);
+
+                if (Client.is_valid())
+                    Client->show_ui(Index);
+            }
 
             return;
         }
@@ -820,6 +848,16 @@ void playlist_uielement_t::OnFolderCreated(const GUID & id, const std::string & 
     _hHighlightedtem = NULL;
 
     ResetAutoComplete();
+
+    // Redraw the control after adding the first folder because now we need to draw chevrons.
+    {
+        uint32_t Count;
+
+        _FolderManager->GetFolderCount(Count);
+
+        if (Count == 1)
+            ::InvalidateRect(_TreeView.Get(), NULL, TRUE);
+    }
 };
 
 /// <summary>
@@ -841,6 +879,16 @@ void playlist_uielement_t::OnFolderRemoved(const GUID & id) noexcept
     Log.AtDebug().Write(STR_COMPONENT_BASENAME " removed folder %s from the tree.", msc::GUIDToUTF8(id).c_str());
 
     ResetAutoComplete();
+
+    // Redraw the control after deleting the last folder because now we don't need to draw chevrons.
+    {
+        uint32_t Count;
+
+        _FolderManager->GetFolderCount(Count);
+
+        if (Count == 0)
+            ::InvalidateRect(_TreeView.Get(), NULL, TRUE);
+    }
 
     if (_IgnoreNotifications)
         return;
@@ -919,7 +967,7 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
 
             TreeView_GetItemRect(hTreeView, hItem, &rcText, TRUE);
 
-            const LONG ItemHeight = rcText.bottom - rcText.top;
+            const LONG IconSize = rcText.bottom - rcText.top;
 
             // Adjust for horizontal scrolling.
             SCROLLINFO si
@@ -933,15 +981,20 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
             // Calculate the start position of the item content.
             RECT rc = rcItem;
 
-            rc.left += (ItemHeight * tvcd->iLevel) - si.nPos;
+            rc.left += (IconSize * tvcd->iLevel) - si.nPos;
 
             // Draw a chevron for a Folder item.
+            uint32_t Count;
+
+            HRESULT hr = _FolderManager->GetFolderCount(Count);
+
+            if (SUCCEEDED(hr) && (Count > 0))
             {
                 if (HasChildren)
                 {
                     RECT rcChev = rc;
 
-                    rcChev.right = rcChev.left + ItemHeight;
+                    rcChev.right = rcChev.left + IconSize;
 
                     const auto hOldFont = (HFONT) ::SelectObject(hDC, _Theme.GetIconFont());
 
@@ -964,12 +1017,12 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
                     ::SelectObject(hDC, hOldFont);
                 }
 
-                rc.left += ItemHeight;
+                rc.left += IconSize;
             }
 
             // Draw the background.
             {
-                rc.right = rc.left + (1 + ItemHeight + 1) + 3 + (rcText.right - rcText.left);
+                rc.right = rc.left + (1 + IconSize + 1) + 3 + (rcText.right - rcText.left);
 
                 if (IsSelected)
                 {
@@ -1002,12 +1055,12 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
 
             // Draw the image.
             {
-                const LONG dx = ((1 + ItemHeight + 1) - (LONG) _State._ImageSize) / 2;
-                const LONG dy = (     ItemHeight      - (LONG) _State._ImageSize) / 2;
+                const LONG dx = ((1 + IconSize + 1) - (LONG) _State._ImageSize) / 2;
+                const LONG dy = (     IconSize      - (LONG) _State._ImageSize) / 2;
 
                 ::ImageList_Draw(_ImageList, tvi.iImage, hDC, rc.left + dx, rc.top + dy, ILD_NORMAL);
 
-                rc.left += (1 + ItemHeight + 1) + 3;
+                rc.left += (1 + IconSize + 1) + 3;
             }
 
             // Draw the text.
@@ -1151,6 +1204,10 @@ LRESULT playlist_uielement_t::OnRightClick(NMHDR * nmhd) noexcept
                 ::AppendMenuW(hPopup, MF_SEPARATOR, 0, NULL);
                 ::AppendMenuW(hPopup, MF_STRING | MF_POPUP, (UINT_PTR) hPlaylist, L"Playlist");
             }
+
+            // Append a menu item to show the UI of an autoplaylist.
+            if (autoplaylist_manager::get()->is_client_present(Index))
+                ::AppendMenuW(hPopup, MF_STRING, IDM_AUTOPLAYLIST, L"Autoplaylist...");
         }
 
         {
@@ -1194,9 +1251,6 @@ LRESULT playlist_uielement_t::OnRightClick(NMHDR * nmhd) noexcept
                 ::InsertMenuItemW(hPopup, (UINT) ::GetMenuItemCount(hPopup), TRUE, &mii);
             }
         }
-
-        // Examine an autoplaylist.
-//      ExamineAutoplaylist(Index);
 
         // Append a troubleshooting menu item.
         if ((::GetKeyState(VK_CONTROL) & 0x8000) && (::GetKeyState(VK_SHIFT) & 0x8000))
@@ -1979,86 +2033,6 @@ bool playlist_uielement_t::IsProhibited(const node_t * node, uint32_t filterMask
         const auto FilterMask = _PlaylistManager->playlist_lock_get_filter_mask(Index);
 
         return ((FilterMask & filterMask) != 0);
-    }
-}
-
-/// <summary>
-/// Examines the configuration of an autoplaylist. Experimental code. Not used yet.
-/// </summary>
-bool playlist_uielement_t::ExamineAutoplaylist(size_t index) noexcept
-{
-    static_api_ptr_t<autoplaylist_manager_v2> am;
-
-    autoplaylist_client_ptr Client;
-
-    try
-    {
-        Client = am->query_client(index);
-
-        if (Client.is_empty())
-            return false;
-    }
-    catch (...)
-    {
-        return false; // Not an autoplaylist.
-    }
-
-    pfc::array_t<t_uint8> Config;
-
-    Client->get_configuration(Config);
-
-    if (Config.size() < (sizeof(t_uint32) * 2))
-        return false;
-
-    stream_reader_memblock_ref Reader(Config.get_ptr(), Config.get_size());
-
-    try
-    {
-        t_uint32 Version = 0;
-
-        Reader.read_lendian_t(Version, fb2k::noAbort);
-
-        // Some builds store flags right after the Version, some do not. Try to detect a reasonable version number.
-        if (Version <= 10)
-        {
-            t_uint32 Flags = 0;
-
-            if (Reader.get_remaining() >= 4)
-                Reader.read_lendian_t(Flags, fb2k::noAbort); // Read and ignore.
-        }
-        else
-            Reader.reset(); // Probably not a version field. Rewind and treat the whole blob as starting with the query string.
-
-        // Read the query string.
-        t_uint32 Length = 0;
-
-        Reader.read_lendian_t(Length, fb2k::noAbort);
-
-        if (Length > Reader.get_remaining())
-            return false;
-
-        pfc::string QueryText;
-
-        Reader.read_string_ex(QueryText, Length, fb2k::noAbort);
-
-        // Read the sort string.
-        if (Reader.get_remaining() < 4)
-            return false;
-
-        Reader.read_lendian_t(Length, fb2k::noAbort);
-
-        if (Length > Reader.get_remaining())
-            return false;
-
-        pfc::string SortText;
-
-        Reader.read_string_ex(SortText, Length, fb2k::noAbort);
-
-        return true;
-    }
-    catch (...)
-    {
-        return false;
     }
 }
 
