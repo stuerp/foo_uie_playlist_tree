@@ -315,7 +315,7 @@ This setting specififies the size of the image in the tree view in pixels. The d
 
 This setting determines which file will be used to create node images. Many Windows executables (.exe) and libraries (.dll) contain icons. The component can extract those icons and create node images from them.
 
-You can also use any image supported by Windows Imaging Component (WIC) such as ICO, PNG, GIF, TIFF, JPEG, WebP, etc...
+You can also use any image in a format supported by the [Windows Imaging Component](https://learn.microsoft.com/en-us/windows/win32/wic/-wic-about-windows-imaging-codec) (WIC) such as ICO, PNG, GIF, TIFF, JPEG, WebP, etc...
 
 Here are some examples:
 
