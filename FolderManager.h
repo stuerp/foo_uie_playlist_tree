@@ -1,5 +1,5 @@
 
-/** $VER: FolderManager.h (2026.07.29) P. Stuer **/
+/** $VER: FolderManager.h (2026.08.02) P. Stuer **/
 
 #pragma once
 
@@ -32,6 +32,8 @@ public:
     virtual HRESULT GetFolderName(const GUID & id, std::string & name) const noexcept = 0;
     virtual HRESULT SetFolderName(const GUID & id, const std::string & newName) noexcept = 0;
     virtual HRESULT RemoveFolder(const GUID & id) noexcept = 0;
+
+    virtual HRESULT GetFolderCount(uint32_t & count) const noexcept = 0;
 
     virtual HRESULT RegisterCallback(folder_manager_callback_t * callback) noexcept = 0;
     virtual HRESULT UnregisterCallback(folder_manager_callback_t * callback) noexcept = 0;

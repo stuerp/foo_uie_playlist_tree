@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.cpp (2026.08.01) P. Stuer **/
+/** $VER: PlaylistsUIElement.cpp (2026.08.02) P. Stuer **/
 
 #include "pch.h"
 
@@ -13,6 +13,8 @@
 #include "Toggle.h"
 #include "Log.h"
 
+#include <unordered_map>
+
 #pragma hdrstop
 
 /// <summary>
@@ -20,10 +22,10 @@
 /// </summary>
 playlist_uielement_t::playlist_uielement_t() : multi_select_tree_view_t(IDC_TREEVIEW)
 {
-    HRESULT hResult = ::OleInitialize(nullptr);
+    HRESULT hr = ::OleInitialize(nullptr);
 
-    if (!SUCCEEDED(hResult))
-        Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to initialize OLE: 0x%08X.", hResult);
+    if (!SUCCEEDED(hr))
+        Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to initialize OLE: 0x%08X.", hr);
 
     _PlaylistManager->register_callback(this, (t_uint32) playlist_callback::flag_all);
     _FolderManager->RegisterCallback(this);
@@ -60,10 +62,10 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
         _TreeViewSubclass.Attach(_TreeView.Get());
 
         {
-            HRESULT hResult = InitImageList();
+            HRESULT hr = InitImageList();
 
-            if (!SUCCEEDED(hResult))
-                Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to initialize image list: 0x%08X.", hResult);
+            if (!SUCCEEDED(hr))
+                Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to initialize image list: 0x%08X.", hr);
         }
     }
 
@@ -82,36 +84,36 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
 
             IAutoComplete * ac = nullptr;
 
-            HRESULT hResult = ::CoCreateInstance(CLSID_AutoComplete, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&ac));
+            HRESULT hr = ::CoCreateInstance(CLSID_AutoComplete, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&ac));
 
-            if (SUCCEEDED(hResult))
+            if (SUCCEEDED(hr))
             {
-                hResult = ::SHAutoComplete(_EditBox, 0);
+                hr = ::SHAutoComplete(_EditBox, 0);
 
-                if (SUCCEEDED(hResult))
+                if (SUCCEEDED(hr))
                 {
                     ac->Init(_EditBox, _StringEnumerator, nullptr, nullptr);
 
                     {
                         IAutoComplete2 * ac2 = nullptr;
 
-                        hResult = ac->QueryInterface(IID_PPV_ARGS(&ac2));
+                        hr = ac->QueryInterface(IID_PPV_ARGS(&ac2));
 
-                        if (SUCCEEDED(hResult))
+                        if (SUCCEEDED(hr))
                         {
                             ac2->SetOptions(ACO_AUTOSUGGEST | ACO_UPDOWNKEYDROPSLIST);
 
                             ac2->Release();
                         }
                         else
-                            Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to set auto complete options: 0x%08X.", hResult);
+                            Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to set auto complete options: 0x%08X.", hr);
                     }
                 }
 
                 ac->Release();
             }
             else
-                Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to install auto complete on edit box: 0x%08X.", hResult);
+                Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to install auto complete on edit box: 0x%08X.", hr);
         }
 
         _EditBox.ShowWindow(_State._IsQuickSearchVisible ? SW_SHOW : SW_HIDE);
@@ -121,10 +123,10 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
     {
         _DropTarget = new drop_target_t(_TreeView.Get(), this);
 
-        HRESULT hResult = ::RegisterDragDrop(m_hWnd, _DropTarget);
+        HRESULT hr = ::RegisterDragDrop(m_hWnd, _DropTarget);
 
-        if (!SUCCEEDED(hResult))
-            Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to register drop target: 0x%08X.", hResult);
+        if (!SUCCEEDED(hr))
+            Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to register drop target: 0x%08X.", hr);
     }
 
 //  _State._Object.clear(); // Uncomment to reset the state.
@@ -165,10 +167,10 @@ void playlist_uielement_t::OnDestroy() noexcept
     {
         if (m_hWnd != NULL)
         {
-            HRESULT hResult = ::RevokeDragDrop(m_hWnd);
+            HRESULT hr = ::RevokeDragDrop(m_hWnd);
 
-            if (!SUCCEEDED(hResult))
-                Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to revoke drop target: 0x%08X.", hResult);
+            if (!SUCCEEDED(hr))
+                Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to revoke drop target: 0x%08X.", hr);
         }
 
         if (_DropTarget != nullptr)
@@ -251,15 +253,17 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
     if (notifyCode != 0)
         return;
 
+    SetMsgHandled(TRUE);
+
     switch (id)
     {
         // Handles the "New Folder" command.
         case IDM_NEW_FOLDER:
         {
-            HRESULT hResult = _FolderManager->CreateFolder();
+            HRESULT hr = _FolderManager->CreateFolder();
 
-            if (!SUCCEEDED(hResult))
-                Log.AtError().Write(STR_COMPONENT_BASENAME " failed to create folder: 0x%08X.", hResult);
+            if (!SUCCEEDED(hr))
+                Log.AtError().Write(STR_COMPONENT_BASENAME " failed to create folder: 0x%08X.", hr);
 
             return;
         }
@@ -449,6 +453,32 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
         {
             if (!standard_commands::main_load_playlist())
                 Log.AtError().Write(STR_COMPONENT_BASENAME " failed to load playlist.");
+
+            return;
+        }
+
+        // Handles the "Autoplaylist..." command.
+        case IDM_AUTOPLAYLIST:
+        {
+            const auto Node = (node_t *) _TreeView.GetData(_hHighlightedtem);
+
+            if (Node == nullptr)
+                return;
+
+            const auto Index = _PlaylistManager->find_playlist_by_guid(Node->Id);
+
+            if (Index == SIZE_MAX)
+                return;
+
+            const auto apm = autoplaylist_manager::get();
+
+            if (apm->is_client_present(Index))
+            {
+                auto Client = apm->query_client(Index);
+
+                if (Client.is_valid())
+                    Client->show_ui(Index);
+            }
 
             return;
         }
@@ -818,6 +848,16 @@ void playlist_uielement_t::OnFolderCreated(const GUID & id, const std::string & 
     _hHighlightedtem = NULL;
 
     ResetAutoComplete();
+
+    // Redraw the control after adding the first folder because now we need to draw chevrons.
+    {
+        uint32_t Count;
+
+        _FolderManager->GetFolderCount(Count);
+
+        if (Count == 1)
+            ::InvalidateRect(_TreeView.Get(), NULL, TRUE);
+    }
 };
 
 /// <summary>
@@ -839,6 +879,16 @@ void playlist_uielement_t::OnFolderRemoved(const GUID & id) noexcept
     Log.AtDebug().Write(STR_COMPONENT_BASENAME " removed folder %s from the tree.", msc::GUIDToUTF8(id).c_str());
 
     ResetAutoComplete();
+
+    // Redraw the control after deleting the last folder because now we don't need to draw chevrons.
+    {
+        uint32_t Count;
+
+        _FolderManager->GetFolderCount(Count);
+
+        if (Count == 0)
+            ::InvalidateRect(_TreeView.Get(), NULL, TRUE);
+    }
 
     if (_IgnoreNotifications)
         return;
@@ -917,7 +967,7 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
 
             TreeView_GetItemRect(hTreeView, hItem, &rcText, TRUE);
 
-            const LONG ItemHeight = rcText.bottom - rcText.top;
+            const LONG IconSize = rcText.bottom - rcText.top;
 
             // Adjust for horizontal scrolling.
             SCROLLINFO si
@@ -931,15 +981,20 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
             // Calculate the start position of the item content.
             RECT rc = rcItem;
 
-            rc.left += (ItemHeight * tvcd->iLevel) - si.nPos;
+            rc.left += (IconSize * tvcd->iLevel) - si.nPos;
 
             // Draw a chevron for a Folder item.
+            uint32_t Count;
+
+            HRESULT hr = _FolderManager->GetFolderCount(Count);
+
+            if (SUCCEEDED(hr) && (Count > 0))
             {
                 if (HasChildren)
                 {
                     RECT rcChev = rc;
 
-                    rcChev.right = rcChev.left + ItemHeight;
+                    rcChev.right = rcChev.left + IconSize;
 
                     const auto hOldFont = (HFONT) ::SelectObject(hDC, _Theme.GetIconFont());
 
@@ -962,12 +1017,12 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
                     ::SelectObject(hDC, hOldFont);
                 }
 
-                rc.left += ItemHeight;
+                rc.left += IconSize;
             }
 
             // Draw the background.
             {
-                rc.right = rc.left + (1 + ItemHeight + 1) + 3 + (rcText.right - rcText.left);
+                rc.right = rc.left + (1 + IconSize + 1) + 3 + (rcText.right - rcText.left);
 
                 if (IsSelected)
                 {
@@ -1000,12 +1055,12 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
 
             // Draw the image.
             {
-                const LONG dx = ((1 + ItemHeight + 1) - (LONG) _State._ImageSize) / 2;
-                const LONG dy = (     ItemHeight      - (LONG) _State._ImageSize) / 2;
+                const LONG dx = ((1 + IconSize + 1) - (LONG) _State._ImageSize) / 2;
+                const LONG dy = (     IconSize      - (LONG) _State._ImageSize) / 2;
 
                 ::ImageList_Draw(_ImageList, tvi.iImage, hDC, rc.left + dx, rc.top + dy, ILD_NORMAL);
 
-                rc.left += (1 + ItemHeight + 1) + 3;
+                rc.left += (1 + IconSize + 1) + 3;
             }
 
             // Draw the text.
@@ -1149,6 +1204,10 @@ LRESULT playlist_uielement_t::OnRightClick(NMHDR * nmhd) noexcept
                 ::AppendMenuW(hPopup, MF_SEPARATOR, 0, NULL);
                 ::AppendMenuW(hPopup, MF_STRING | MF_POPUP, (UINT_PTR) hPlaylist, L"Playlist");
             }
+
+            // Append a menu item to show the UI of an autoplaylist.
+            if (autoplaylist_manager::get()->is_client_present(Index))
+                ::AppendMenuW(hPopup, MF_STRING, IDM_AUTOPLAYLIST, L"Autoplaylist...");
         }
 
         {
@@ -1192,9 +1251,6 @@ LRESULT playlist_uielement_t::OnRightClick(NMHDR * nmhd) noexcept
                 ::InsertMenuItemW(hPopup, (UINT) ::GetMenuItemCount(hPopup), TRUE, &mii);
             }
         }
-
-        // Examine an autoplaylist.
-//      ExamineAutoplaylist(Index);
 
         // Append a troubleshooting menu item.
         if ((::GetKeyState(VK_CONTROL) & 0x8000) && (::GetKeyState(VK_SHIFT) & 0x8000))
@@ -1271,9 +1327,9 @@ LRESULT playlist_uielement_t::OnGetDisplayInfo(NMHDR * nmhd) noexcept
     {
         pfc::string Text;
 
-        HRESULT hResult = title_formatter_t::Evaluate(_State._TextFormat, &_TreeView, Node->Id, Text);
+        HRESULT hr = title_formatter_t::Evaluate(_State._TextFormat, &_TreeView, Node->Id, Text);
 
-        if (!SUCCEEDED(hResult))
+        if (!SUCCEEDED(hr))
             return FALSE;
 
         ::wcscpy_s(tvi.pszText, (size_t) tvi.cchTextMax, msc::UTF8ToWide(Text.c_str()).c_str());
@@ -1522,9 +1578,9 @@ LRESULT playlist_uielement_t::OnGetInfoTip(NMHDR * nmhd) noexcept
 
     pfc::string Text;
 
-    HRESULT hResult = title_formatter_t::Evaluate(_State._ToolTipFormat, &_TreeView, Node->Id, Text);
+    HRESULT hr = title_formatter_t::Evaluate(_State._ToolTipFormat, &_TreeView, Node->Id, Text);
 
-    if (!SUCCEEDED(hResult))
+    if (!SUCCEEDED(hr))
         return TRUE;
 
     ::wcscpy_s(nmgi->pszText, (rsize_t) nmgi->cchTextMax, msc::UTF8ToWide(Text.c_str()).c_str());
@@ -1721,10 +1777,10 @@ void playlist_uielement_t::Refresh() noexcept
 {
     _Theme.Initialize(m_hWnd);
 
-    HRESULT hResult = InitImageList();
+    HRESULT hr = InitImageList();
 
-    if (!SUCCEEDED(hResult))
-        Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to initialize image list: 0x%08X.", hResult);
+    if (!SUCCEEDED(hr))
+        Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to initialize image list: 0x%08X.", hr);
 
     _TreeView.RefreshAllItems();
 
@@ -1845,30 +1901,39 @@ HRESULT playlist_uielement_t::InitImageList() noexcept
     if (!_ImageList)
         return HRESULT_FROM_WIN32(::GetLastError());
 
-    imagelist_t hSrcImageList;
-    std::string LastFilePath;
+    std::unordered_map<std::string, imagelist_t> ImageLists;
 
     for (const auto & Image : _State._Images)
     {
-        bool AreEqual = std::ranges::equal(Image._FilePath, LastFilePath, std::equal_to<>{}, [](unsigned char c) { return std::tolower(c); }, [](unsigned char c) { return std::tolower(c); });
+        const auto LowerView = Image._FilePath | std::views::transform([](unsigned char c) { return (char) std::tolower(c); });
 
-        // Only load the image list if the file path is different from the last one.
-        if (!AreEqual)
+        const std::string Lower(LowerView.begin(), LowerView.end());
+
+        // Only create an image list if the file path hasn't been seen yet.
+        imagelist_t * SrcImageList = nullptr;
+
+        const auto Iter = ImageLists.find(Lower);
+
+        if (Iter == ImageLists.end())
         {
-            hSrcImageList = image_list_factory_t::Create(Image._FilePath, _State._ImageSize);
+            imagelist_t NewImageList = image_list_factory_t::Create(Image._FilePath, _State._ImageSize);
 
-            if (!hSrcImageList)
+            if (!NewImageList)
                 return HRESULT_FROM_WIN32(::GetLastError());
+
+            auto Result = ImageLists.emplace(Lower, std::move(NewImageList));
+
+            SrcImageList = &Result.first->second;
         }
+        else
+            SrcImageList = &Iter->second;
 
-        icon_t hIcon = ::ImageList_GetIcon(hSrcImageList, (int) Image._IconIndex, ILD_TRANSPARENT);
+        icon_t Icon = ::ImageList_GetIcon(*SrcImageList, (int) Image._IconIndex, ILD_TRANSPARENT);
 
-        if (!hIcon)
+        if (!Icon)
             return HRESULT_FROM_WIN32(::GetLastError());
 
-        ::ImageList_ReplaceIcon(_ImageList, -1, hIcon);
-
-        LastFilePath = Image._FilePath;
+        ::ImageList_ReplaceIcon(_ImageList, -1, Icon);
     }
 
     _TreeView.SetNormalImageList(_ImageList);
@@ -1908,17 +1973,17 @@ void playlist_uielement_t::ModifyFilterMask(uint32_t newFilterMask) const noexce
 
     if (FilterMask != 0u)
     {
-        HRESULT hResult = _LockManager->LockPlaylist(Node->Id, FilterMask);
+        HRESULT hr = _LockManager->LockPlaylist(Node->Id, FilterMask);
 
-        if (!SUCCEEDED(hResult))
-            Log.AtError().Write(STR_COMPONENT_BASENAME " failed to lock playlist %d: 0x%08X.", Index, hResult);
+        if (!SUCCEEDED(hr))
+            Log.AtError().Write(STR_COMPONENT_BASENAME " failed to lock playlist %d: 0x%08X.", Index, hr);
     }
     else
     {
-        HRESULT hResult = _LockManager->UnlockPlaylist(Node->Id);
+        HRESULT hr = _LockManager->UnlockPlaylist(Node->Id);
 
-        if (!SUCCEEDED(hResult))
-            Log.AtError().Write(STR_COMPONENT_BASENAME " failed to unlock playlist %d: 0x%08X.", Index, hResult);
+        if (!SUCCEEDED(hr))
+            Log.AtError().Write(STR_COMPONENT_BASENAME " failed to unlock playlist %d: 0x%08X.", Index, hr);
     }
 }
 
@@ -1972,86 +2037,6 @@ bool playlist_uielement_t::IsProhibited(const node_t * node, uint32_t filterMask
 }
 
 /// <summary>
-/// Examines the configuration of an autoplaylist. Experimental code. Not used yet.
-/// </summary>
-bool playlist_uielement_t::ExamineAutoplaylist(size_t index) noexcept
-{
-    static_api_ptr_t<autoplaylist_manager_v2> am;
-
-    autoplaylist_client_ptr Client;
-
-    try
-    {
-        Client = am->query_client(index);
-
-        if (Client.is_empty())
-            return false;
-    }
-    catch (...)
-    {
-        return false; // Not an autoplaylist.
-    }
-
-    pfc::array_t<t_uint8> Config;
-
-    Client->get_configuration(Config);
-
-    if (Config.size() < (sizeof(t_uint32) * 2))
-        return false;
-
-    stream_reader_memblock_ref Reader(Config.get_ptr(), Config.get_size());
-
-    try
-    {
-        t_uint32 Version = 0;
-
-        Reader.read_lendian_t(Version, fb2k::noAbort);
-
-        // Some builds store flags right after the Version, some do not. Try to detect a reasonable version number.
-        if (Version <= 10)
-        {
-            t_uint32 Flags = 0;
-
-            if (Reader.get_remaining() >= 4)
-                Reader.read_lendian_t(Flags, fb2k::noAbort); // Read and ignore.
-        }
-        else
-            Reader.reset(); // Probably not a version field. Rewind and treat the whole blob as starting with the query string.
-
-        // Read the query string.
-        t_uint32 Length = 0;
-
-        Reader.read_lendian_t(Length, fb2k::noAbort);
-
-        if (Length > Reader.get_remaining())
-            return false;
-
-        pfc::string QueryText;
-
-        Reader.read_string_ex(QueryText, Length, fb2k::noAbort);
-
-        // Read the sort string.
-        if (Reader.get_remaining() < 4)
-            return false;
-
-        Reader.read_lendian_t(Length, fb2k::noAbort);
-
-        if (Length > Reader.get_remaining())
-            return false;
-
-        pfc::string SortText;
-
-        Reader.read_string_ex(SortText, Length, fb2k::noAbort);
-
-        return true;
-    }
-    catch (...)
-    {
-        return false;
-    }
-}
-
-/// <summary>
 /// Calculates the ideal height of the edit box.
 /// </summary>
 LONG playlist_uielement_t::CalculateEditHeight(HWND hWnd, HFONT hFont) noexcept
@@ -2066,13 +2051,13 @@ LONG playlist_uielement_t::CalculateEditHeight(HWND hWnd, HFONT hFont) noexcept
 
     auto hSysFont = (HFONT) ::GetStockObject(SYSTEM_FONT);
 
-    ::SelectObject(hDC, hSysFont);
+    (void) ::SelectObject(hDC, hSysFont);
 
     TEXTMETRIC tmSysFont = {};
 
     ::GetTextMetricsW(hDC, &tmSysFont);
 
-    ::SelectObject(hDC, hOldFont);
+    (void) ::SelectObject(hDC, hOldFont);
 
     ::ReleaseDC(hWnd, hDC);
 

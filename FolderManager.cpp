@@ -1,5 +1,5 @@
 
-/** $VER: FolderManager.cpp (2026.07.29) P. Stuer **/
+/** $VER: FolderManager.cpp (2026.08.02) P. Stuer **/
 
 #include "pch.h"
 
@@ -45,10 +45,10 @@ public:
 
         GUID Id;
 
-        HRESULT hResult = ::CoCreateGuid(&Id);
+        HRESULT hr = ::CoCreateGuid(&Id);
 
-        if (!SUCCEEDED(hResult))
-            return hResult;
+        if (!SUCCEEDED(hr))
+            return hr;
 
         return CreateFolder(Id, Name);
     }
@@ -117,6 +117,16 @@ public:
 
         for (auto Callback : _Callbacks)
             Callback->OnFolderRemoved(id);
+
+        return S_OK;
+    }
+
+    /// <summary>
+    /// Returns the number of folders.
+    /// </summary>
+    HRESULT GetFolderCount(uint32_t & count) const noexcept final
+    {
+        count = (uint32_t) _Items.size();
 
         return S_OK;
     }

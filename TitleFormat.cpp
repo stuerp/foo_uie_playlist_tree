@@ -1,5 +1,5 @@
 
-/** $VER: TitleFormat.cpp (2026.07.25) P. Stuer **/
+/** $VER: TitleFormat.cpp (2026.08.02) P. Stuer **/
 
 #include "pch.h"
 
@@ -202,7 +202,6 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
                 return false;
 
             std::string Text;
-
             std::locale Locale(""); // User default Windows locale.
 
             Text = std::format(Locale, "{:L}", Size);
@@ -222,13 +221,12 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
                 return false;
 
             std::string Text;
+            std::locale Locale(""); // User default Windows locale.
 
             const uint64_t TB = 1'099'511'627'776;
             const uint64_t GB =     1'073'741'824;
             const uint64_t MB =         1'048'576;
             const uint64_t KB =             1'024;
-
-            std::locale Locale(""); // User default Windows locale.
 
             if (Size >= TB)
                 Text = std::format(Locale, "{:.3Lf} TB", (double) Size / TB);
@@ -333,66 +331,34 @@ const std::string custom_titleformat_hook_t::ExpandEnvironmentStrings(const std:
 }
 
 /// <summary>
-/// Gets tje duration of a playlist (in seconds).
+/// Gets the duration of a playlist in seconds.
 /// </summary>
 double custom_titleformat_hook_t::GetPlaylistDuration(size_t index) const noexcept
 {
-    class callback_t : public playlist_manager::enum_items_callback
-    {
-    public:
-        virtual ~callback_t() { }
+    auto OptimalThreadCount = std::thread::hardware_concurrency();
 
-        bool on_item(t_size itemIndex, const metadb_handle_ptr & item, bool isSelected) override
-        {
-            if (item.is_valid())
-            {
-                const double Length = item->get_length(); // in seconds
+    if (OptimalThreadCount == 0)
+        OptimalThreadCount = 1;
 
-                // Ignore unknown lengths (-1.0 or similar)
-                if (Length > 0.)
-                    Duration += Length;
-            }
+    metadb_handle_list Handles;
 
-            return true; // Continue walking
-        }
+    _PlaylistManager->playlist_get_all_items(index, Handles);
 
-    public:
-        double Duration = 0.; // in seconds
-    };
+    auto Seconds = metadb_handle_list_helper::calc_total_duration_v2(Handles, OptimalThreadCount, fb2k::noAbort);
 
-    callback_t Callback;
-
-    _PlaylistManager->playlist_enum_items(index, Callback, bit_array_true());
-
-    return Callback.Duration;
+    return Seconds;
 }
 
-
 /// <summary>
-/// Gets the size of a playlist (in bytes).
+/// Gets the size of a playlist in bytes.
 /// </summary>
 t_filesize custom_titleformat_hook_t::GetPlaylistSize(size_t index) const noexcept
 {
-    class callback_t : public playlist_manager::enum_items_callback
-    {
-    public:
-        virtual ~callback_t() { }
+    metadb_handle_list Handles;
 
-        bool on_item(t_size itemIndex, const metadb_handle_ptr & item, bool isSelected) override
-        {
-            if (item.is_valid())
-                Size += item->get_filesize();
+    _PlaylistManager->playlist_get_all_items(index, Handles);
 
-            return true; // Continue walking
-        }
+    auto Size = metadb_handle_list_helper::calc_total_size(Handles, true);
 
-    public:
-        t_filesize Size = 0; // in bytes
-    };
-
-    callback_t Callback;
-
-    _PlaylistManager->playlist_enum_items(index, Callback, bit_array_true());
-
-    return Callback.Size;
+    return Size;
 }

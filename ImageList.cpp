@@ -1,10 +1,15 @@
 
-/** $VER: ImageList.cpp (2026.07.10) P. Stuer **/
+/** $VER: ImageList.cpp (2026.08.02) P. Stuer **/
 
 #include "pch.h"
 
 #include "ImageList.h"
 #include "RAII.h"
+#include "WIC.h"
+
+#include <wrl/client.h>
+
+using namespace Microsoft::WRL;
 
 #pragma hdrstop
 
@@ -13,29 +18,30 @@
 /// </summary>
 HIMAGELIST image_list_factory_t::Create(const std::string & filePath, uint32_t iconSize, uint32_t maxIcons) noexcept
 {
+    HIMAGELIST hImageList = NULL;
+
     #pragma warning(disable: 6388) // 'THIS_HINSTANCE' might not be '0': this does not adhere to the specification for the function 'ExtractIconW'.
 
-    std::wstring FilePath = msc::UTF8ToWide(filePath);
+    const std::wstring FilePath = msc::UTF8ToWide(filePath);
 
     msc::module_t hModule(FilePath);
 
-    if (!hModule)
-        return NULL;
-
-    if (maxIcons == ~0)
-        maxIcons = GetIconCount(hModule.Get());
-
-    HIMAGELIST hImageList = ::ImageList_Create((int) iconSize, (int) iconSize, ILC_COLOR32 | ILC_MASK, (int) maxIcons, 0);
-
-    if (hImageList == NULL)
-        return NULL;
-
-    for (uint32_t i = 0; i < maxIcons; ++i)
+    if (hModule)
     {
-        HICON hIcon = ::ExtractIconW(THIS_HINSTANCE, FilePath.c_str(), (UINT) i);
+        if (maxIcons == ~0)
+            maxIcons = GetIconCount(hModule.Get());
 
-        if (hIcon != NULL)
+        hImageList = ::ImageList_Create((int) iconSize, (int) iconSize, ILC_COLOR32 | ILC_MASK, (int) maxIcons, 0);
+
+        if (hImageList == NULL)
+            return NULL;
+
+        for (uint32_t i = 0; i < maxIcons; ++i)
         {
+            HICON hIcon = ::ExtractIconW(THIS_HINSTANCE, FilePath.c_str(), (UINT) i);
+
+            if (hIcon == NULL)
+                break; // No more icons available
 
             const int Index = ::ImageList_ReplaceIcon(hImageList, -1, hIcon);
 
@@ -44,8 +50,26 @@ HIMAGELIST image_list_factory_t::Create(const std::string & filePath, uint32_t i
 
             ::DestroyIcon(hIcon);
         }
-        else
-            break; // No more icons available
+    }
+    else
+    {
+        hImageList = ::ImageList_Create((int) iconSize, (int) iconSize, ILC_COLOR32 | ILC_MASK, (int) 1, 0);
+
+        if (hImageList == NULL)
+            return NULL;
+
+        static_api_ptr_t<wic_t> WIC;
+
+        HBITMAP hBitmap = NULL;
+
+        HRESULT hr = WIC->Load(FilePath, iconSize, iconSize, &hBitmap);
+
+        if (SUCCEEDED(hr))
+        {
+            (void) ::ImageList_Add(hImageList, hBitmap, NULL);
+
+            ::DeleteObject(hBitmap);
+        }
     }
 
     return hImageList;
@@ -65,7 +89,7 @@ uint32_t image_list_factory_t::GetIconCount(HMODULE hModule) noexcept
         uint32_t IconCount;
     } Context =
     {
-        hModule
+        .hModule = hModule
     };
 
     ::EnumResourceTypesW(hModule, (ENUMRESTYPEPROCW) [](HMODULE hModule, LPWSTR type, LONG_PTR lParam) -> BOOL

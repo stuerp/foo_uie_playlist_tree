@@ -77,12 +77,12 @@ To create the component first build the x86 configuration and next the x64 confi
 
 ## Change Log
 
-v1.4.1.0, 2026-08-01
+v1.4.2.0, 2026-08-02
 
-* New: Option to hide the Quick Search text box.
-* Improved: Optimized startup a little bit.
-* Fixed: Rendering a horizontally scrolled treeview.
-* Fixed: Playlist Restore menu was broken. (Regression)
+* New: The images can be loaded from all [Windows Imaging Component](https://learn.microsoft.com/en-us/windows/win32/wic/-wic-about-windows-imaging-codec) (WIC) supported formats (ICO, PNG, GIF, TIFF, JPEG, WebP, etc...).
+* New: Context menu item to show the autoplaylist UI if available.
+* New: The left margin will adjust itself depending on folders being used or not.
+* Fixed: The size of some playlists was not calculated correctly.
 
 ## Acknowledgements / Credits
 

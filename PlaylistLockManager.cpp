@@ -63,10 +63,10 @@ public:
 
         if (pm->playlist_lock_is_present(Index))
         {
-            HRESULT hResult = UnlockPlaylist(id);
+            HRESULT hr = UnlockPlaylist(id);
 
-            if (!SUCCEEDED(hResult))
-                return hResult; // Already locked but not by me.
+            if (!SUCCEEDED(hr))
+                return hr; // Already locked but not by me.
         }
 
         auto Lock = fb2k::service_new<playlist_lock_t>(filterMask);
