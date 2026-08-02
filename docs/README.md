@@ -76,7 +76,7 @@ The text box has an Auto Complete feature that contains all the nodes names of t
 
 Right-click on the component window to display the context menu. The following items are available:
 
-`New`
+### New
 
 Creates a new folder or playlist item.
 
@@ -84,11 +84,11 @@ By default the new item gets created as a child of a folder item or below a play
 
 If no item is highlighted the new item gets created at the bottom of the tree.
 
-`Rename`
+### Rename
 
 Allows you to rename the highlighted item. You can not rename a playlist that is [locked for renaming](#rename-playlist). The menu item will be disabled.
 
-`Remove`
+### Remove
 
 Allows you to remove the highlighted item. You can not remove a playlist that is [locked for removal](#remove-playlist). The menu item will be disabled.
 
@@ -98,23 +98,30 @@ A folder that contains at least one playlist that is [locked for removal](#remov
 > Removing a folder also removes all the items it contains.
 > A click with the middle mouse button will also remove the highlighed item.
 
-`Sort`
+### Sort
 
 Sorts the contents of the highlighed folder or the siblings of the selected playlist.
 
-`Save playlist...`
+### Save playlist...
 
 Saves the playlist the mouse pointer is hovering over.
 
-`Save all playlists...`
+### Save all playlists...
 
 Saves all the playlists.
 
-`Load playlist...`
+### Load playlist...
 
 Loads a playlist.
 
-`Restore`
+### Autoplaylist...
+
+This menu item allows you to call up a dialog to edit an autoplaylist.
+
+> [!Note]
+> This menu item only appears when the highlighted playlist is an autoplaylist.
+
+### Restore Submenu
 
 Allows you to restore a playlist that has been removed during the current session from the foobar2000 playlist recycle bin.
 
@@ -125,6 +132,9 @@ Allows you to restore a playlist that has been removed during the current sessio
 ### Lock Submenu
 
 The `Lock` submenu allows you to lock a playlist or inspect an existing lock from another component.
+
+> [!Note]
+> This submenu only appears when the highlighted playlist is locked.
 
 The name of the component that lock a playlist is displayed at the bottom of the submenu. If another component has applied the lock the menu items will be disabled. You'll have to use the lock owner component to modify the locks.
 
@@ -169,6 +179,9 @@ Disables all restrictions.
 ### Playlist Submenu
 
 The `Playlist` menu allows you to access the menu items that would appear in a normal playlist context menu.
+
+> [!Note]
+> This submenu only appears when the highlighted item is a playlist.
 
 ---
 
@@ -301,6 +314,8 @@ This setting specififies the size of the image in the tree view in pixels. The d
 ### File Path
 
 This setting determines which file will be used to create node images. Many Windows executables (.exe) and libraries (.dll) contain icons. The component can extract those icons and create node images from them.
+
+You can also use any image supported by Windows Imaging Component (WIC) such as ICO, PNG, GIF, TIFF, JPEG, WebP, etc...
 
 Here are some examples:
 
