@@ -77,12 +77,9 @@ To create the component first build the x86 configuration and next the x64 confi
 
 ## Change Log
 
-v1.4.1.0, 2026-08-01
+vNext, 2026-xx-xx
 
-* New: Option to hide the Quick Search text box.
-* Improved: Optimized startup a little bit.
-* Fixed: Rendering a horizontally scrolled treeview.
-* Fixed: Playlist Restore menu was broken. (Regression)
+* Fixed: The size of some playlists was not calculated correctly.
 
 ## Acknowledgements / Credits
 

@@ -1,6 +1,13 @@
 
 # foo_uie_playlist_tree History
 
+v1.4.1.0, 2026-08-01
+
+* New: Option to hide the Quick Search text box.
+* Improved: Optimized startup a little bit.
+* Fixed: Rendering a horizontally scrolled treeview.
+* Fixed: Playlist Restore menu was broken. (Regression)
+
 v1.4.0.0, 2026-07-31
 
 * New: A `Playlist` submenu will be added to the context menu that contains the standard foobar2000 context menu for a playlist when one is selected.

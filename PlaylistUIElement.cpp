@@ -13,6 +13,8 @@
 #include "Toggle.h"
 #include "Log.h"
 
+#include <unordered_map>
+
 #pragma hdrstop
 
 /// <summary>
@@ -1845,30 +1847,39 @@ HRESULT playlist_uielement_t::InitImageList() noexcept
     if (!_ImageList)
         return HRESULT_FROM_WIN32(::GetLastError());
 
-    imagelist_t hSrcImageList;
-    std::string LastFilePath;
+    std::unordered_map<std::string, imagelist_t> ImageLists;
 
     for (const auto & Image : _State._Images)
     {
-        bool AreEqual = std::ranges::equal(Image._FilePath, LastFilePath, std::equal_to<>{}, [](unsigned char c) { return std::tolower(c); }, [](unsigned char c) { return std::tolower(c); });
+        const auto LowerView = Image._FilePath | std::views::transform([](unsigned char c) { return (char) std::tolower(c); });
 
-        // Only load the image list if the file path is different from the last one.
-        if (!AreEqual)
+        const std::string Lower(LowerView.begin(), LowerView.end());
+
+        // Only create an image list if the file path hasn't been seen yet.
+        imagelist_t * SrcImageList = nullptr;
+
+        const auto Iter = ImageLists.find(Lower);
+
+        if (Iter == ImageLists.end())
         {
-            hSrcImageList = image_list_factory_t::Create(Image._FilePath, _State._ImageSize);
+            imagelist_t NewImageList = image_list_factory_t::Create(Image._FilePath, _State._ImageSize);
 
-            if (!hSrcImageList)
+            if (!NewImageList)
                 return HRESULT_FROM_WIN32(::GetLastError());
+
+            auto Result = ImageLists.emplace(Lower, std::move(NewImageList));
+
+            SrcImageList = &Result.first->second;
         }
+        else
+            SrcImageList = &Iter->second;
 
-        icon_t hIcon = ::ImageList_GetIcon(hSrcImageList, (int) Image._IconIndex, ILD_TRANSPARENT);
+        icon_t Icon = ::ImageList_GetIcon(*SrcImageList, (int) Image._IconIndex, ILD_TRANSPARENT);
 
-        if (!hIcon)
+        if (!Icon)
             return HRESULT_FROM_WIN32(::GetLastError());
 
-        ::ImageList_ReplaceIcon(_ImageList, -1, hIcon);
-
-        LastFilePath = Image._FilePath;
+        ::ImageList_ReplaceIcon(_ImageList, -1, Icon);
     }
 
     _TreeView.SetNormalImageList(_ImageList);
@@ -2066,13 +2077,13 @@ LONG playlist_uielement_t::CalculateEditHeight(HWND hWnd, HFONT hFont) noexcept
 
     auto hSysFont = (HFONT) ::GetStockObject(SYSTEM_FONT);
 
-    ::SelectObject(hDC, hSysFont);
+    (void) ::SelectObject(hDC, hSysFont);
 
     TEXTMETRIC tmSysFont = {};
 
     ::GetTextMetricsW(hDC, &tmSysFont);
 
-    ::SelectObject(hDC, hOldFont);
+    (void) ::SelectObject(hDC, hOldFont);
 
     ::ReleaseDC(hWnd, hDC);
 

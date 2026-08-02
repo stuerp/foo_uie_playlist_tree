@@ -469,14 +469,12 @@ private:
 
         // Create the image list, if necessary.
         {
-            auto FilePath = (SUCCEEDED(hResult)) ? Text.c_str() : Image._FilePath;
+            const auto FilePath = SUCCEEDED(hResult) ? Text.c_str() : Image._FilePath;
 
-            bool AreEqual = std::ranges::equal(FilePath, _ImageListFilePath, std::equal_to<>{}, [](unsigned char c) { return std::tolower(c); }, [](unsigned char c) { return std::tolower(c); });
+            const bool AreEqual = std::ranges::equal(FilePath, _ImageListFilePath, std::equal_to<>{}, [](unsigned char c) { return std::tolower(c); }, [](unsigned char c) { return std::tolower(c); });
 
             if (!AreEqual)
             {
-//              _hImageList.Reset();
-
                 _ImageList = image_list_factory_t::Create(FilePath, _NewState._ImageSize);
 
                 if (_ImageList == NULL)
