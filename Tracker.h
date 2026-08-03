@@ -33,12 +33,12 @@ public:
 
         auto Iter = std::find(_Items.begin(), _Items.end(), item); 
   
-        if (Iter != _Items.end())
-        {
-            _Items.erase(Iter); 
+        if (Iter == _Items.end())
+            return;
 
-            SetCurrent(nullptr);
-        }
+        _Items.erase(Iter); 
+
+        SetCurrent(nullptr);
     }
 
     T * GetCurrent() const noexcept

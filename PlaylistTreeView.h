@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsTreeView.h (2026.07.30) P. Stuer **/
+/** $VER: PlaylistsTreeView.h (2026.08.03) P. Stuer **/
 
 #pragma once
 
@@ -70,19 +70,19 @@ public:
     }
 
     /// <summary>
-    /// Walks the tree view.
+    /// Walks the complete tree view.
     /// </summary>
     template<typename Visitor> bool Walk(Visitor && visitor) const noexcept
     {
         const auto hItem = TreeView_GetRoot(Get());
 
-        return Walk_(hItem, NULL, visitor); // Always walk the complete tree.
+        return Walk_(hItem, visitor);
     }
 
     /// <summary>
     /// Walks the tree view starting at the specified node.
     /// </summary>
-    template<typename Visitor> bool Walk(Visitor && visitor, const node_t * startNode) const noexcept
+    template<typename Visitor> bool WalkBranch(Visitor && visitor, const node_t * startNode) const noexcept
     {
         if (startNode == nullptr)
             return false;
@@ -92,7 +92,7 @@ public:
         if (hItem == NULL)
             return false;
 
-        return Walk_(hItem, hItem, visitor);
+        return WalkBranch_(hItem, visitor);
     }
 
 protected:
@@ -133,30 +133,47 @@ private:
     /// <summary>
     /// Walks this instance.
     /// </summary>
-    template<typename Visitor> bool Walk_(HTREEITEM hItem, HTREEITEM hStartItem, Visitor && visitor) const noexcept
+    template<typename Visitor> bool Walk_(HTREEITEM hItem, Visitor && visitor) const noexcept
     {
-        auto hCurrentItem = hItem;
-
-        while (hCurrentItem != NULL)
+        while (hItem != NULL)
         {
-            const auto Node = (node_t *) GetData(hCurrentItem);
+            const auto Node = (node_t *) GetData(hItem);
 
             if (!visitor(Node))
                 return false;
 
             // Walk the sub branch if the current item has children.
-            const auto hChild = TreeView_GetChild(Get(), hCurrentItem);
+            const auto hChild = TreeView_GetChild(Get(), hItem);
 
-            if ((hChild != NULL) && !Walk_(hChild, hStartItem, visitor))
+            if ((hChild != NULL) && !Walk_(hChild, visitor))
                 return false;
 
-            hCurrentItem = TreeView_GetNextSibling(Get(), hCurrentItem);
+            hItem = TreeView_GetNextSibling(Get(), hItem);
         }
 
-        // Stop walking if we've walked the complete branch downwards. Don't go up.
-        if (TreeView_GetParent(Get(), hItem) == hStartItem)
-            return false;
+        return true; // Continue walking.
+    }
 
-        return true;
+    /// <summary>
+    /// Walks the branch starting at the specified item.
+    /// </summary>
+    template<typename Visitor> bool WalkBranch_(HTREEITEM hParent, Visitor && visitor) const noexcept
+    {
+        auto hChild = TreeView_GetChild(Get(), hParent);
+
+        while (hChild != NULL)
+        {
+            const auto Node = (node_t *) GetData(hChild);
+
+            if (!visitor(Node))
+                return false;
+
+            if (!WalkBranch_(hChild, visitor))
+                return false;
+
+            hChild = TreeView_GetNextSibling(Get(), hChild);
+        }
+
+        return true; // Continue walking.
     }
 };

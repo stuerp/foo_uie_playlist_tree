@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.cpp (2026.08.02) P. Stuer **/
+/** $VER: PlaylistsUIElement.cpp (2026.08.03) P. Stuer **/
 
 #include "pch.h"
 
@@ -659,7 +659,7 @@ void playlist_uielement_t::on_playlist_created(size_t index, const char * name, 
 
     const auto Id = _PlaylistManager->playlist_get_guid(index);
 
-    Log.AtDebug().Write(STR_COMPONENT_BASENAME " noticed playlist %s was created as \"%s\".", msc::GUIDToUTF8(Id).c_str(), name);
+    Log.AtDebug().Write(STR_COMPONENT_BASENAME ": Playlist %s was created as \"%s\".", msc::GUIDToUTF8(Id).c_str(), name);
 
     // Get the data of the item we were hovering over, if any.
     const auto Parent = (node_t *) _TreeView.GetData(_hHighlightedtem);
@@ -698,7 +698,7 @@ void playlist_uielement_t::on_playlists_reorder(const size_t * order, size_t cou
 /// </summary>
 void playlist_uielement_t::on_playlists_removing(const bit_array & mask, size_t oldCount, size_t newCount) noexcept
 {
-    Log.AtDebug().Write(STR_COMPONENT_BASENAME " noticed %d playlist(s) are being removed.", oldCount - newCount);
+    Log.AtDebug().Write(STR_COMPONENT_BASENAME ": %d playlist(s) are being removed.", oldCount - newCount);
 
     if (_IgnoreNotifications)
         return;
@@ -707,7 +707,7 @@ void playlist_uielement_t::on_playlists_removing(const bit_array & mask, size_t 
     {
         const auto Id = _PlaylistManager->playlist_get_guid(Index);
 
-        Log.AtDebug().Write(STR_COMPONENT_BASENAME " noticed playlist %s is being removed.", msc::GUIDToUTF8(Id).c_str());
+        Log.AtDebug().Write(STR_COMPONENT_BASENAME ": Playlist %s is being removed.", msc::GUIDToUTF8(Id).c_str());
 
         if (!_TreeView.RemoveItem(Id))
             Log.AtError().Write(STR_COMPONENT_BASENAME " failed to remove item %s.", msc::GUIDToUTF8(Id).c_str());
@@ -719,7 +719,7 @@ void playlist_uielement_t::on_playlists_removing(const bit_array & mask, size_t 
 /// </summary>
 void playlist_uielement_t::on_playlists_removed(const bit_array & mask, size_t oldCount, size_t newCount) noexcept
 {
-    Log.AtDebug().Write(STR_COMPONENT_BASENAME " noticed %d playlist(s) were removed.", oldCount - newCount);
+    Log.AtDebug().Write(STR_COMPONENT_BASENAME ": %d playlist(s) were removed.", oldCount - newCount);
 
     ResetAutoComplete();
 }
@@ -734,7 +734,7 @@ void playlist_uielement_t::on_playlist_renamed(size_t index, const char * newNam
 
     const auto Id = _PlaylistManager->playlist_get_guid(index);
 
-    Log.AtDebug().Write(STR_COMPONENT_BASENAME " noticed playlist %s was renamed to \"%s\".", msc::GUIDToUTF8(Id).c_str(), newName);
+    Log.AtDebug().Write(STR_COMPONENT_BASENAME ": Playlist %s was renamed to \"%s\".", msc::GUIDToUTF8(Id).c_str(), newName);
 
     _TreeView.SetName(Id, newName);
 
@@ -770,10 +770,10 @@ void playlist_uielement_t::on_playlist_locked(size_t index, bool isLocked) noexc
         if (!_PlaylistManager->playlist_lock_query_name(index, LockName))
             LockName = "<Unknown>";
 
-        Log.AtDebug().Write(STR_COMPONENT_BASENAME " noticed playlist %d was locked with lock \"%s\".", index, LockName.c_str());
+        Log.AtDebug().Write(STR_COMPONENT_BASENAME ": Playlist %d was locked with lock \"%s\".", index, LockName.c_str());
     }
     else
-        Log.AtDebug().Write(STR_COMPONENT_BASENAME " noticed playlist %d was unlocked.", index);
+        Log.AtDebug().Write(STR_COMPONENT_BASENAME ": Playlist %d was unlocked.", index);
 
     const auto Id = _PlaylistManager->playlist_get_guid(index);
 
@@ -2004,26 +2004,23 @@ bool playlist_uielement_t::IsProhibited(const node_t * node, uint32_t filterMask
             return false;
 
         // A folder should not be removed if it contains at least one playlist that has a removal lock.
-        bool Result = false;
+        bool FoundLockedPlaylist = false;
 
         auto StartNode = node;
 
-        _TreeView.Walk([&](node_t * node) -> bool
+        _TreeView.WalkBranch([&](node_t * node) -> bool
         {
-            if (StartNode == node)
-                return true;
-
             if (IsProhibited(node, playlist_lock::filter_remove_playlist))
             {
-                Result = true;
+                FoundLockedPlaylist = true;
 
-                return false;
+                return false; // Stop walking.
             }
 
             return true; // Continue walking.
         }, StartNode);
 
-        return Result;
+        return FoundLockedPlaylist;
     }
     else
     {
@@ -2076,7 +2073,7 @@ void playlist_uielement_t::ResetAutoComplete() noexcept
     if (_StringEnumerator == nullptr)
         return;
 
-    Log.AtDebug().Write("Resetting auto complete.");
+    Log.AtDebug().Write(STR_COMPONENT_BASENAME " is resetting auto complete.");
 
     _StringEnumerator->Clear();
 
