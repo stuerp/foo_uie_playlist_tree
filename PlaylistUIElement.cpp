@@ -1130,7 +1130,7 @@ LRESULT playlist_uielement_t::OnRightClick(NMHDR * nmhd) noexcept
 
     if (hPopup != NULL)
     {
-        static_api_ptr_t<contextmenu_manager> cm;
+        static_api_ptr_t<contextmenu_manager> ContextMenuManager;
 
         HMENU hPlaylist = NULL;
 
@@ -1197,11 +1197,11 @@ LRESULT playlist_uielement_t::OnRightClick(NMHDR * nmhd) noexcept
 
                 _PlaylistManager->playlist_get_all_items(Index, Handles);
 
-                cm->init_context(Handles, contextmenu_manager::flag_show_shortcuts | contextmenu_manager::flag_view_full);
+                ContextMenuManager->init_context(Handles, contextmenu_manager::flag_show_shortcuts | contextmenu_manager::flag_view_full);
 
                 hPlaylist = ::CreatePopupMenu();
 
-                cm->win32_build_menu(hPlaylist, IDM_PLAYLIST, ~0);
+                ContextMenuManager->win32_build_menu(hPlaylist, IDM_PLAYLIST, ~0);
 
                 ::AppendMenuW(hPopup, MF_SEPARATOR, 0, NULL);
                 ::AppendMenuW(hPopup, MF_STRING | MF_POPUP, (UINT_PTR) hPlaylist, L"Playlist");
@@ -1266,7 +1266,7 @@ LRESULT playlist_uielement_t::OnRightClick(NMHDR * nmhd) noexcept
         ::PostMessageW(m_hWnd, WM_NULL, 0, 0);
 
         if (Command >= IDM_PLAYLIST)
-            cm->execute_by_id((unsigned int) (Command - IDM_PLAYLIST));
+            ContextMenuManager->execute_by_id((unsigned int) (Command - IDM_PLAYLIST));
         else
         if (Command > 0)
             ::PostMessageW(m_hWnd, WM_COMMAND, MAKEWPARAM(Command, 0), 0);
