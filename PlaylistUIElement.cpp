@@ -414,22 +414,24 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
             pfc::string_formatter Extensions;
             uint32_t DefaultExtension = 0;
 
+            // Create a string containing all the supported external playlist formats for the Windows dialog.
             {
                 service_enum_t<playlist_loader> LoaderEnumerator;
                 service_ptr_t<playlist_loader> Loader;
 
-                uint32_t i = 0;
-
-                while (LoaderEnumerator.next(Loader))
+                for (uint32_t i = 0; LoaderEnumerator.next(Loader); )
                 {
-                    if (Loader->can_write())
-                    {
-                        Extensions << Loader->get_extension() << " files|*." << Loader->get_extension() << "|";
+                    if (!Loader->can_write())
+                        continue;
 
-                        if (!::stricmp_utf8(Loader->get_extension(), "fpl"))
-                            DefaultExtension = i;
-                        i++;
-                    }
+                    const char * Extension = Loader->get_extension();
+
+                    Extensions << Extension << " files|*." << Extension << "|";
+
+                    if (::stricmp_utf8(Extension, "fpl") == 0)
+                        DefaultExtension = i;
+
+                    i++;
                 }
             }
 

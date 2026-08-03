@@ -1,5 +1,5 @@
 
-/** $VER: WIC.cpp (2026.08.02) P. Stuer **/
+/** $VER: WIC.cpp (2026.08.03) P. Stuer **/
 
 #include "pch.h"
 
@@ -25,7 +25,7 @@ public:
         hr = ::CoCreateInstance(CLSID_WICImagingFactory2, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(_Factory.ReleaseAndGetAddressOf()));
 
         if (FAILED(hr))
-            hr = CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(_Factory.ReleaseAndGetAddressOf()));
+            hr = CoCreateInstance(CLSID_WICImagingFactory1, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(_Factory.ReleaseAndGetAddressOf()));
 
         if (FAILED(hr))
             throw exception_com(hr);
@@ -171,12 +171,12 @@ HRESULT wic_t_impl::Load(const std::wstring & filePath, UINT targetWidth, UINT t
 
     ::ReleaseDC(nullptr, hDC);
 
-    if (hDIB == NULL)
+    if ((hDIB == NULL) || (Bits == nullptr))
         return hr;
 
     constexpr UINT BytesPerPixel = 4;
 
-    const UINT Stride = (BytesPerPixel * Width + 3) & ~3;
+    const UINT Stride = ((BytesPerPixel * Width) + 3) & ~3;
     const UINT BufferSize = Stride * Height;
 
     hr = Converter->CopyPixels(nullptr, Stride, BufferSize, Bits);
@@ -207,7 +207,7 @@ HRESULT wic_t_impl::GetBitsPerPixel(const WICPixelFormatGUID & pixelFormat, UINT
     if (!SUCCEEDED(hr))
         return hr;
 
-    hr = ComponentInfo->QueryInterface(__uuidof(IWICPixelFormatInfo), (void **) &PixelFormatInfo);
+    hr = ComponentInfo->QueryInterface(__uuidof(IWICPixelFormatInfo), (void **) PixelFormatInfo.ReleaseAndGetAddressOf());
 
     if (!SUCCEEDED(hr))
         return hr;

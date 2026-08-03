@@ -124,7 +124,7 @@ bool playlist_tree_view_t::SelectItem(const std::string & name) const noexcept
 }
 
 /// <summary>
-/// Find the item with the specified id.
+/// Finds the item with the specified id.
 /// </summary>
 HTREEITEM playlist_tree_view_t::FindItem(const GUID & id) const noexcept
 {
