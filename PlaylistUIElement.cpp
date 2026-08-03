@@ -1314,6 +1314,16 @@ LRESULT playlist_uielement_t::OnMiddleClick(NMHDR * nmhd) noexcept
 }
 
 /// <summary>
+/// Handles the NM_KILLFOCUS notification.
+/// </summary>
+LRESULT playlist_uielement_t::OnKillFocus(NMHDR * nmhd) noexcept
+{
+    _TreeView.EndDrag(true);
+
+    return 0;
+}
+
+/// <summary>
 /// Handles the TVN_GETDISPINFO notification.
 /// </summary>
 LRESULT playlist_uielement_t::OnGetDisplayInfo(NMHDR * nmhd) noexcept
@@ -1604,16 +1614,6 @@ LRESULT playlist_uielement_t::OnBeginDrag(NMHDR * nmhd) noexcept
     SetMsgHandled(FALSE);
 
     return FALSE;
-}
-
-/// <summary>
-/// Handles the TVN_ITEMEXPANDED notification.
-/// </summary>
-LRESULT playlist_uielement_t::OnItemExpanded(NMHDR * nmhd) noexcept
-{
-    SetMsgHandled(FALSE);
-
-    return TRUE;
 }
 
 /// <summary>

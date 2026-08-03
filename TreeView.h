@@ -262,6 +262,7 @@ private:
 protected:
     HTREEITEM _hDragSource = NULL;
     HTREEITEM _hDropTarget = NULL;
+    BOOL _PlaceAfter = FALSE;
 
 private:
     HWND _hTreeView;

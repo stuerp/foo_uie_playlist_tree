@@ -92,54 +92,7 @@ STDMETHODIMP drop_target_t::Drop(IDataObject * dataObject, DWORD keyState, POINT
 #endif
 
     _UIElement->DropFiles(dataObject);
-/*
-    FORMATETC FormatEtc =
-    {
-        .cfFormat = CF_HDROP,
-        .ptd      = nullptr,
-        .dwAspect = DVASPECT_CONTENT,
-        .lindex   = -1,
-        .tymed    = TYMED_HGLOBAL
-    };
 
-    STGMEDIUM StgMedium = { };
-
-    hr = dataObject->GetData(&FormatEtc, &StgMedium);
-
-    if (!SUCCEEDED(hr))
-        return hr;
-
-    // Enumerate all files.
-    {
-        const auto hDrop = (HDROP) StgMedium.hGlobal;
-
-        const UINT DropCount = ::DragQueryFileW(hDrop, 0xFFFFFFFF, nullptr, 0);
-
-    }
-
-    {
-        const auto hDrop = (HDROP) StgMedium.hGlobal;
-
-        const UINT DropCount = ::DragQueryFileW(hDrop, 0xFFFFFFFF, nullptr, 0);
-
-        std::vector<std::wstring> FilePaths;
-
-        FilePaths.reserve(DropCount);
-
-        for (UINT i = 0; i < DropCount; ++i)
-        {
-            wchar_t FilePath[MAX_PATH];
-
-            if (::DragQueryFileW(hDrop, i, FilePath, _countof(FilePath)))
-                FilePaths.push_back(FilePath);
-        }
-
-        if (FilePaths.size() != 0)
-            _UIElement->DropFiles(FilePaths);
-    }
-
-    ::ReleaseStgMedium(&StgMedium);
-*/
     return S_OK;
 }
 
