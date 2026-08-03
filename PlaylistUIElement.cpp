@@ -943,33 +943,14 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
 
             const auto hItem = (HTREEITEM) tvcd->nmcd.dwItemSpec;
 
-            // Get information about the item.
-            wchar_t Text[512] = { };
+            uint32_t Count;
 
-            const TVITEMEX tvi
-            {
-                .mask       = TVIF_TEXT | TVIF_IMAGE | TVIF_STATE | TVIF_CHILDREN,
-                .hItem      = hItem,
-                .stateMask  = 0xFF,
-                .pszText    = Text,
-                .cchTextMax = _countof(Text),
-            };
+            HRESULT hr = _FolderManager->GetFolderCount(Count);
 
-            TreeView_GetItem(hTreeView, &tvi);
+            const bool HasFolders = SUCCEEDED(hr) && (Count > 0);
 
-            const auto HasFocus      = (::GetFocus() == hTreeView);
-            const auto HasChildren   = (tvi.cChildren != 0);
-            const auto IsSelected    = ((tvi.state & TVIS_SELECTED) != 0); // || ((tvcd->nmcd.uItemState & CDIS_SELECTED) != 0);
-            const auto IsHighlighted = ((tvi.state & TVIS_DROPHILITED) != 0);
-            const auto IsHot         = ((tvcd->nmcd.uItemState & CDIS_HOT) != 0);
-            const auto IsFocused     = ((tvcd->nmcd.uItemState & CDIS_FOCUS) != 0);
-
-            // Get bounding rectangle of the item text.
-            RECT rcText;
-
-            TreeView_GetItemRect(hTreeView, hItem, &rcText, TRUE);
-
-            const LONG IconSize = rcText.bottom - rcText.top;
+            const auto IsHot     = ((tvcd->nmcd.uItemState & CDIS_HOT) != 0);
+            const auto IsFocused = ((tvcd->nmcd.uItemState & CDIS_FOCUS) != 0);
 
             // Adjust for horizontal scrolling.
             SCROLLINFO si
@@ -980,112 +961,7 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
 
             ::GetScrollInfo(hTreeView, SB_HORZ, &si);
 
-            // Calculate the start position of the item content.
-            RECT rc = rcItem;
-
-            rc.left += (IconSize * tvcd->iLevel) - si.nPos;
-
-            // Draw a chevron for a Folder item.
-            uint32_t Count;
-
-            HRESULT hr = _FolderManager->GetFolderCount(Count);
-
-            if (SUCCEEDED(hr) && (Count > 0))
-            {
-                if (HasChildren)
-                {
-                    RECT rcChev = rc;
-
-                    rcChev.right = rcChev.left + IconSize;
-
-                    const auto hOldFont = (HFONT) ::SelectObject(hDC, _Theme.GetIconFont());
-
-                //  const wchar_t * ChevronLeft  = L"\uE76B";
-                    const wchar_t * ChevronRight = L"\uE76C";
-                    const wchar_t * ChevronDown  = L"\uE70D";
-                //  const wchar_t * ChevronUp    = L"\uE70E";
-
-                    const DTTOPTS Options =
-                    {
-                        .dwSize = sizeof(Options),
-                        .dwFlags = DTT_TEXTCOLOR,
-                        .crText = _Theme.GetWindowTextColor()
-                    };
-
-                    constexpr DWORD Flags = DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX;
-
-                    ::DrawThemeTextEx(_Theme.GetTextStyle(), hDC, 0, 0, (tvi.state & TVIS_EXPANDED) ? ChevronDown : ChevronRight, -1, Flags, &rcChev, &Options);
-
-                    ::SelectObject(hDC, hOldFont);
-                }
-
-                rc.left += IconSize;
-            }
-
-            // Draw the background.
-            {
-                rc.right = rc.left + (1 + IconSize + 1) + 3 + (rcText.right - rcText.left);
-
-                if (IsSelected)
-                {
-                    auto & hBrush = HasFocus ? _Theme.GetSelectionBrush() : _Theme.GetInactiveSelectionBrush();
-
-                    ::FillRect(hDC, &rc, hBrush);
-
-                    // Draw the focus rectangle.
-                    if (IsFocused)
-                    {
-                        const auto & hPen = _Theme.GetHighlightPen();
-
-                        const auto hOldBrush = ::SelectObject(hDC, hBrush);
-                        const auto hOldPen = ::SelectObject(hDC, hPen);
-
-                        ::RoundRect(hDC, rc.left, rc.top, rc.right, rc.bottom, 2, 2);
-
-                        ::SelectObject(hDC, hOldPen);
-                        ::SelectObject(hDC, hOldBrush);
-                    }
-                }
-                else
-                if (IsHot || IsHighlighted)
-                {
-                    auto & hBrush = _Theme.GetHighlightBrush();
-
-                    ::FillRect(hDC, &rc, hBrush);
-                }
-            }
-
-            // Draw the image.
-            {
-                const LONG dx = ((1 + IconSize + 1) - (LONG) _State._ImageSize) / 2;
-                const LONG dy = (     IconSize      - (LONG) _State._ImageSize) / 2;
-
-                ::ImageList_Draw(_ImageList, tvi.iImage, hDC, rc.left + dx, rc.top + dy, ILD_NORMAL);
-
-                rc.left += (1 + IconSize + 1) + 3;
-            }
-
-            // Draw the text.
-            {
-                const COLORREF Color = IsSelected ? (HasFocus ? _Theme.GetSelectionTextColor() : _Theme.GetInactiveSelectionTextColor()) : ((IsHot || IsHighlighted) ? _Theme.GetHighlightTextColor() : _Theme.GetWindowTextColor());
-
-                const DTTOPTS Options =
-                {
-                    .dwSize = sizeof(Options),
-                    .dwFlags = DTT_TEXTCOLOR,
-                    .crText = Color
-                };
-
-                rc.right = rc.left + (rcText.right - rcText.left);
-
-                const auto hOldFont = ::SelectObject(hDC, _Theme.GetPlaylistFont());
-
-                constexpr DWORD Flags = DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_EXPANDTABS | DT_NOPREFIX;
-
-                ::DrawThemeTextEx(_Theme.GetTextStyle(), hDC, 0, 0, Text, -1, Flags, &rc, &Options);
-
-                ::SelectObject(hDC, hOldFont);
-            }
+            _TreeView.DrawItem(hDC, hItem, tvcd->iLevel, si.nPos, rcItem, _ImageList, _State._ImageSize, HasFolders, IsHot, IsFocused, false);
 
             return CDRF_SKIPDEFAULT; // Skip all other stages because we've drawn the complete item.
         }
@@ -1609,7 +1485,11 @@ LRESULT playlist_uielement_t::OnBeginDrag(NMHDR * nmhd) noexcept
 {
     const auto nmtv = (NMTREEVIEWW *) nmhd;
 
-    _TreeView.BeginDrag(nmtv);
+    const DWORD Position = ::GetMessagePos();
+
+    const POINT pt = { GET_X_LPARAM(Position), GET_Y_LPARAM(Position) };
+
+    _TreeView.BeginDrag(nmtv, pt);
 
     SetMsgHandled(FALSE);
 

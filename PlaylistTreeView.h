@@ -59,6 +59,10 @@ public:
         return __super::RemoveItem(hItem);
     }
 
+    void DrawItem(HDC hDC, HTREEITEM hItem, int level, int scrollX, const RECT & rcItem, HIMAGELIST imageList, uint32_t imageSize, bool hasFolders, bool isHot, bool isFocused, bool isDragging) const noexcept;
+
+    void DrawDragImage(HDC hDC, HTREEITEM hItem) const noexcept final;
+
     size_t GetChildCount(const GUID & id) const noexcept;
 
     /// <summary>

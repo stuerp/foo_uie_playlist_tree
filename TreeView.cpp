@@ -1,5 +1,5 @@
 
-/** $VER: TreeView.cpp (2026.07.31) P. Stuer **/
+/** $VER: TreeView.cpp (2026.08.03) P. Stuer **/
 
 #include "pch.h"
 
@@ -373,129 +373,31 @@ void * tree_view_t::GetData(HTREEITEM hItem) const noexcept
     return (void *) tvi.lParam;
 }
 
-/*
-HIMAGELIST CreateDragImage(node_t * node)
-{
-    // Determine size of the rendered item
-    SIZE sz = MeasureNode(node);
-
-    HDC hdcScreen = GetDC(nullptr);
-    HDC hdcMem    = CreateCompatibleDC(hdcScreen);
-
-    BITMAPINFO bi = {};
-    bi.bmiHeader.biSize        = sizeof(BITMAPINFOHEADER);
-    bi.bmiHeader.biWidth       = sz.cx;
-    bi.bmiHeader.biHeight      = -sz.cy;    // top-down DIB
-    bi.bmiHeader.biPlanes      = 1;
-    bi.bmiHeader.biBitCount    = 32;
-    bi.bmiHeader.biCompression = BI_RGB;
-
-    void* bits = nullptr;
-
-    HBITMAP bmp = CreateDIBSection(hdcScreen, &bi, DIB_RGB_COLORS, &bits, nullptr, 0);
-
-    HGDIOBJ oldBmp = SelectObject(hdcMem, bmp);
-
-    // Transparent background
-    ZeroMemory(bits, sz.cx * sz.cy * 4);
-
-    // Render exactly like the control paints itself
-    RECT rc = { 0, 0, sz.cx, sz.cy };
-
-    DrawNode(hdcMem, node, rc);
-
-    // Make entire image 180/255 opacity
-    uint32_t* p = static_cast<uint32_t*>(bits);
-
-    for (int i = 0; i < sz.cx * sz.cy; ++i)
-    {
-        p[i] = (p[i] & 0x00FFFFFF) | (180u << 24);
-    }
-
-    SelectObject(hdcMem, oldBmp);
-    DeleteDC(hdcMem);
-    ReleaseDC(nullptr, hdcScreen);
-
-    HIMAGELIST himl = ImageList_Create(sz.cx, sz.cy, ILC_COLOR32 | ILC_MASK, 1, 1);
-
-    ImageList_Add(himl, bmp, nullptr);
-
-    DeleteObject(bmp);
-
-    return himl;
-}
-*/
-/*
-HIMAGELIST CreateDragImage(HWND hTreeView, HTREEITEM hItem)
-{
-    RECT r{};
-
-    TreeView_GetItemRect(hTreeView, hItem, &r, TRUE);
-
-    HDC hDCScreen = ::GetDC(nullptr);
-
-    HDC hDCMem = ::CreateCompatibleDC(hDCScreen);
-
-    const auto w = r.right  - r.left;
-    const auto h = r.bottom - r.top;
-
-    auto hBitmap = ::CreateCompatibleBitmap(hDCScreen, w, h);
-
-    auto hOldBitmap = ::SelectObject(hDCMem, hBitmap);
-
-    // Draw the background.
-    r = { 0, 0, w, h };
-
-    ::FillRect(hDCMem, &r, (HBRUSH) ::GetStockObject(WHITE_BRUSH));
-
-    // Draw the text.
-    wchar_t Text[256]{};
-
-    TVITEM tvi
-    {
-        .mask       = TVIF_TEXT,
-        .hItem      = hItem,
-        .pszText    = Text,
-        .cchTextMax = _countof(Text)
-    };
-
-    TreeView_GetItem(hTreeView, &tvi);
-
-    ::SetBkMode(hDCMem, TRANSPARENT);
-
-    ::TextOutW(hDCMem, 0, 0, Text, (int) ::wcslen(Text));
-
-    ::SelectObject(hDCMem, hOldBitmap);
-
-    ::DeleteDC(hDCMem);
-
-    ::ReleaseDC(nullptr, hDCScreen);
-
-    HIMAGELIST himl = ::ImageList_Create(w, h, ILC_COLOR32 | ILC_MASK, 1, 1);
-
-    ::ImageList_Add(himl, hBitmap, nullptr);
-
-    ::DeleteObject(hBitmap);
-
-    return himl;
-}
-*/
 /// <summary>
 /// Begins a drag operation.
 /// </summary>
-void tree_view_t::BeginDrag(const NMTREEVIEW * nmtv) noexcept
+void tree_view_t::BeginDrag(const NMTREEVIEWW * nmtv, const POINT & point) noexcept
 {
     TreeView_SetInsertMarkColor(_hTreeView, _Theme.GetWindowTextColor());
 
+    const auto & hItem = nmtv->itemNew.hItem;
+
     // Create the drag image.
-    _hDragImageList = TreeView_CreateDragImage(_hTreeView, nmtv->itemNew.hItem);
-//  _hDragImageList = CreateDragImage(_hTreeView, nmtv->itemNew.hItem);
+    _hDragImageList = CreateDragImage(_hTreeView, hItem);
 
     if (_hDragImageList == NULL)
         return;
+/*
+    POINT pt = point;
 
+    ::ScreenToClient(_hTreeView, &pt);
+
+    RECT rcItem;
+
+    TreeView_GetItemRect(_hTreeView, hItem, &rcItem, FALSE);
+*/
     // Begin the drag operation.
-    if (!::ImageList_BeginDrag(_hDragImageList, 0, 0, 0))
+    if (!::ImageList_BeginDrag(_hDragImageList, 0, 0, 0))//(rcItem.left - pt.x), -(pt.y - rcItem.top)))
         return;
 
     // Lock the tree view.
@@ -511,7 +413,7 @@ void tree_view_t::BeginDrag(const NMTREEVIEW * nmtv) noexcept
 /// <summary>
 /// Moves the drag item.
 /// </summary>
-void tree_view_t::DragMove(const CPoint & point) noexcept
+void tree_view_t::DragMove(const POINT & point) noexcept
 {
     if (_hDragSource == NULL)
         return;
@@ -653,4 +555,66 @@ tree_view_t::DropZone tree_view_t::GetDropZone(const RECT & r, const POINT & pt)
         return DropZone::Bottom;
 
     return DropZone::Middle;
+}
+
+/// <summary>
+/// Creates a drag image.
+/// </summary>
+HIMAGELIST tree_view_t::CreateDragImage(HWND hTreeView, HTREEITEM hItem) const noexcept
+{
+    HIMAGELIST hImageList = NULL;
+
+    RECT rcItem;
+
+    TreeView_GetItemRect(_hTreeView, hItem, &rcItem, FALSE);
+
+    const LONG Width  = rcItem.right - rcItem.left;
+    const LONG Height = rcItem.bottom - rcItem.top;
+
+    HDC hDCScreen = ::GetDC(NULL);
+
+    const BITMAPINFO bi =
+    {
+        .bmiHeader =
+        {
+            .biSize        = sizeof(BITMAPINFOHEADER),
+            .biWidth       = Width,
+            .biHeight      = -Height,
+            .biPlanes      = 1,
+            .biBitCount    = 24,
+            .biCompression = BI_RGB,
+        }
+    };
+
+    void * Bits = nullptr;
+
+    const auto hBitmap = ::CreateDIBSection(hDCScreen, &bi, DIB_RGB_COLORS, &Bits, NULL, 0);
+
+    if ((hBitmap != NULL) && (Bits != nullptr))
+    {
+        HDC hDCMem = ::CreateCompatibleDC(hDCScreen);
+
+        if (hDCMem != NULL)
+        {
+            const auto hOldBitmap = ::SelectObject(hDCMem, hBitmap);
+
+            DrawDragImage(hDCMem, hItem);
+
+            ::SelectObject(hDCMem, hOldBitmap);
+
+            ::DeleteDC(hDCMem);
+        }
+
+        hImageList = ::ImageList_Create(Width, Height, ILC_COLOR32 | ILC_MASK, 1, 1);
+
+        ::ImageList_Add(hImageList, hBitmap, nullptr);
+
+        ::DeleteObject(hBitmap);
+    }
+    else
+        hImageList = TreeView_CreateDragImage(_hTreeView, hItem); // Fall-back
+
+    ::ReleaseDC(NULL, hDCScreen);
+
+    return hImageList;
 }

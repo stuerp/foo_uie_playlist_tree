@@ -163,13 +163,14 @@ HRESULT wic_t_impl::Load(const std::wstring & filePath, UINT targetWidth, UINT t
         }
     };
 
-    HDC hDC = ::GetDC(nullptr);
+    // Get the screen DC.
+    HDC hDC = ::GetDC(NULL);
 
     BYTE * Bits = nullptr;
 
-    const HBITMAP hDIB = ::CreateDIBSection(hDC, &bi, DIB_RGB_COLORS, (void **) &Bits, nullptr, 0);
+    const HBITMAP hDIB = ::CreateDIBSection(hDC, &bi, DIB_RGB_COLORS, (void **) &Bits, NULL, 0);
 
-    ::ReleaseDC(nullptr, hDC);
+    ::ReleaseDC(NULL, hDC);
 
     if ((hDIB == NULL) || (Bits == nullptr))
         return hr;

@@ -1,9 +1,11 @@
 
-/** $VER: PlaylistsTreeView.cpp (2026.07.30) P. Stuer **/
+/** $VER: PlaylistsTreeView.cpp (2026.08.03) P. Stuer **/
 
 #include "pch.h"
 
 #include "PlaylistTreeView.h"
+
+#include "Theme.h"
 
 #pragma hdrstop
 
@@ -236,3 +238,161 @@ bool playlist_tree_view_t::AllowDrop(DropZone dropZone) noexcept
 
     return Node->IsFolder || (!Node->IsFolder && (dropZone != DropZone::Middle));
 }
+
+/// <summary>
+/// Draws a treeview item.
+/// </summary>
+void playlist_tree_view_t::DrawItem(HDC hDC, HTREEITEM hItem, int level, int scrollX, const RECT & rcItem, HIMAGELIST imageList, uint32_t imageSize, bool hasFolders, bool isHot, bool isFocused, bool isDragging) const noexcept
+{
+    // Get information about the item.
+    wchar_t Text[512] = { };
+
+    const TVITEMEX tvi
+    {
+        .mask       = TVIF_TEXT | TVIF_IMAGE | TVIF_STATE | TVIF_CHILDREN,
+        .hItem      = hItem,
+        .stateMask  = 0xFF,
+        .pszText    = Text,
+        .cchTextMax = _countof(Text),
+    };
+
+    TreeView_GetItem(Get(), &tvi);
+
+    const auto HasFocus      = (::GetFocus() == Get());
+    const auto HasChildren   = (tvi.cChildren != 0);
+    const auto IsSelected    = ((tvi.state & TVIS_SELECTED)    != 0) & !isDragging;
+    const auto IsHighlighted = ((tvi.state & TVIS_DROPHILITED) != 0) & !isDragging;
+
+    // Get bounding rectangle of the item text.
+    RECT rcText;
+
+    TreeView_GetItemRect(Get(), hItem, &rcText, TRUE);
+
+    const LONG IconSize = rcText.bottom - rcText.top;
+
+    // Calculate the start position of the item content.
+    RECT rc = rcItem;
+
+    rc.left += (IconSize * level) - scrollX;
+
+    // Draw a chevron for a Folder item.
+    if (hasFolders)
+    {
+        if (HasChildren)
+        {
+            RECT rcChev = rc;
+
+            rcChev.right = rcChev.left + IconSize;
+
+            const auto hOldFont = (HFONT) ::SelectObject(hDC, _Theme.GetIconFont());
+
+        //  const wchar_t * ChevronLeft  = L"\uE76B";
+            const wchar_t * ChevronRight = L"\uE76C";
+            const wchar_t * ChevronDown  = L"\uE70D";
+        //  const wchar_t * ChevronUp    = L"\uE70E";
+
+            const DTTOPTS Options =
+            {
+                .dwSize = sizeof(Options),
+                .dwFlags = DTT_TEXTCOLOR,
+                .crText = _Theme.GetWindowTextColor()
+            };
+
+            constexpr DWORD Flags = DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX;
+
+            ::DrawThemeTextEx(_Theme.GetTextStyle(), hDC, 0, 0, (tvi.state & TVIS_EXPANDED) ? ChevronDown : ChevronRight, -1, Flags, &rcChev, &Options);
+
+            ::SelectObject(hDC, hOldFont);
+        }
+
+        rc.left += IconSize;
+    }
+
+    // Draw the background.
+    {
+        rc.right = rc.left + (1 + IconSize + 1) + 3 + (rcText.right - rcText.left);
+
+        if (IsSelected)
+        {
+            auto & hBrush = HasFocus ? _Theme.GetSelectionBrush() : _Theme.GetInactiveSelectionBrush();
+
+            ::FillRect(hDC, &rc, hBrush);
+
+            // Draw the focus rectangle.
+            if (isFocused)
+            {
+                const auto & hPen = _Theme.GetHighlightPen();
+
+                const auto hOldBrush = ::SelectObject(hDC, hBrush);
+                const auto hOldPen = ::SelectObject(hDC, hPen);
+
+                ::RoundRect(hDC, rc.left, rc.top, rc.right, rc.bottom, 2, 2);
+
+                ::SelectObject(hDC, hOldPen);
+                ::SelectObject(hDC, hOldBrush);
+            }
+        }
+        else
+        if (isHot || IsHighlighted)
+        {
+            auto & hBrush = _Theme.GetHighlightBrush();
+
+            ::FillRect(hDC, &rc, hBrush);
+        }
+    }
+
+    // Draw the image.
+    {
+        const LONG dx = ((1 + IconSize + 1) - (LONG) imageSize) / 2;
+        const LONG dy = (     IconSize      - (LONG) imageSize) / 2;
+
+        ::ImageList_Draw(imageList, tvi.iImage, hDC, rc.left + dx, rc.top + dy, ILD_TRANSPARENT);
+
+        rc.left += (1 + IconSize + 1) + 3;
+    }
+
+    // Draw the text.
+    {
+        const COLORREF Color = IsSelected ? (HasFocus ? _Theme.GetSelectionTextColor() : _Theme.GetInactiveSelectionTextColor()) : ((isHot || IsHighlighted) ? _Theme.GetHighlightTextColor() : _Theme.GetWindowTextColor());
+
+        const DTTOPTS Options =
+        {
+            .dwSize = sizeof(Options),
+            .dwFlags = DTT_TEXTCOLOR,
+            .crText = Color
+        };
+
+        rc.right = rc.left + (rcText.right - rcText.left);
+
+        const auto hOldFont = ::SelectObject(hDC, _Theme.GetPlaylistFont());
+
+        constexpr DWORD Flags = DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_EXPANDTABS | DT_NOPREFIX;
+
+        ::DrawThemeTextEx(_Theme.GetTextStyle(), hDC, 0, 0, Text, -1, Flags, &rc, &Options);
+
+        ::SelectObject(hDC, hOldFont);
+    }
+}
+
+/// <summary>
+/// Draws a treeview item.
+/// </summary>
+void playlist_tree_view_t::DrawDragImage(HDC hDC, HTREEITEM hItem) const noexcept
+{
+    RECT rcItem;
+
+    TreeView_GetItemRect(Get(), hItem, &rcItem, FALSE);
+
+    ::OffsetRect(&rcItem, -rcItem.left, -rcItem.top);
+
+    ::FillRect(hDC, &rcItem, _Theme.GetWindowBrush());
+
+    HIMAGELIST hImageList = GetNormalImageList();
+
+    int IconWidth, IconHeight;
+
+    ::ImageList_GetIconSize(hImageList, &IconWidth, &IconHeight);
+
+    DrawItem(hDC, hItem, 0, 0, rcItem, hImageList, (uint32_t) IconWidth, false, false, false, true);
+}
+
