@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.h (2026.08.01) **/
+/** $VER: Preferences.h (2026.08.02) **/
 
 #pragma once
 
@@ -12,8 +12,10 @@
 #define IDC_IMAGE_LIST          1006
 #define IDC_QUICK_SEARCH        1007
 
+#define IDC_LOG_LEVEL           9999
+
 #define W_A00   332 // Dialog width as set by foobar2000, in dialog units
-#define H_A00   288 // Dialog height as set by foobar2000, in dialog units
+#define H_A00   243 // Dialog height as set by foobar2000, in dialog units
 
 #define H_LBL     8 // Label
 
@@ -124,3 +126,22 @@
 #define H_A24   H_CHB
 #define X_A24   X_A18
 #define Y_A24   Y_A18 + H_A18 + IY
+
+// Groupbox: Component
+#define X_A99   0
+#define W_A99   332
+
+    // Label: Log level
+    #define X_A98    X_A99 +  5
+    #define Y_A98    Y_A99 + 11
+    #define W_A98    34
+    #define H_A98    H_LBL
+
+    // Combobox: Log level
+    #define X_A97    X_A98 + W_A98 + IX
+    #define Y_A97    Y_A98
+    #define W_A97    48
+    #define H_A97    H_CBX
+
+#define H_A99   11 + H_A97 + 7
+#define Y_A99   H_A00 - (H_A99 + IY)

@@ -264,7 +264,7 @@ The component provides the following custom formatting fields:
 
 ### Text Format
 
-This setting determines how the text of a tree node gets formatted.
+This setting determines how the text of a tree node gets formatted using foobar2000 [Title Formatting](https://wiki.hydrogenaudio.org/index.php?title=Foobar2000:Title_Formatting_Introduction).
 
 Here are some examples:
 
@@ -275,11 +275,11 @@ Here are some examples:
 ```
 
 > [!Note]
-> This setting supports title formatting.
+> This setting supports foobar2000 [Title Formatting](https://wiki.hydrogenaudio.org/index.php?title=Foobar2000:Title_Formatting_Introduction).
 
 ### Tooltip
 
-This setting specifies title formatting for the tooltip displayed in the tree view.
+This setting specifies foobar2000 [Title Formatting](https://wiki.hydrogenaudio.org/index.php?title=Foobar2000:Title_Formatting_Introduction) for the tooltip displayed in the tree view.
 
 The default is:
 
@@ -290,7 +290,7 @@ $if(%node_is_folder%,,$if(%playlist_size_natural%,%playlist_size_natural%$crlf()
 Leave the text empty to disable the tooltips.
 
 > [!Note]
-> This setting supports title formatting.
+> This setting supports foobar2000 [Title Formatting](https://wiki.hydrogenaudio.org/index.php?title=Foobar2000:Title_Formatting_Introduction).
 > `$crlf()` is a foobar2000 function that inserts a line break in the text.
 
 ### Node Image
@@ -325,7 +325,7 @@ Here are some examples:
 - `%fb2k_component_path%\SomeIconLibrary.icl`
 
 > [!Note]
-> This setting supports title formatting.
+> This setting supports foobar2000 [Title Formatting](https://wiki.hydrogenaudio.org/index.php?title=Foobar2000:Title_Formatting_Introduction).
 
 ### Image List
 

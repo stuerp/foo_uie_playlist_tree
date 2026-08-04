@@ -1,5 +1,5 @@
 
-/** $VER: TreeView.cpp (2026.07.31) P. Stuer **/
+/** $VER: TreeView.cpp (2026.08.04) P. Stuer **/
 
 #include "pch.h"
 
@@ -15,9 +15,10 @@ bool tree_view_t::Create(HWND hWndParent, size_t id) noexcept
 {
     _Id = id;
 
-    const DWORD Styles = WS_CHILD | WS_VISIBLE | WS_VSCROLL | TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | TVS_EDITLABELS | TVS_SHOWSELALWAYS | TVS_TRACKSELECT | TVS_INFOTIP; // | TVS_SINGLEEXPAND | TVS_FULLROWSELECT;
+    constexpr DWORD Styles = WS_CHILD | WS_VISIBLE | WS_VSCROLL | TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | TVS_EDITLABELS | TVS_SHOWSELALWAYS | TVS_TRACKSELECT | TVS_INFOTIP; // | TVS_SINGLEEXPAND | TVS_FULLROWSELECT;
+    constexpr DWORD ExStyles = TVS_EX_DOUBLEBUFFER;
 
-    _hTreeView = ::CreateWindowExW(0, WC_TREEVIEW, L"", Styles, 0, 0, 0, 0, hWndParent, (HMENU) id, THIS_HINSTANCE, nullptr);
+    _hTreeView = ::CreateWindowExW(ExStyles, WC_TREEVIEW, L"", Styles, 0, 0, 0, 0, hWndParent, (HMENU) id, THIS_HINSTANCE, nullptr);
 
     if (_hTreeView == NULL)
         return false;
@@ -375,25 +376,35 @@ void * tree_view_t::GetData(HTREEITEM hItem) const noexcept
 /// <summary>
 /// Begins a drag operation.
 /// </summary>
-void tree_view_t::BeginDrag(const NMTREEVIEW * nmtv) noexcept
+void tree_view_t::BeginDrag(const NMTREEVIEWW * nmtv) noexcept
 {
     TreeView_SetInsertMarkColor(_hTreeView, _Theme.GetWindowTextColor());
 
+    const auto & hItem = nmtv->itemNew.hItem;
+
+    // Measure the drag image.
+    RECT rcDrag;
+
+    MeasureDragImage(hItem, rcDrag);
+
     // Create the drag image.
-    _hDragImageList = TreeView_CreateDragImage(_hTreeView, nmtv->itemNew.hItem);
+    _hDragImageList = CreateDragImage(hItem, rcDrag);
 
     if (_hDragImageList == NULL)
         return;
 
+    const int dx = nmtv->ptDrag.x - rcDrag.left;
+    const int dy = nmtv->ptDrag.y - rcDrag.top;
+
     // Begin the drag operation.
-    if (!::ImageList_BeginDrag(_hDragImageList, 0, 0, 0))
+    if (!::ImageList_BeginDrag(_hDragImageList, 0, dx, dy))
         return;
 
     // Lock the tree view.
     if (!::ImageList_DragEnter(_hTreeView, nmtv->ptDrag.x, nmtv->ptDrag.y))
         return;
 
-    ::ShowCursor(FALSE);
+//  ::ShowCursor(FALSE);
     ::SetCapture(::GetParent(_hTreeView));
 
     _hDragSource = nmtv->itemNew.hItem;
@@ -402,58 +413,94 @@ void tree_view_t::BeginDrag(const NMTREEVIEW * nmtv) noexcept
 /// <summary>
 /// Moves the drag item.
 /// </summary>
-void tree_view_t::DragMove(const CPoint & point) noexcept
+void tree_view_t::DragMove(const POINT & point) noexcept
 {
     if (_hDragSource == NULL)
         return;
 
     POINT pt = point;
 
-    {
-        ::ClientToScreen(::GetParent(_hTreeView), &pt);
-        ::ScreenToClient(_hTreeView, &pt);
+    ::ClientToScreen(::GetParent(_hTreeView), &pt);
+    ::ScreenToClient(_hTreeView, &pt);
 
-        ::ImageList_DragMove(pt.x, pt.y);
-    }
+    // Hide the drag image.
+    ::ImageList_DragShowNolock(FALSE);
+
+    // Remove the insertion marker.
+    TreeView_SetInsertMark(_hTreeView, NULL, _PlaceAfter);
 
     // Determine the drop target and highlight it.
+    const TVHITTESTINFO tvhi = { .pt = pt };
+
+    const auto hHitItem = TreeView_HitTest(_hTreeView, &tvhi);
+
+    if (hHitItem != NULL)
     {
-        ::ImageList_DragShowNolock(FALSE);
-
-        TreeView_SetInsertMark(_hTreeView, NULL, FALSE); // Remove the insertion marker.
-
-        const TVHITTESTINFO tvht = { .pt = pt };
-
-        _hDropTarget = TreeView_HitTest(_hTreeView, &tvht);
-
-        if ((_hDropTarget != NULL) && (_hDropTarget != _hDragSource))
+        if ((hHitItem != _hDropTarget) || (_hDropTarget == NULL))
         {
-            TreeView_SelectDropTarget(_hTreeView, _hDropTarget);
+            TreeView_SelectDropTarget(_hTreeView, hHitItem);
 
-            RECT rc = { };
-
-            if (TreeView_GetItemRect(_hTreeView, _hDropTarget, &rc, TRUE))
-            {
-                _DropZone = GetDropZone(rc, pt);
-
-                if (_DropZone != DropZone::Middle)
-                {
-                    const BOOL PlaceAfter = (_DropZone == DropZone::Bottom) ? TRUE : FALSE;
-
-                    TreeView_SetInsertMark(_hTreeView, _hDropTarget, PlaceAfter); // Add the insertion marker.
-                }
-            }
-
+             _hDropTarget = hHitItem;
         }
+    }
 
-        ::ImageList_DragShowNolock(TRUE);
+    if ((_hDropTarget != NULL) && (_hDropTarget != _hDragSource))
+    {
+        RECT rc = { };
+
+        if (TreeView_GetItemRect(_hTreeView, _hDropTarget, &rc, TRUE))
+        {
+            _DropZone = GetDropZone(rc, pt);
+
+            if (_DropZone != DropZone::Middle)
+            {
+                _PlaceAfter = (_DropZone == DropZone::Bottom) ? TRUE : FALSE;
+
+                // Add the insertion marker.
+                TreeView_SetInsertMark(_hTreeView, _hDropTarget, _PlaceAfter);
+            }
+        }
+    }
+
+    // Show the drag image.
+    ::ImageList_DragShowNolock(TRUE);
+
+    // Move the drag image.
+    ::ImageList_DragMove(pt.x, pt.y);
+
+    ::SetCursor(::LoadCursorW(NULL, (hHitItem != _hDragSource) ? IDC_ARROW : IDC_NO));
+
+    // Scroll the treeview up or down if necessary.
+    {
+        SCROLLINFO si =
+        {
+            .cbSize = sizeof(si),
+            .fMask = SIF_PAGE | SIF_POS | SIF_RANGE
+        };
+
+        if (::GetScrollInfo(_hTreeView, SB_VERT, &si))
+        {
+            if ((tvhi.flags == TVHT_BELOW) && (si.nPos < (si.nMax - std::max((int) si.nPage - 1, 0))))
+            {
+                ::SendMessageW(_hTreeView, WM_VSCROLL, MAKEWPARAM(SB_LINEDOWN, 0), 0L);
+
+                RefreshAllItems();
+            }
+            else
+            if ((tvhi.flags == TVHT_ABOVE) && (si.nPos > si.nMin))
+            {
+                ::SendMessageW(_hTreeView, WM_VSCROLL, MAKEWPARAM(SB_LINEUP, 0), 0L);
+
+                RefreshAllItems();
+            }
+        }
     }
 }
 
 /// <summary>
 /// Ends the drag operation.
 /// </summary>
-void tree_view_t::EndDrag(bool cancel) noexcept
+void tree_view_t::EndDrag(bool isDragCancelled) noexcept
 {
     if (_hDragSource == NULL)
         return;
@@ -468,7 +515,7 @@ void tree_view_t::EndDrag(bool cancel) noexcept
     TreeView_SetInsertMark(_hTreeView, NULL, FALSE);
 
     // Move the item and its children. If hDropTarget is NULL the node gets added to the end of the tree.
-    if (((_hDropTarget == NULL) || ((_hDropTarget != NULL) && (_hDropTarget != _hDragSource) && AllowDrop(_DropZone))) && !cancel)
+    if (((_hDropTarget == NULL) || ((_hDropTarget != NULL) && (_hDropTarget != _hDragSource) && AllowDrop(_DropZone))) && !isDragCancelled)
     {
         MoveItem(_hDropTarget, _hDragSource, _DropZone);
 
@@ -486,7 +533,8 @@ void tree_view_t::EndDrag(bool cancel) noexcept
     }
 
     ::ReleaseCapture();
-    ::ShowCursor(TRUE);
+//  ::ShowCursor(TRUE);
+    ::SetCursor(::LoadCursorW(NULL, IDC_ARROW));
 
     _hDragSource = NULL;
 
@@ -497,16 +545,76 @@ void tree_view_t::EndDrag(bool cancel) noexcept
 /// <summary>
 /// Gets the drop zone that contains the specified point.
 /// </summary>
-tree_view_t::DropZone tree_view_t::GetDropZone(const RECT & r, const POINT & pt) const noexcept
+tree_view_t::DropZone tree_view_t::GetDropZone(const RECT & rc, const POINT & pt) const noexcept
 {
     // Divide the item into 3 zones, the middle zone being twice as high.
-    const float ZoneHeight = (float) (r.bottom - r.top) / 4.f;
+    const float ZoneHeight = (float) (rc.bottom - rc.top) / 4.f;
 
-    if ((float) pt.y < (float) r.top + ZoneHeight)
+    if ((float) pt.y < (float) rc.top + ZoneHeight)
         return DropZone::Top;
 
-    if ((float) pt.y >= (float) r.bottom - ZoneHeight)
+    if ((float) pt.y >= (float) rc.bottom - ZoneHeight)
         return DropZone::Bottom;
 
     return DropZone::Middle;
+}
+
+/// <summary>
+/// Creates a drag image.
+/// </summary>
+HIMAGELIST tree_view_t::CreateDragImage(HTREEITEM hItem, const RECT & rc) const noexcept
+{
+    HIMAGELIST hImageList = NULL;
+
+    const LONG Width  = rc.right  - rc.left;
+    const LONG Height = rc.bottom - rc.top;
+
+    const HDC hDCScreen = ::GetDC(NULL);
+
+    const BITMAPINFO bmi =
+    {
+        .bmiHeader =
+        {
+            .biSize        = sizeof(BITMAPINFOHEADER),
+            .biWidth       = Width,
+            .biHeight      = -Height,
+            .biPlanes      = 1,
+            .biBitCount    = 24, // Don't use 32bpp
+            .biCompression = BI_RGB,
+        }
+    };
+
+    void * Bits = nullptr;
+
+    const auto hBitmap = ::CreateDIBSection(hDCScreen, &bmi, DIB_RGB_COLORS, &Bits, NULL, 0);
+
+    if ((hBitmap != NULL) && (Bits != nullptr))
+    {
+        const HDC hDCMem = ::CreateCompatibleDC(hDCScreen);
+
+        if (hDCMem != NULL)
+        {
+            const auto hOldBitmap = ::SelectObject(hDCMem, hBitmap);
+
+            DrawDragImage(hDCMem, hItem, rc);
+
+            ::SelectObject(hDCMem, hOldBitmap);
+
+            ::DeleteDC(hDCMem);
+
+            {
+                hImageList = ::ImageList_Create(Width, Height, ILC_COLOR32 | ILC_MASK, 1, 0);
+
+                ::ImageList_Add(hImageList, hBitmap, nullptr);
+
+                ::DeleteObject(hBitmap);
+            }
+        }
+    }
+    else
+        hImageList = TreeView_CreateDragImage(_hTreeView, hItem); // Fall-back
+
+    ::ReleaseDC(NULL, hDCScreen);
+
+    return hImageList;
 }

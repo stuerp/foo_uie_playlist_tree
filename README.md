@@ -77,12 +77,12 @@ To create the component first build the x86 configuration and next the x64 confi
 
 ## Change Log
 
-v1.4.2.0, 2026-08-02
+v1.4.3.0, 2026-08-04
 
-* New: The images can be loaded from all [Windows Imaging Component](https://learn.microsoft.com/en-us/windows/win32/wic/-wic-about-windows-imaging-codec) (WIC) supported formats (ICO, PNG, GIF, TIFF, JPEG, WebP, etc...).
-* New: Context menu item to show the autoplaylist UI if available.
-* New: The left margin will adjust itself depending on folders being used or not.
-* Fixed: The size of some playlists was not calculated correctly.
+* Improved: Rendering of tree node drag & drop.
+  * Reduced flicker.
+  * Removed all artifacts caused by the insertion marker (hopefully).
+  * Since the switch to custom rendering the drag image was broken.
 
 ## Acknowledgements / Credits
 

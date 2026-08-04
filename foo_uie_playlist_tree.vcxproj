@@ -147,6 +147,7 @@
       <SubSystem>Windows</SubSystem>
       <AdditionalDependencies>$(SolutionDir)..\sdk\foobar2000\shared\shared-$(Platform).lib;$(SolutionDir)..\out\$(PlatformTarget)-$(Configuration)\columns_ui_sdk.lib</AdditionalDependencies>
       <EnableUAC>false</EnableUAC>
+      <AdditionalManifestDependencies>%(AdditionalManifestDependencies)</AdditionalManifestDependencies>
     </Link>
     <PostBuildEvent>
       <Command>pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(TargetName) $(TargetFileName) $(Platform) $(OutputPath)</Command>
@@ -181,6 +182,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>$(SolutionDir)..\sdk\foobar2000\shared\shared-$(Platform).lib;$(SolutionDir)..\out\$(PlatformTarget)-$(Configuration)\columns_ui_sdk.lib</AdditionalDependencies>
       <EnableUAC>false</EnableUAC>
+      <AdditionalManifestDependencies>%(AdditionalManifestDependencies)</AdditionalManifestDependencies>
     </Link>
     <PostBuildEvent>
       <Command>pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(TargetName) $(TargetFileName) $(Platform) $(OutputPath)</Command>
@@ -213,6 +215,7 @@
       <SubSystem>Windows</SubSystem>
       <AdditionalDependencies>$(SolutionDir)..\sdk\foobar2000\shared\shared-$(Platform).lib;$(SolutionDir)..\out\$(PlatformTarget)-$(Configuration)\columns_ui_sdk.lib</AdditionalDependencies>
       <EnableUAC>false</EnableUAC>
+      <AdditionalManifestDependencies>%(AdditionalManifestDependencies)</AdditionalManifestDependencies>
     </Link>
     <PostBuildEvent>
       <Command>pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(TargetName) $(TargetFileName) $(Platform) $(OutputPath)</Command>
@@ -245,6 +248,7 @@
       <SubSystem>Windows</SubSystem>
       <AdditionalDependencies>$(SolutionDir)..\sdk\foobar2000\shared\shared-$(Platform).lib;$(SolutionDir)..\out\$(PlatformTarget)-$(Configuration)\columns_ui_sdk.lib</AdditionalDependencies>
       <EnableUAC>false</EnableUAC>
+      <AdditionalManifestDependencies>%(AdditionalManifestDependencies)</AdditionalManifestDependencies>
     </Link>
     <PostBuildEvent>
       <Command>pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(TargetName) $(TargetFileName) $(Platform) $(OutputPath)</Command>
@@ -279,6 +283,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>$(SolutionDir)..\sdk\foobar2000\shared\shared-$(Platform).lib;$(SolutionDir)..\out\$(PlatformTarget)-$(Configuration)\columns_ui_sdk.lib</AdditionalDependencies>
       <EnableUAC>false</EnableUAC>
+      <AdditionalManifestDependencies>%(AdditionalManifestDependencies)</AdditionalManifestDependencies>
     </Link>
     <PostBuildEvent>
       <Command>pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(TargetName) $(TargetFileName) $(Platform) $(OutputPath)</Command>
@@ -313,6 +318,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>$(SolutionDir)..\sdk\foobar2000\shared\shared-$(Platform).lib;$(SolutionDir)..\out\$(PlatformTarget)-$(Configuration)\columns_ui_sdk.lib</AdditionalDependencies>
       <EnableUAC>false</EnableUAC>
+      <AdditionalManifestDependencies>%(AdditionalManifestDependencies)</AdditionalManifestDependencies>
     </Link>
     <PostBuildEvent>
       <Command>pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(TargetName) $(TargetFileName) $(Platform) $(OutputPath)</Command>
