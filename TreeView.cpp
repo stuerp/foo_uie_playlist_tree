@@ -1,5 +1,5 @@
 
-/** $VER: TreeView.cpp (2026.08.03) P. Stuer **/
+/** $VER: TreeView.cpp (2026.08.04) P. Stuer **/
 
 #include "pch.h"
 
@@ -423,6 +423,9 @@ void tree_view_t::DragMove(const POINT & point) noexcept
     ::ClientToScreen(::GetParent(_hTreeView), &pt);
     ::ScreenToClient(_hTreeView, &pt);
 
+    // Hide the drag image.
+    ::ImageList_DragShowNolock(FALSE);
+
     // Remove the insertion marker.
     TreeView_SetInsertMark(_hTreeView, NULL, _PlaceAfter);
 
@@ -435,11 +438,7 @@ void tree_view_t::DragMove(const POINT & point) noexcept
     {
         if ((hHitItem != _hDropTarget) || (_hDropTarget == NULL))
         {
-            ::ImageList_DragShowNolock(FALSE);
-
             TreeView_SelectDropTarget(_hTreeView, hHitItem);
-
-            ::ImageList_DragShowNolock(TRUE);
 
              _hDropTarget = hHitItem;
         }
@@ -462,6 +461,9 @@ void tree_view_t::DragMove(const POINT & point) noexcept
             }
         }
     }
+
+    // Show the drag image.
+    ::ImageList_DragShowNolock(TRUE);
 
     // Move the drag image.
     ::ImageList_DragMove(pt.x, pt.y);

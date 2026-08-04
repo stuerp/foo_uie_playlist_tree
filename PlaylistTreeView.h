@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsTreeView.h (2026.08.03) P. Stuer **/
+/** $VER: PlaylistsTreeView.h (2026.08.04) P. Stuer **/
 
 #pragma once
 
