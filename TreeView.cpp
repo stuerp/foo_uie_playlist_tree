@@ -376,28 +376,28 @@ void * tree_view_t::GetData(HTREEITEM hItem) const noexcept
 /// <summary>
 /// Begins a drag operation.
 /// </summary>
-void tree_view_t::BeginDrag(const NMTREEVIEWW * nmtv, const POINT & point) noexcept
+void tree_view_t::BeginDrag(const NMTREEVIEWW * nmtv) noexcept
 {
     TreeView_SetInsertMarkColor(_hTreeView, _Theme.GetWindowTextColor());
 
     const auto & hItem = nmtv->itemNew.hItem;
 
+    // Measure the drag image.
+    RECT rcDrag;
+
+    MeasureDragImage(hItem, rcDrag);
+
     // Create the drag image.
-    _hDragImageList = CreateDragImage(_hTreeView, hItem);
+    _hDragImageList = CreateDragImage(hItem, rcDrag);
 
     if (_hDragImageList == NULL)
         return;
-/*
-    POINT pt = point;
 
-    ::ScreenToClient(_hTreeView, &pt);
+    const int dx = nmtv->ptDrag.x - rcDrag.left;
+    const int dy = nmtv->ptDrag.y - rcDrag.top;
 
-    RECT rcItem;
-
-    TreeView_GetItemRect(_hTreeView, hItem, &rcItem, FALSE);
-*/
     // Begin the drag operation.
-    if (!::ImageList_BeginDrag(_hDragImageList, 0, 0, 0))//(rcItem.left - pt.x), -(pt.y - rcItem.top)))
+    if (!::ImageList_BeginDrag(_hDragImageList, 0, dx, dy))
         return;
 
     // Lock the tree view.
@@ -498,7 +498,7 @@ void tree_view_t::DragMove(const POINT & point) noexcept
 /// <summary>
 /// Ends the drag operation.
 /// </summary>
-void tree_view_t::EndDrag(bool cancel) noexcept
+void tree_view_t::EndDrag(bool isDragCancelled) noexcept
 {
     if (_hDragSource == NULL)
         return;
@@ -513,7 +513,7 @@ void tree_view_t::EndDrag(bool cancel) noexcept
     TreeView_SetInsertMark(_hTreeView, NULL, FALSE);
 
     // Move the item and its children. If hDropTarget is NULL the node gets added to the end of the tree.
-    if (((_hDropTarget == NULL) || ((_hDropTarget != NULL) && (_hDropTarget != _hDragSource) && AllowDrop(_DropZone))) && !cancel)
+    if (((_hDropTarget == NULL) || ((_hDropTarget != NULL) && (_hDropTarget != _hDragSource) && AllowDrop(_DropZone))) && !isDragCancelled)
     {
         MoveItem(_hDropTarget, _hDragSource, _DropZone);
 
@@ -543,15 +543,15 @@ void tree_view_t::EndDrag(bool cancel) noexcept
 /// <summary>
 /// Gets the drop zone that contains the specified point.
 /// </summary>
-tree_view_t::DropZone tree_view_t::GetDropZone(const RECT & r, const POINT & pt) const noexcept
+tree_view_t::DropZone tree_view_t::GetDropZone(const RECT & rc, const POINT & pt) const noexcept
 {
     // Divide the item into 3 zones, the middle zone being twice as high.
-    const float ZoneHeight = (float) (r.bottom - r.top) / 4.f;
+    const float ZoneHeight = (float) (rc.bottom - rc.top) / 4.f;
 
-    if ((float) pt.y < (float) r.top + ZoneHeight)
+    if ((float) pt.y < (float) rc.top + ZoneHeight)
         return DropZone::Top;
 
-    if ((float) pt.y >= (float) r.bottom - ZoneHeight)
+    if ((float) pt.y >= (float) rc.bottom - ZoneHeight)
         return DropZone::Bottom;
 
     return DropZone::Middle;
@@ -560,20 +560,16 @@ tree_view_t::DropZone tree_view_t::GetDropZone(const RECT & r, const POINT & pt)
 /// <summary>
 /// Creates a drag image.
 /// </summary>
-HIMAGELIST tree_view_t::CreateDragImage(HWND hTreeView, HTREEITEM hItem) const noexcept
+HIMAGELIST tree_view_t::CreateDragImage(HTREEITEM hItem, const RECT & rc) const noexcept
 {
     HIMAGELIST hImageList = NULL;
 
-    RECT rcItem;
+    const LONG Width  = rc.right  - rc.left;
+    const LONG Height = rc.bottom - rc.top;
 
-    TreeView_GetItemRect(_hTreeView, hItem, &rcItem, FALSE);
+    const HDC hDCScreen = ::GetDC(NULL);
 
-    const LONG Width  = rcItem.right - rcItem.left;
-    const LONG Height = rcItem.bottom - rcItem.top;
-
-    HDC hDCScreen = ::GetDC(NULL);
-
-    const BITMAPINFO bi =
+    const BITMAPINFO bmi =
     {
         .bmiHeader =
         {
@@ -581,35 +577,37 @@ HIMAGELIST tree_view_t::CreateDragImage(HWND hTreeView, HTREEITEM hItem) const n
             .biWidth       = Width,
             .biHeight      = -Height,
             .biPlanes      = 1,
-            .biBitCount    = 24,
+            .biBitCount    = 24, // Don't use 32bpp
             .biCompression = BI_RGB,
         }
     };
 
     void * Bits = nullptr;
 
-    const auto hBitmap = ::CreateDIBSection(hDCScreen, &bi, DIB_RGB_COLORS, &Bits, NULL, 0);
+    const auto hBitmap = ::CreateDIBSection(hDCScreen, &bmi, DIB_RGB_COLORS, &Bits, NULL, 0);
 
     if ((hBitmap != NULL) && (Bits != nullptr))
     {
-        HDC hDCMem = ::CreateCompatibleDC(hDCScreen);
+        const HDC hDCMem = ::CreateCompatibleDC(hDCScreen);
 
         if (hDCMem != NULL)
         {
             const auto hOldBitmap = ::SelectObject(hDCMem, hBitmap);
 
-            DrawDragImage(hDCMem, hItem);
+            DrawDragImage(hDCMem, hItem, rc);
 
             ::SelectObject(hDCMem, hOldBitmap);
 
             ::DeleteDC(hDCMem);
+
+            {
+                hImageList = ::ImageList_Create(Width, Height, ILC_COLOR32 | ILC_MASK, 1, 0);
+
+                ::ImageList_Add(hImageList, hBitmap, nullptr);
+
+                ::DeleteObject(hBitmap);
+            }
         }
-
-        hImageList = ::ImageList_Create(Width, Height, ILC_COLOR32 | ILC_MASK, 1, 1);
-
-        ::ImageList_Add(hImageList, hBitmap, nullptr);
-
-        ::DeleteObject(hBitmap);
     }
     else
         hImageList = TreeView_CreateDragImage(_hTreeView, hItem); // Fall-back

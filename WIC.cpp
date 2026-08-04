@@ -150,7 +150,7 @@ HRESULT wic_t_impl::Load(const std::wstring & filePath, UINT targetWidth, UINT t
     if (!SUCCEEDED(hr))
         return hr;
 
-    BITMAPINFO bi
+    const BITMAPINFO bmi
     {
         .bmiHeader =
         {
@@ -168,7 +168,7 @@ HRESULT wic_t_impl::Load(const std::wstring & filePath, UINT targetWidth, UINT t
 
     BYTE * Bits = nullptr;
 
-    const HBITMAP hDIB = ::CreateDIBSection(hDC, &bi, DIB_RGB_COLORS, (void **) &Bits, NULL, 0);
+    const HBITMAP hDIB = ::CreateDIBSection(hDC, &bmi, DIB_RGB_COLORS, (void **) &Bits, NULL, 0);
 
     ::ReleaseDC(NULL, hDC);
 

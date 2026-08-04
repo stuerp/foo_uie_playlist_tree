@@ -159,7 +159,8 @@ public:
 
     size_t GetChildCount(HTREEITEM hItem) const noexcept;
 
-    virtual void DrawDragImage(HDC hDC, HTREEITEM hItem) const noexcept { }
+    virtual void MeasureDragImage(HTREEITEM hItem, RECT & rc) const noexcept { }
+    virtual void DrawDragImage(HDC hDC, HTREEITEM hItem, const RECT & rc) const noexcept { }
 
     void Redraw() const noexcept;
     bool RedrawItem(HTREEITEM hItem) const noexcept;
@@ -179,7 +180,7 @@ public:
 
     void MoveItem(HTREEITEM hParentItem, HTREEITEM hChildItem, DropZone dropZone) const noexcept;
 
-    void BeginDrag(const NMTREEVIEWW * nmtv, const POINT & point) noexcept;
+    void BeginDrag(const NMTREEVIEWW * nmtv) noexcept;
     void DragMove(const POINT & point) noexcept;
     void EndDrag(bool cancel) noexcept;
 
@@ -269,8 +270,8 @@ protected:
     virtual bool AllowDrop(DropZone dropZone) noexcept { return false; };
 
 private:
-    DropZone GetDropZone(const RECT & r, const POINT & pt) const noexcept;
-    HIMAGELIST CreateDragImage(HWND hTreeView, HTREEITEM hItem) const noexcept;
+    DropZone GetDropZone(const RECT & rc, const POINT & pt) const noexcept;
+    HIMAGELIST CreateDragImage(HTREEITEM hItem, const RECT & rc) const noexcept;
 
 protected:
     HTREEITEM _hDragSource = NULL;

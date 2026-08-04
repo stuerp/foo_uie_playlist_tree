@@ -55,8 +55,16 @@ private:
     virtual void OnSize(UINT nType, CSize size) noexcept override;
 
     void OnPaint(CDCHandle dc) noexcept;
-    void OnCommand(UINT notifyCode, int id, CWindow wnd) noexcept;
     void OnSetFocus(CWindow wndOld) noexcept;
+
+    // Required for drag & drop.
+    void OnMouseMove(UINT flags, CPoint point) noexcept;
+    void OnMouseLeave() noexcept;
+    void OnLButtonUp(UINT flags, CPoint point) noexcept;
+    void OnCaptureChanged(CWindow wnd) noexcept;
+
+    void OnCommand(UINT notifyCode, int id, CWindow wnd) noexcept;
+    void OnEditChange(UINT notifyCode, int id, CWindow wnd);
 
     LRESULT OnCustomDraw(NMHDR * nmhd) noexcept;
     LRESULT OnRightClick(NMHDR * nmhd) noexcept;
@@ -73,18 +81,17 @@ private:
     LRESULT OnBeginLabelEdit(NMHDR * nmhd) noexcept;
     LRESULT OnEndLabelEdit(NMHDR * nmhd) noexcept;
 
-    void OnEditChange(UINT notifyCode, int id, CWindow wnd);
-
-    void OnMouseMove(UINT flags, CPoint point) noexcept;
-    void OnMouseLeave() noexcept;
-    void OnLButtonUp(UINT flags, CPoint point) noexcept;
-
     BEGIN_MSG_MAP_EX(playlist_uielement_t)
         MSG_WM_PAINT(OnPaint)
+
         MSG_WM_SETFOCUS(OnSetFocus)
 
-        COMMAND_HANDLER_EX(IDC_EDITBOX, EN_CHANGE, OnEditChange)
+        MSG_WM_MOUSEMOVE(OnMouseMove)
+        MSG_WM_MOUSELEAVE(OnMouseLeave)
+        MSG_WM_LBUTTONUP(OnLButtonUp)
+        MSG_WM_CAPTURECHANGED(OnCaptureChanged)
 
+        COMMAND_HANDLER_EX(IDC_EDITBOX, EN_CHANGE, OnEditChange)
         MSG_WM_COMMAND(OnCommand)
 
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, NM_CUSTOMDRAW, OnCustomDraw)
@@ -100,10 +107,6 @@ private:
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_BEGINLABELEDIT, OnBeginLabelEdit)
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_ENDLABELEDIT, OnEndLabelEdit)
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_BEGINDRAG, OnBeginDrag)
-
-        MSG_WM_MOUSEMOVE(OnMouseMove)
-        MSG_WM_MOUSELEAVE(OnMouseLeave)
-        MSG_WM_LBUTTONUP(OnLButtonUp)
 
 //      CHAIN_MSG_MAP(multi_select_tree_view_t)
         CHAIN_MSG_MAP(uielement_t)

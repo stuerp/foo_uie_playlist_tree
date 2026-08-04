@@ -242,12 +242,14 @@ bool playlist_tree_view_t::AllowDrop(DropZone dropZone) noexcept
 /// <summary>
 /// Draws a treeview item.
 /// </summary>
-void playlist_tree_view_t::DrawItem(HDC hDC, HTREEITEM hItem, int level, int scrollX, const RECT & rcItem, HIMAGELIST imageList, uint32_t imageSize, bool hasFolders, bool isHot, bool isFocused, bool isDragging) const noexcept
+void playlist_tree_view_t::DrawItem(HDC hDC, HTREEITEM hItem, int level, int scrollX, const RECT & rcItem, HIMAGELIST imageList, uint32_t imageWidth, bool hasFolders, bool isHot, bool isFocused, bool isDragImage) const noexcept
 {
+    const auto HasFocus = (::GetFocus() == Get());
+
     // Get information about the item.
     wchar_t Text[512] = { };
 
-    const TVITEMEX tvi
+    TVITEMEX tvi
     {
         .mask       = TVIF_TEXT | TVIF_IMAGE | TVIF_STATE | TVIF_CHILDREN,
         .hItem      = hItem,
@@ -258,33 +260,34 @@ void playlist_tree_view_t::DrawItem(HDC hDC, HTREEITEM hItem, int level, int scr
 
     TreeView_GetItem(Get(), &tvi);
 
-    const auto HasFocus      = (::GetFocus() == Get());
-    const auto HasChildren   = (tvi.cChildren != 0);
-    const auto IsSelected    = ((tvi.state & TVIS_SELECTED)    != 0) & !isDragging;
-    const auto IsHighlighted = ((tvi.state & TVIS_DROPHILITED) != 0) & !isDragging;
+    const auto IsSelected    = ((tvi.state & TVIS_SELECTED)    != 0) & !isDragImage;
+    const auto IsHighlighted = ((tvi.state & TVIS_DROPHILITED) != 0) & !isDragImage;
+
+    // Calculate the start position of the item content.
+    RECT rc = rcItem;
+
+    rc.left += (imageWidth * level) - scrollX;
+
+    // Calculate the image width including horizontal padding.
+    const LONG ImageWidth = (1 + (LONG) imageWidth + 1) + 3;
 
     // Get bounding rectangle of the item text.
     RECT rcText;
 
     TreeView_GetItemRect(Get(), hItem, &rcText, TRUE);
 
-    const LONG IconSize = rcText.bottom - rcText.top;
+    const LONG TextWidth  = rcText.right  - rcText.left;
+    const LONG TextHeight = rcText.bottom - rcText.top;
 
-    // Calculate the start position of the item content.
-    RECT rc = rcItem;
-
-    rc.left += (IconSize * level) - scrollX;
-
-    // Draw a chevron for a Folder item.
+    // Draw a chevron if folders are being used.
     if (hasFolders)
     {
-        if (HasChildren)
+        // Draw a chevron if the folder has children.
+        if (tvi.cChildren != 0)
         {
-            RECT rcChev = rc;
+            RECT rcChevron = { rc.left, rc.top, rcChevron.left + TextHeight, rc.bottom };
 
-            rcChev.right = rcChev.left + IconSize;
-
-            const auto hOldFont = (HFONT) ::SelectObject(hDC, _Theme.GetIconFont());
+            const auto hOldFont = ::SelectObject(hDC, _Theme.GetIconFont());
 
         //  const wchar_t * ChevronLeft  = L"\uE76B";
             const wchar_t * ChevronRight = L"\uE76C";
@@ -300,21 +303,22 @@ void playlist_tree_view_t::DrawItem(HDC hDC, HTREEITEM hItem, int level, int scr
 
             constexpr DWORD Flags = DT_CENTER | DT_VCENTER | DT_SINGLELINE | DT_NOPREFIX;
 
-            ::DrawThemeTextEx(_Theme.GetTextStyle(), hDC, 0, 0, (tvi.state & TVIS_EXPANDED) ? ChevronDown : ChevronRight, -1, Flags, &rcChev, &Options);
+            ::DrawThemeTextEx(_Theme.GetTextStyle(), hDC, 0, 0, (tvi.state & TVIS_EXPANDED) ? ChevronDown : ChevronRight, -1, Flags, &rcChevron, &Options);
 
             ::SelectObject(hDC, hOldFont);
         }
 
-        rc.left += IconSize;
+        rc.left += TextHeight;
     }
 
     // Draw the background.
+    if (!isDragImage)
     {
-        rc.right = rc.left + (1 + IconSize + 1) + 3 + (rcText.right - rcText.left);
+        rc.right = rc.left + ImageWidth + TextWidth;
 
         if (IsSelected)
         {
-            auto & hBrush = HasFocus ? _Theme.GetSelectionBrush() : _Theme.GetInactiveSelectionBrush();
+            const auto & hBrush = HasFocus ? _Theme.GetSelectionBrush() : _Theme.GetInactiveSelectionBrush();
 
             ::FillRect(hDC, &rc, hBrush);
 
@@ -335,7 +339,7 @@ void playlist_tree_view_t::DrawItem(HDC hDC, HTREEITEM hItem, int level, int scr
         else
         if (isHot || IsHighlighted)
         {
-            auto & hBrush = _Theme.GetHighlightBrush();
+            const auto & hBrush = _Theme.GetHighlightBrush();
 
             ::FillRect(hDC, &rc, hBrush);
         }
@@ -343,12 +347,12 @@ void playlist_tree_view_t::DrawItem(HDC hDC, HTREEITEM hItem, int level, int scr
 
     // Draw the image.
     {
-        const LONG dx = ((1 + IconSize + 1) - (LONG) imageSize) / 2;
-        const LONG dy = (     IconSize      - (LONG) imageSize) / 2;
+        const LONG dx = 1;
+        const LONG dy = (TextHeight - (LONG) imageWidth) / 2;
 
         ::ImageList_Draw(imageList, tvi.iImage, hDC, rc.left + dx, rc.top + dy, ILD_TRANSPARENT);
 
-        rc.left += (1 + IconSize + 1) + 3;
+        rc.left += ImageWidth;
     }
 
     // Draw the text.
@@ -362,7 +366,7 @@ void playlist_tree_view_t::DrawItem(HDC hDC, HTREEITEM hItem, int level, int scr
             .crText = Color
         };
 
-        rc.right = rc.left + (rcText.right - rcText.left);
+        rc.right = rc.left + TextWidth;
 
         const auto hOldFont = ::SelectObject(hDC, _Theme.GetPlaylistFont());
 
@@ -375,23 +379,37 @@ void playlist_tree_view_t::DrawItem(HDC hDC, HTREEITEM hItem, int level, int scr
 }
 
 /// <summary>
+/// Calculates the dimensions of a drag image.
+/// </summary>
+void playlist_tree_view_t::MeasureDragImage(HTREEITEM hItem, RECT & rect) const noexcept
+{
+    // Get the rectangle of the text part of the item.
+    TreeView_GetItemRect(Get(), hItem, &rect, TRUE);
+
+    // Add room for the icon.
+    HIMAGELIST hImageList = GetNormalImageList();
+
+    int IconWidth, IconHeight;
+
+    ::ImageList_GetIconSize(hImageList, &IconWidth, &IconHeight);
+
+    rect.left -= 1 + IconWidth + 1 + 3;
+}
+
+/// <summary>
 /// Draws a treeview item.
 /// </summary>
-void playlist_tree_view_t::DrawDragImage(HDC hDC, HTREEITEM hItem) const noexcept
+void playlist_tree_view_t::DrawDragImage(HDC hDC, HTREEITEM hItem, const RECT & rc) const noexcept
 {
-    RECT rcItem;
-
-    TreeView_GetItemRect(Get(), hItem, &rcItem, FALSE);
-
-    ::OffsetRect(&rcItem, -rcItem.left, -rcItem.top);
-
-    ::FillRect(hDC, &rcItem, _Theme.GetWindowBrush());
+    RECT rcItem = { 0, 0, rc.right - rc.left, rc.bottom - rc.top };
 
     HIMAGELIST hImageList = GetNormalImageList();
 
     int IconWidth, IconHeight;
 
     ::ImageList_GetIconSize(hImageList, &IconWidth, &IconHeight);
+
+    ::FillRect(hDC, &rcItem, _Theme.GetWindowBrush());
 
     DrawItem(hDC, hItem, 0, 0, rcItem, hImageList, (uint32_t) IconWidth, false, false, false, true);
 }

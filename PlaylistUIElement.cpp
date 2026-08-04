@@ -246,6 +246,14 @@ void playlist_uielement_t::OnPaint(CDCHandle dc) noexcept
 }
 
 /// <summary>
+/// Handles the WM_SETFOCUS message.
+/// </summary>
+void playlist_uielement_t::OnSetFocus(CWindow wndOld) noexcept
+{
+    _TreeView.SetFocus(); // Forward the focus.
+}
+
+/// <summary>
 /// Handles the WM_COMMAND message.
 /// </summary>
 void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexcept
@@ -517,14 +525,6 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
 }
 
 /// <summary>
-/// Handles the WM_SETFOCUS message.
-/// </summary>
-void playlist_uielement_t::OnSetFocus(CWindow wndOld) noexcept
-{
-    _TreeView.SetFocus(); // Forward the focus.
-}
-
-/// <summary>
 /// Handles the EN_CHANGE notification.
 /// </summary>
 void playlist_uielement_t::OnEditChange(UINT notifyCode, int id, CWindow wnd)
@@ -545,6 +545,8 @@ void playlist_uielement_t::OnEditChange(UINT notifyCode, int id, CWindow wnd)
 void playlist_uielement_t::OnMouseMove(UINT flags, CPoint point) noexcept
 {
     _TreeView.DragMove(point);
+
+    SetMsgHandled(TRUE);
 }
 
 /// <summary>
@@ -553,6 +555,8 @@ void playlist_uielement_t::OnMouseMove(UINT flags, CPoint point) noexcept
 void playlist_uielement_t::OnMouseLeave() noexcept
 {
     _TreeView.RemoveInsertMarker();
+
+    SetMsgHandled(TRUE);
 }
 
 /// <summary>
@@ -561,355 +565,19 @@ void playlist_uielement_t::OnMouseLeave() noexcept
 void playlist_uielement_t::OnLButtonUp(UINT flags, CPoint point) noexcept
 {
     _TreeView.EndDrag(false);
-}
 
-#pragma region playlist_callback
-
-/// <summary>
-/// 
-/// </summary>
-void playlist_uielement_t::on_items_added(size_t playlistIndex, size_t start, const pfc::list_base_const_t<metadb_handle_ptr> & handles, const bit_array & selection) noexcept
-{
-    const auto Id = _PlaylistManager->playlist_get_guid(playlistIndex);
-
-    _TreeView.RefreshItem(Id);
+    SetMsgHandled(TRUE);
 }
 
 /// <summary>
-/// 
+/// Handles the WM_LBUTTONUP message.
 /// </summary>
-void playlist_uielement_t::on_items_reordered(size_t playlistIndex, const size_t * order, size_t count) noexcept
+void playlist_uielement_t::OnCaptureChanged(CWindow wnd) noexcept
 {
+    _TreeView.EndDrag(true);
+
+    SetMsgHandled(TRUE);
 }
-
-/// <summary>
-/// 
-/// </summary>
-void playlist_uielement_t::on_items_removing(size_t playlistIndex, const bit_array & mask, size_t oldCount, size_t newCount) noexcept
-{
-}
-
-/// <summary>
-/// 
-/// </summary>
-void playlist_uielement_t::on_items_removed(size_t playlistIndex, const bit_array & mask, size_t oldCount, size_t newCount) noexcept
-{
-    const auto Id = _PlaylistManager->playlist_get_guid(playlistIndex);
-
-    _TreeView.RefreshItem(Id);
-}
-
-/// <summary>
-/// 
-/// </summary>
-void playlist_uielement_t::on_items_selection_change(size_t playlistIndex, const bit_array & affected, const bit_array & state) noexcept
-{
-}
-
-/// <summary>
-/// 
-/// </summary>
-void playlist_uielement_t::on_item_focus_change(size_t playlistIndex, size_t from, size_t to) noexcept
-{
-}
-    
-/// <summary>
-/// 
-/// </summary>
-void playlist_uielement_t::on_items_modified(size_t playlistIndex, const bit_array & mask) noexcept
-{
-}
-
-/// <summary>
-/// 
-/// </summary>
-void playlist_uielement_t::on_items_modified_fromplayback(size_t playlistIndex, const bit_array & mask, play_control::t_display_level level) noexcept
-{
-}
-
-/// <summary>
-/// 
-/// </summary>
-void playlist_uielement_t::on_items_replaced(size_t playlistIndex, const bit_array & mask, const pfc::list_base_const_t<t_on_items_replaced_entry> & data) noexcept
-{
-}
-
-/// <summary>
-/// 
-/// </summary>
-void playlist_uielement_t::on_item_ensure_visible(size_t playlistIndex, size_t itemIndex) noexcept
-{
-}
-
-/// <summary>
-/// Handles the activation of a new playlist.
-/// </summary>
-void playlist_uielement_t::on_playlist_activate(size_t oldIndex, size_t newIndex) noexcept
-{
-    SelectPlaylist(newIndex);
-}
-
-/// <summary>
-/// Handles the creation of a new playlist.
-/// </summary>
-void playlist_uielement_t::on_playlist_created(size_t index, const char * name, size_t size) noexcept
-{
-    if ((index == SIZE_MAX) || (name == nullptr) || (size == 0))
-        return;
-
-    const auto Id = _PlaylistManager->playlist_get_guid(index);
-
-    Log.AtDebug().Write(STR_COMPONENT_BASENAME ": Playlist %s was created as \"%s\".", msc::GUIDToUTF8(Id).c_str(), name);
-
-    // Get the data of the item we were hovering over, if any.
-    const auto Parent = (node_t *) _TreeView.GetData(_hHighlightedtem);
-
-    // Add the item.
-    auto ParentId = GUID_NULL;
-    auto InsertAfterId = GUID_NULL;
-
-    if (Parent != nullptr)
-    {
-        if (Parent->IsFolder)
-            ParentId = Parent->Id;
-        else
-            InsertAfterId = Parent->Id;
-    }
-
-    _TreeView.AddItem(ParentId, InsertAfterId, Id, name, false, false);
-
-    // Activate the newly created playlist.
-    _PlaylistManager->set_active_playlist(index);
-
-    _hHighlightedtem = NULL;
-
-    ResetAutoComplete();
-}
-
-/// <summary>
-/// Handles playlists having been reordered.
-/// </summary>
-void playlist_uielement_t::on_playlists_reorder(const size_t * order, size_t count) noexcept
-{
-}
-
-/// <summary>
-/// Handles playlists that are being removed.
-/// </summary>
-void playlist_uielement_t::on_playlists_removing(const bit_array & mask, size_t oldCount, size_t newCount) noexcept
-{
-    Log.AtDebug().Write(STR_COMPONENT_BASENAME ": %d playlist(s) are being removed.", oldCount - newCount);
-
-    if (_IgnoreNotifications)
-        return;
-
-    for (size_t Index = mask.find_first(true, 0, oldCount); Index < oldCount; Index = mask.find_next(true, Index, oldCount))
-    {
-        const auto Id = _PlaylistManager->playlist_get_guid(Index);
-
-        Log.AtDebug().Write(STR_COMPONENT_BASENAME ": Playlist %s is being removed.", msc::GUIDToUTF8(Id).c_str());
-
-        if (!_TreeView.RemoveItem(Id))
-            Log.AtError().Write(STR_COMPONENT_BASENAME " failed to remove item %s.", msc::GUIDToUTF8(Id).c_str());
-    }
-}
-
-/// <summary>
-/// Handles removed playlists.
-/// </summary>
-void playlist_uielement_t::on_playlists_removed(const bit_array & mask, size_t oldCount, size_t newCount) noexcept
-{
-    Log.AtDebug().Write(STR_COMPONENT_BASENAME ": %d playlist(s) were removed.", oldCount - newCount);
-
-    ResetAutoComplete();
-}
-
-/// <summary>
-/// Handles a renamed playlist.
-/// </summary>
-void playlist_uielement_t::on_playlist_renamed(size_t index, const char * newName, size_t newSize) noexcept
-{
-    if ((index == SIZE_MAX) || (newName == nullptr) || (newSize == 0))
-        return;
-
-    const auto Id = _PlaylistManager->playlist_get_guid(index);
-
-    Log.AtDebug().Write(STR_COMPONENT_BASENAME ": Playlist %s was renamed to \"%s\".", msc::GUIDToUTF8(Id).c_str(), newName);
-
-    _TreeView.SetName(Id, newName);
-
-    ResetAutoComplete();
-}
-
-/// <summary>
-/// 
-/// </summary>
-void playlist_uielement_t::on_default_format_changed() noexcept
-{
-}
-
-/// <summary>
-/// 
-/// </summary>
-void playlist_uielement_t::on_playback_order_changed(size_t p_new_index) noexcept
-{
-}
-
-/// <summary>
-/// 
-/// </summary>
-void playlist_uielement_t::on_playlist_locked(size_t index, bool isLocked) noexcept
-{
-    if (index == SIZE_MAX)
-        return;
-
-    if (isLocked)
-    {
-        pfc::string LockName;
-
-        if (!_PlaylistManager->playlist_lock_query_name(index, LockName))
-            LockName = "<Unknown>";
-
-        Log.AtDebug().Write(STR_COMPONENT_BASENAME ": Playlist %d was locked with lock \"%s\".", index, LockName.c_str());
-    }
-    else
-        Log.AtDebug().Write(STR_COMPONENT_BASENAME ": Playlist %d was unlocked.", index);
-
-    const auto Id = _PlaylistManager->playlist_get_guid(index);
-
-    _TreeView.RefreshItem(Id);
-}
-
-#pragma endregion
-
-#pragma region play_callback
-
-/// <summary>
-/// Playback advanced to new track.
-/// </summary>
-void playlist_uielement_t::on_playback_new_track(metadb_handle_ptr track)
-{
-    _IsPlaying = true;
-
-    _TreeView.RefreshAllItems();
-}
-
-/// <summary>
-/// Playback stopped.
-/// </summary>
-void playlist_uielement_t::on_playback_stop(play_control::t_stop_reason reason)
-{
-    _IsPlaying = false;
-
-    _TreeView.RefreshAllItems();
-}
-
-/// <summary>
-/// Playback paused/resumed.
-/// </summary>
-void playlist_uielement_t::on_playback_pause(bool isPaused)
-{
-    _IsPlaying = !isPaused;
-
-    _TreeView.RefreshAllItems();
-}
-
-#pragma endregion
-
-#pragma region folder_manager_callback_t
-
-/// <summary>
-/// Called after a folder has been created.
-/// </summary>
-void playlist_uielement_t::OnFolderCreated(const GUID & id, const std::string & name) noexcept
-{
-    if (_IgnoreNotifications || (id == GUID_NULL) || name.empty())
-        return;
-
-    Log.AtDebug().Write(STR_COMPONENT_BASENAME " is adding folder %s to the tree.", msc::GUIDToUTF8(id).c_str());
-
-    // Get the node we were hovering over, if any.
-    const auto Parent = (node_t *) _TreeView.GetData(_hHighlightedtem);
-
-    // Add the item.
-    auto ParentId = GUID_NULL;
-    auto InsertAfterId = GUID_NULL;
-
-    if (Parent != nullptr)
-    {
-        if (Parent->IsFolder)
-            ParentId = Parent->Id;
-        else
-            InsertAfterId = Parent->Id;
-    }
-
-    _TreeView.AddItem(ParentId, InsertAfterId, id, name, true, false);
-
-    _TreeView.SelectItem(id);
-
-    _hHighlightedtem = NULL;
-
-    ResetAutoComplete();
-
-    // Redraw the control after adding the first folder because now we need to draw chevrons.
-    {
-        uint32_t Count;
-
-        _FolderManager->GetFolderCount(Count);
-
-        if (Count == 1)
-            ::InvalidateRect(_TreeView.Get(), NULL, TRUE);
-    }
-};
-
-/// <summary>
-/// Called when a folder is about to be removed.
-/// </summary>
-void playlist_uielement_t::OnFolderRemoving(const GUID & id) noexcept
-{
-    Log.AtDebug().Write(STR_COMPONENT_BASENAME " is removing folder %s from the tree.", msc::GUIDToUTF8(id).c_str());
-
-    if (_IgnoreNotifications)
-        return;
-};
-
-/// <summary>
-/// Called when a folder is has been removed.
-/// </summary>
-void playlist_uielement_t::OnFolderRemoved(const GUID & id) noexcept
-{
-    Log.AtDebug().Write(STR_COMPONENT_BASENAME " removed folder %s from the tree.", msc::GUIDToUTF8(id).c_str());
-
-    ResetAutoComplete();
-
-    // Redraw the control after deleting the last folder because now we don't need to draw chevrons.
-    {
-        uint32_t Count;
-
-        _FolderManager->GetFolderCount(Count);
-
-        if (Count == 0)
-            ::InvalidateRect(_TreeView.Get(), NULL, TRUE);
-    }
-
-    if (_IgnoreNotifications)
-        return;
-};
-
-/// <summary>
-/// Called after a folder has been renamed.
-/// </summary>
-void playlist_uielement_t::OnFolderRenamed(const GUID & id, const std::string & oldName, const std::string & newName) noexcept
-{
-    Log.AtDebug().Write(STR_COMPONENT_BASENAME " is renamed folder %s from \"%s\" to \"%s\".", msc::GUIDToUTF8(id).c_str(), oldName.c_str(), newName.c_str());
-
-    ResetAutoComplete();
-
-    if (_IgnoreNotifications)
-        return;
-};
-
-#pragma endregion
 
 /// <summary>
 /// Handles the NM_CUSTOMDRAW notification.
@@ -1485,16 +1153,361 @@ LRESULT playlist_uielement_t::OnBeginDrag(NMHDR * nmhd) noexcept
 {
     const auto nmtv = (NMTREEVIEWW *) nmhd;
 
-    const DWORD Position = ::GetMessagePos();
-
-    const POINT pt = { GET_X_LPARAM(Position), GET_Y_LPARAM(Position) };
-
-    _TreeView.BeginDrag(nmtv, pt);
+    _TreeView.BeginDrag(nmtv);
 
     SetMsgHandled(FALSE);
 
     return FALSE;
 }
+
+#pragma region playlist_callback
+
+/// <summary>
+/// 
+/// </summary>
+void playlist_uielement_t::on_items_added(size_t playlistIndex, size_t start, const pfc::list_base_const_t<metadb_handle_ptr> & handles, const bit_array & selection) noexcept
+{
+    const auto Id = _PlaylistManager->playlist_get_guid(playlistIndex);
+
+    _TreeView.RefreshItem(Id);
+}
+
+/// <summary>
+/// 
+/// </summary>
+void playlist_uielement_t::on_items_reordered(size_t playlistIndex, const size_t * order, size_t count) noexcept
+{
+}
+
+/// <summary>
+/// 
+/// </summary>
+void playlist_uielement_t::on_items_removing(size_t playlistIndex, const bit_array & mask, size_t oldCount, size_t newCount) noexcept
+{
+}
+
+/// <summary>
+/// 
+/// </summary>
+void playlist_uielement_t::on_items_removed(size_t playlistIndex, const bit_array & mask, size_t oldCount, size_t newCount) noexcept
+{
+    const auto Id = _PlaylistManager->playlist_get_guid(playlistIndex);
+
+    _TreeView.RefreshItem(Id);
+}
+
+/// <summary>
+/// 
+/// </summary>
+void playlist_uielement_t::on_items_selection_change(size_t playlistIndex, const bit_array & affected, const bit_array & state) noexcept
+{
+}
+
+/// <summary>
+/// 
+/// </summary>
+void playlist_uielement_t::on_item_focus_change(size_t playlistIndex, size_t from, size_t to) noexcept
+{
+}
+    
+/// <summary>
+/// 
+/// </summary>
+void playlist_uielement_t::on_items_modified(size_t playlistIndex, const bit_array & mask) noexcept
+{
+}
+
+/// <summary>
+/// 
+/// </summary>
+void playlist_uielement_t::on_items_modified_fromplayback(size_t playlistIndex, const bit_array & mask, play_control::t_display_level level) noexcept
+{
+}
+
+/// <summary>
+/// 
+/// </summary>
+void playlist_uielement_t::on_items_replaced(size_t playlistIndex, const bit_array & mask, const pfc::list_base_const_t<t_on_items_replaced_entry> & data) noexcept
+{
+}
+
+/// <summary>
+/// 
+/// </summary>
+void playlist_uielement_t::on_item_ensure_visible(size_t playlistIndex, size_t itemIndex) noexcept
+{
+}
+
+/// <summary>
+/// Handles the activation of a new playlist.
+/// </summary>
+void playlist_uielement_t::on_playlist_activate(size_t oldIndex, size_t newIndex) noexcept
+{
+    SelectPlaylist(newIndex);
+}
+
+/// <summary>
+/// Handles the creation of a new playlist.
+/// </summary>
+void playlist_uielement_t::on_playlist_created(size_t index, const char * name, size_t size) noexcept
+{
+    if ((index == SIZE_MAX) || (name == nullptr) || (size == 0))
+        return;
+
+    const auto Id = _PlaylistManager->playlist_get_guid(index);
+
+    Log.AtDebug().Write(STR_COMPONENT_BASENAME ": Playlist %s was created as \"%s\".", msc::GUIDToUTF8(Id).c_str(), name);
+
+    // Get the data of the item we were hovering over, if any.
+    const auto Parent = (node_t *) _TreeView.GetData(_hHighlightedtem);
+
+    // Add the item.
+    auto ParentId = GUID_NULL;
+    auto InsertAfterId = GUID_NULL;
+
+    if (Parent != nullptr)
+    {
+        if (Parent->IsFolder)
+            ParentId = Parent->Id;
+        else
+            InsertAfterId = Parent->Id;
+    }
+
+    _TreeView.AddItem(ParentId, InsertAfterId, Id, name, false, false);
+
+    // Activate the newly created playlist.
+    _PlaylistManager->set_active_playlist(index);
+
+    _hHighlightedtem = NULL;
+
+    ResetAutoComplete();
+}
+
+/// <summary>
+/// Handles playlists having been reordered.
+/// </summary>
+void playlist_uielement_t::on_playlists_reorder(const size_t * order, size_t count) noexcept
+{
+}
+
+/// <summary>
+/// Handles playlists that are being removed.
+/// </summary>
+void playlist_uielement_t::on_playlists_removing(const bit_array & mask, size_t oldCount, size_t newCount) noexcept
+{
+    Log.AtDebug().Write(STR_COMPONENT_BASENAME ": %d playlist(s) are being removed.", oldCount - newCount);
+
+    if (_IgnoreNotifications)
+        return;
+
+    for (size_t Index = mask.find_first(true, 0, oldCount); Index < oldCount; Index = mask.find_next(true, Index, oldCount))
+    {
+        const auto Id = _PlaylistManager->playlist_get_guid(Index);
+
+        Log.AtDebug().Write(STR_COMPONENT_BASENAME ": Playlist %s is being removed.", msc::GUIDToUTF8(Id).c_str());
+
+        if (!_TreeView.RemoveItem(Id))
+            Log.AtError().Write(STR_COMPONENT_BASENAME " failed to remove item %s.", msc::GUIDToUTF8(Id).c_str());
+    }
+}
+
+/// <summary>
+/// Handles removed playlists.
+/// </summary>
+void playlist_uielement_t::on_playlists_removed(const bit_array & mask, size_t oldCount, size_t newCount) noexcept
+{
+    Log.AtDebug().Write(STR_COMPONENT_BASENAME ": %d playlist(s) were removed.", oldCount - newCount);
+
+    ResetAutoComplete();
+}
+
+/// <summary>
+/// Handles a renamed playlist.
+/// </summary>
+void playlist_uielement_t::on_playlist_renamed(size_t index, const char * newName, size_t newSize) noexcept
+{
+    if ((index == SIZE_MAX) || (newName == nullptr) || (newSize == 0))
+        return;
+
+    const auto Id = _PlaylistManager->playlist_get_guid(index);
+
+    Log.AtDebug().Write(STR_COMPONENT_BASENAME ": Playlist %s was renamed to \"%s\".", msc::GUIDToUTF8(Id).c_str(), newName);
+
+    _TreeView.SetName(Id, newName);
+
+    ResetAutoComplete();
+}
+
+/// <summary>
+/// 
+/// </summary>
+void playlist_uielement_t::on_default_format_changed() noexcept
+{
+}
+
+/// <summary>
+/// 
+/// </summary>
+void playlist_uielement_t::on_playback_order_changed(size_t p_new_index) noexcept
+{
+}
+
+/// <summary>
+/// 
+/// </summary>
+void playlist_uielement_t::on_playlist_locked(size_t index, bool isLocked) noexcept
+{
+    if (index == SIZE_MAX)
+        return;
+
+    if (isLocked)
+    {
+        pfc::string LockName;
+
+        if (!_PlaylistManager->playlist_lock_query_name(index, LockName))
+            LockName = "<Unknown>";
+
+        Log.AtDebug().Write(STR_COMPONENT_BASENAME ": Playlist %d was locked with lock \"%s\".", index, LockName.c_str());
+    }
+    else
+        Log.AtDebug().Write(STR_COMPONENT_BASENAME ": Playlist %d was unlocked.", index);
+
+    const auto Id = _PlaylistManager->playlist_get_guid(index);
+
+    _TreeView.RefreshItem(Id);
+}
+
+#pragma endregion
+
+#pragma region play_callback
+
+/// <summary>
+/// Playback advanced to new track.
+/// </summary>
+void playlist_uielement_t::on_playback_new_track(metadb_handle_ptr track)
+{
+    _IsPlaying = true;
+
+    _TreeView.RefreshAllItems();
+}
+
+/// <summary>
+/// Playback stopped.
+/// </summary>
+void playlist_uielement_t::on_playback_stop(play_control::t_stop_reason reason)
+{
+    _IsPlaying = false;
+
+    _TreeView.RefreshAllItems();
+}
+
+/// <summary>
+/// Playback paused/resumed.
+/// </summary>
+void playlist_uielement_t::on_playback_pause(bool isPaused)
+{
+    _IsPlaying = !isPaused;
+
+    _TreeView.RefreshAllItems();
+}
+
+#pragma endregion
+
+#pragma region folder_manager_callback_t
+
+/// <summary>
+/// Called after a folder has been created.
+/// </summary>
+void playlist_uielement_t::OnFolderCreated(const GUID & id, const std::string & name) noexcept
+{
+    if (_IgnoreNotifications || (id == GUID_NULL) || name.empty())
+        return;
+
+    Log.AtDebug().Write(STR_COMPONENT_BASENAME " is adding folder %s to the tree.", msc::GUIDToUTF8(id).c_str());
+
+    // Get the node we were hovering over, if any.
+    const auto Parent = (node_t *) _TreeView.GetData(_hHighlightedtem);
+
+    // Add the item.
+    auto ParentId = GUID_NULL;
+    auto InsertAfterId = GUID_NULL;
+
+    if (Parent != nullptr)
+    {
+        if (Parent->IsFolder)
+            ParentId = Parent->Id;
+        else
+            InsertAfterId = Parent->Id;
+    }
+
+    _TreeView.AddItem(ParentId, InsertAfterId, id, name, true, false);
+
+    _TreeView.SelectItem(id);
+
+    _hHighlightedtem = NULL;
+
+    ResetAutoComplete();
+
+    // Redraw the control after adding the first folder because now we need to draw chevrons.
+    {
+        uint32_t Count;
+
+        _FolderManager->GetFolderCount(Count);
+
+        if (Count == 1)
+            ::InvalidateRect(_TreeView.Get(), NULL, TRUE);
+    }
+};
+
+/// <summary>
+/// Called when a folder is about to be removed.
+/// </summary>
+void playlist_uielement_t::OnFolderRemoving(const GUID & id) noexcept
+{
+    Log.AtDebug().Write(STR_COMPONENT_BASENAME " is removing folder %s from the tree.", msc::GUIDToUTF8(id).c_str());
+
+    if (_IgnoreNotifications)
+        return;
+};
+
+/// <summary>
+/// Called when a folder is has been removed.
+/// </summary>
+void playlist_uielement_t::OnFolderRemoved(const GUID & id) noexcept
+{
+    Log.AtDebug().Write(STR_COMPONENT_BASENAME " removed folder %s from the tree.", msc::GUIDToUTF8(id).c_str());
+
+    ResetAutoComplete();
+
+    // Redraw the control after deleting the last folder because now we don't need to draw chevrons.
+    {
+        uint32_t Count;
+
+        _FolderManager->GetFolderCount(Count);
+
+        if (Count == 0)
+            ::InvalidateRect(_TreeView.Get(), NULL, TRUE);
+    }
+
+    if (_IgnoreNotifications)
+        return;
+};
+
+/// <summary>
+/// Called after a folder has been renamed.
+/// </summary>
+void playlist_uielement_t::OnFolderRenamed(const GUID & id, const std::string & oldName, const std::string & newName) noexcept
+{
+    Log.AtDebug().Write(STR_COMPONENT_BASENAME " is renamed folder %s from \"%s\" to \"%s\".", msc::GUIDToUTF8(id).c_str(), oldName.c_str(), newName.c_str());
+
+    ResetAutoComplete();
+
+    if (_IgnoreNotifications)
+        return;
+};
+
+#pragma endregion
+
 
 /// <summary>
 /// Deserializes this instance from a JSON object.
