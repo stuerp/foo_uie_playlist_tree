@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.cpp (2026.08.03) P. Stuer **/
+/** $VER: PlaylistsUIElement.cpp (2026.08.10) P. Stuer **/
 
 #include "pch.h"
 
@@ -45,13 +45,8 @@ playlist_uielement_t::~playlist_uielement_t()
 /// <summary>
 /// Creates the window.
 /// </summary>
-LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
+LRESULT playlist_uielement_t::OnCreate(CREATESTRUCTW * cs) noexcept
 {
-    auto Result = __super::OnCreate(cs);
-
-    if (Result != 0)
-        return Result;
-
    _UIElementTracker.Add(this);
 
     // Create the tree view.
@@ -71,7 +66,7 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
 
     // Create the edit box.
     {
-        constexpr DWORD Styles = WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_TABSTOP | ES_LEFT | ES_AUTOHSCROLL;
+        constexpr DWORD Styles   = WS_CHILD | WS_CLIPCHILDREN | WS_TABSTOP | ES_LEFT | ES_AUTOHSCROLL;
         constexpr DWORD ExStyles = WS_EX_NOPARENTNOTIFY | WS_EX_CLIENTEDGE;
 
         if (!_EditBox.Create(m_hWnd, NULL, nullptr, Styles, ExStyles, IDC_EDITBOX, nullptr))
@@ -116,7 +111,7 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
                 Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to install auto complete on edit box: 0x%08X.", hr);
         }
 
-        _EditBox.ShowWindow(_State._IsQuickSearchVisible ? SW_SHOW : SW_HIDE);
+        _EditBox.ShowWindow(_State._UseQuickSearch ? SW_SHOW : SW_HIDE);
     }
 
     // Create the drop target.
@@ -153,6 +148,9 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
 
     ::SetScrollInfo(_TreeView.Get(), SB_HORZ, &si, TRUE);
 
+    GetColors();
+    GetFonts();
+
     _DarkMode.AddControls(m_hWnd);
 
     return 0;
@@ -181,17 +179,20 @@ void playlist_uielement_t::OnDestroy() noexcept
         }
     }
 
-    // Destroy the string enumerator.
-    if (_StringEnumerator != nullptr)
-    {
-        delete _StringEnumerator;
-
-        _StringEnumerator = nullptr;
-    }
-
     // Destroy the edit box.
     if (_EditBox.IsWindow())
+    {
+        // Important: Destroy the edit box first because there's no way to remove auto-complete from it.
         _EditBox.DestroyWindow();
+
+        // Destroy the string enumerator.
+        if (_StringEnumerator != nullptr)
+        {
+            delete _StringEnumerator;
+
+            _StringEnumerator = nullptr;
+        }
+    }
 
     // Destroy the tree view.
     if (_TreeView.Get() != NULL)
@@ -207,8 +208,6 @@ void playlist_uielement_t::OnDestroy() noexcept
 
     _UIElementTracker.Remove(this);
 
-    __super::OnDestroy();
-
     SetMsgHandled(TRUE);
 }
 
@@ -217,11 +216,9 @@ void playlist_uielement_t::OnDestroy() noexcept
 /// </summary>
 void playlist_uielement_t::OnSize(UINT type, CSize size) noexcept
 {
-    uielement_t::OnSize(type, size);
-
     LONG Height = 0;
 
-    if (_State._IsQuickSearchVisible)
+    if (_State._UseQuickSearch)
     {
         constexpr LONG Gap = 4;
 
@@ -238,8 +235,22 @@ void playlist_uielement_t::OnSize(UINT type, CSize size) noexcept
 /// <summary>
 /// Handles the WM_PAINT message.
 /// </summary>
-void playlist_uielement_t::OnPaint(CDCHandle dc) noexcept
+void playlist_uielement_t::OnPaint(CDCHandle) noexcept
 {
+    Log.AtDebug().Write(STR_COMPONENT_BASENAME "::" __FUNCTION__ );
+
+    PAINTSTRUCT ps;
+
+    const auto hDC = ::BeginPaint(m_hWnd, &ps);
+
+    CBrush Brush;
+
+    Brush.CreateSolidBrush(fb2k::isDarkMode() ? 0X202020 :  0xF0F0F0);
+
+    ::FillRect(hDC, &ps.rcPaint, Brush);
+
+    ::EndPaint(m_hWnd, &ps);
+
     _TreeView.Redraw();
 
     SetMsgHandled(FALSE);
@@ -1508,7 +1519,6 @@ void playlist_uielement_t::OnFolderRenamed(const GUID & id, const std::string & 
 
 #pragma endregion
 
-
 /// <summary>
 /// Deserializes this instance from a JSON object.
 /// </summary>
@@ -1681,7 +1691,7 @@ void playlist_uielement_t::Refresh() noexcept
 
     // Quick Search visible or not?
     {
-        _EditBox.ShowWindow(_State._IsQuickSearchVisible ? SW_SHOW : SW_HIDE);
+        _EditBox.ShowWindow(_State._UseQuickSearch ? SW_SHOW : SW_HIDE);
 
         RECT rc;
 
@@ -1692,14 +1702,32 @@ void playlist_uielement_t::Refresh() noexcept
 }
 
 /// <summary>
-/// Handles a change of the fonts.
+/// Handles a change of the user interface colors.
+/// </summary>
+void playlist_uielement_t::OnColorsChanged() noexcept
+{
+    __super::OnColorsChanged();
+
+    if (_TreeView.Get() != NULL)
+        _TreeView.SetColors(_Theme.GetWindowColor(), _Theme.GetWindowTextColor());
+
+    ::RedrawWindow(m_hWnd, nullptr, NULL, RDW_INVALIDATE | RDW_ALLCHILDREN);
+}
+
+/// <summary>
+/// Handles a change of the user interface fonts.
 /// </summary>
 void playlist_uielement_t::OnFontsChanged() noexcept
 {
     __super::OnFontsChanged();
 
-    _TreeView.SetFont(_Theme.GetPlaylistFont());
-    _EditBox.SetFont(_Theme.GetPlaylistFont());
+    if (_TreeView.Get() != NULL)
+        _TreeView.SetFont(_Theme.GetPlaylistFont());
+
+    if (_EditBox.IsWindow())
+        _EditBox.SetFont(_Theme.GetPlaylistFont());
+
+    ::RedrawWindow(m_hWnd, nullptr, NULL, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
 }
 
 /// <summary>

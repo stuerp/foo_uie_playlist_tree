@@ -1,6 +1,13 @@
 
 # foo_uie_playlist_tree History
 
+v1.4.3.0, 2026-08-04
+
+* Improved: Rendering of tree node drag & drop.
+  * Reduced flicker.
+  * Removed all artifacts caused by the insertion marker (hopefully).
+  * Since the switch to custom rendering the drag image was broken.
+
 v1.4.2.0, 2026-08-02
 
 * New: The images can be loaded from all [Windows Imaging Component](https://learn.microsoft.com/en-us/windows/win32/wic/-wic-about-windows-imaging-codec) (WIC) supported formats (ICO, PNG, GIF, TIFF, JPEG, WebP, etc...).

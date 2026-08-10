@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.h (2026.08.02) P. Stuer **/
+/** $VER: PlaylistsUIElement.h (2026.08.10) P. Stuer **/
 
 #pragma once
 
@@ -16,8 +16,6 @@
 #include "Tracker.h"
 #include "TreeViewSubclass.h"
 #include "UIElement.h"
-
-#include <sdk/playlist.h>
 
 /// <summary>
 /// Implements the user interface element base class.
@@ -39,7 +37,8 @@ public:
 
     void Refresh() noexcept;
 
-    virtual void OnFontsChanged() noexcept override;
+    void OnColorsChanged() noexcept override;
+    void OnFontsChanged() noexcept override;
 
 protected:
     void SetConfiguration(const char * data, size_t size) noexcept;
@@ -50,11 +49,11 @@ protected:
 private:
     #pragma region CWindowImpl
 
-    virtual LRESULT OnCreate(CREATESTRUCT * cs) noexcept override;
-    virtual void OnDestroy() noexcept override;
-    virtual void OnSize(UINT nType, CSize size) noexcept override;
-
+    LRESULT OnCreate(CREATESTRUCTW * cs) noexcept;
+    void OnDestroy() noexcept;
+    void OnSize(UINT type, CSize size) noexcept;
     void OnPaint(CDCHandle dc) noexcept;
+
     void OnSetFocus(CWindow wndOld) noexcept;
 
     // Required for drag & drop.
@@ -82,6 +81,9 @@ private:
     LRESULT OnEndLabelEdit(NMHDR * nmhd) noexcept;
 
     BEGIN_MSG_MAP_EX(playlist_uielement_t)
+        MSG_WM_CREATE(OnCreate)
+        MSG_WM_DESTROY(OnDestroy)
+        MSG_WM_SIZE(OnSize)
         MSG_WM_PAINT(OnPaint)
 
         MSG_WM_SETFOCUS(OnSetFocus)
@@ -109,7 +111,6 @@ private:
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_BEGINDRAG, OnBeginDrag)
 
 //      CHAIN_MSG_MAP(multi_select_tree_view_t)
-        CHAIN_MSG_MAP(uielement_t)
     END_MSG_MAP()
 
     #pragma endregion

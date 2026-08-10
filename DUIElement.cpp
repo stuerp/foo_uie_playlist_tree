@@ -1,12 +1,14 @@
 
-/** $VER: DUIElement.cpp (2026.07.26) P. Stuer - Implements Default User Interface support **/
+/** $VER: DUIElement.cpp (2026.08.10) P. Stuer - Implements Default User Interface support **/
 
 #include "pch.h"
 
 #include "DUIElement.h"
 #include "Theme.h"
 
-#include <helpers\BumpableElem.h>
+#pragma warning(push, 0)
+#include <helpers/BumpableElem.h>
+#pragma warning(pop)
 
 #pragma hdrstop
 
@@ -18,12 +20,9 @@ namespace
 /// </summary>
 dui_element_t::dui_element_t(ui_element_config::ptr data, ui_element_instance_callback::ptr callback) : m_callback(callback)
 {
-    _Theme._IsDUI = true;
-
     set_configuration(data);
 
-    // Call here before the colors have been initialized.
-    _Theme.Initialize(m_hWnd);
+    _Theme.Initialize(m_hWnd, true);
 }
 
 #pragma region ui_element_instance interface
@@ -75,23 +74,20 @@ ui_element_config::ptr dui_element_t::g_get_default_configuration() noexcept
 /// </summary>
 void dui_element_t::initialize_window(HWND hWndParent) noexcept
 {
-    const DWORD Style = 0;
-    const DWORD ExStyle = 0;
+    constexpr DWORD Style   = WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
+    constexpr DWORD ExStyle = 0;
 
     this->Create(hWndParent, nullptr, nullptr, Style, ExStyle);
-
-    GetColors();
-    GetFonts();
 }
 
 /// <summary>
 /// Sets the instance configuration data.
 /// </summary>
-void dui_element_t::set_configuration(ui_element_config::ptr data) noexcept
+void dui_element_t::set_configuration(ui_element_config::ptr config) noexcept
 {
-    ui_element_config_parser Parser(data);
+    ui_element_config_parser Parser(config);
 
-    SetConfiguration((const char *) data->get_data(), data->get_data_size());
+    SetConfiguration((const char *) config->get_data(), config->get_data_size());
 }
 
 /// <summary>
@@ -127,18 +123,13 @@ void dui_element_t::GetColors() noexcept
     _Theme.SetWindowTextColor           ((COLORREF) m_callback->query_std_color(ui_color_text));
 
     _Theme.SetSelectionColor            ((COLORREF) m_callback->query_std_color(ui_color_selection));
-    _Theme.SetSelectionTextColor        (_DarkMode ? RGB(255, 255, 255) : (COLORREF) m_callback->query_std_color(ui_color_text));
+    _Theme.SetSelectionTextColor        (fb2k::isDarkMode() ? RGB(255, 255, 255) : (COLORREF) m_callback->query_std_color(ui_color_text)); // Don't use fb2k::CCoreDarkModeHooks.
 
     _Theme.SetInactiveSelectionColor    ((COLORREF) m_callback->query_std_color(ui_color_selection));
     _Theme.SetInactiveSelectionTextColor((COLORREF) m_callback->query_std_color(ui_color_text));
 
     _Theme.SetHighlightColor            ((COLORREF) m_callback->query_std_color(ui_color_highlight));
-    _Theme.SetHighlightTextColor        (_DarkMode ? RGB(255, 255, 255) : (COLORREF) m_callback->query_std_color(ui_color_text));
-
-    TreeView_SetBkColor  (_TreeView.Get(), _Theme.GetWindowColor());
-    TreeView_SetTextColor(_TreeView.Get(), _Theme.GetWindowTextColor());
-
-    ::InvalidateRect(_TreeView.Get(), nullptr, TRUE);
+    _Theme.SetHighlightTextColor        (fb2k::isDarkMode() ? RGB(255, 255, 255) : (COLORREF) m_callback->query_std_color(ui_color_text)); // Don't use fb2k::CCoreDarkModeHooks.
 }
 
 /// <summary>
@@ -147,9 +138,6 @@ void dui_element_t::GetColors() noexcept
 void dui_element_t::GetFonts() noexcept
 {
     _Theme.SetPlaylistFont(m_callback->query_font_ex(ui_font_playlists));
-
-    _TreeView.SetFont(_Theme.GetPlaylistFont());
-    _EditBox.SetFont(_Theme.GetPlaylistFont());
 }
 
 static service_factory_single_t<ui_element_impl_withpopup<dui_element_t>> _Factory;

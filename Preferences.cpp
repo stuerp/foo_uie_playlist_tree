@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.cpp (2026.08.02) P. Stuer **/
+/** $VER: Preferences.cpp (2026.08.10) P. Stuer **/
 
 #include "pch.h"
 
@@ -33,7 +33,7 @@ class preferences_t : public CDialogImpl<preferences_t>, public preferences_page
 public:
     preferences_t(preferences_page_callback::ptr callback) : m_bMsgHandled(FALSE), _Callback(callback)
     {
-        _Theme.Initialize(m_hWnd);
+        _Theme.Initialize(m_hWnd, true);
 
         icon_list_t::Register(THIS_HINSTANCE);
     }
@@ -242,7 +242,7 @@ private:
 
         // Quick Search
         {
-            SendDlgItemMessageW(IDC_QUICK_SEARCH, BM_SETCHECK, _NewState._IsQuickSearchVisible);
+            SendDlgItemMessageW(IDC_QUICK_SEARCH, BM_SETCHECK, _NewState._UseQuickSearch);
         }
 
         // Component
@@ -427,7 +427,7 @@ private:
 
             case IDC_QUICK_SEARCH:
             {
-                _NewState._IsQuickSearchVisible = (bool) SendDlgItemMessageW(id, BM_GETCHECK);
+                _NewState._UseQuickSearch = (bool) SendDlgItemMessageW(id, BM_GETCHECK);
                 break;
             }
         }
@@ -506,7 +506,7 @@ private:
 
         // Quick Search
         {
-            if (_NewState._IsQuickSearchVisible != _State._IsQuickSearchVisible)
+            if (_NewState._UseQuickSearch != _State._UseQuickSearch)
                 return true;
         }
 

@@ -32,8 +32,10 @@ public:
     static ui_element_config::ptr g_get_default_configuration() noexcept;
 
     void initialize_window(HWND hParent) noexcept;
+
     void set_configuration(ui_element_config::ptr data) noexcept final;
     ui_element_config::ptr get_configuration() noexcept final;
+
     virtual void notify(const GUID & what, t_size param1, const void * param2, t_size param2Size);
 
     #pragma endregion

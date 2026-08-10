@@ -1,5 +1,5 @@
 
-/** $VER: TreeView.h (2026.08.04) P. Stuer **/
+/** $VER: TreeView.h (2026.08.10) P. Stuer **/
 
 #pragma once
 
@@ -150,6 +150,12 @@ public:
     HIMAGELIST GetStateImageList() const noexcept
     {
         return TreeView_GetImageList(_hTreeView, TVSIL_STATE);
+    }
+
+    void SetColors(COLORREF backgroundColor, COLORREF foregroundColor) const noexcept
+    {
+        TreeView_SetBkColor  (_hTreeView, backgroundColor);
+        TreeView_SetTextColor(_hTreeView, foregroundColor);
     }
 
     void SetFont(HFONT hFont) const noexcept

@@ -1,5 +1,5 @@
 
-/** $VER: Theme.h (2026.07.25) P. Stuer **/
+/** $VER: Theme.h (2026.08.10) P. Stuer **/
 
 #pragma once
 
@@ -10,14 +10,13 @@
 #include <SDKDDKVer.h>
 #include <Windows.h>
 
-#include <sdk/coreDarkMode.h>
-
 class theme_t
 {
 public:
     ~theme_t() noexcept;
 
     HRESULT Initialize(HWND hWnd) noexcept;
+    HRESULT Initialize(HWND hWnd, bool isDUI) noexcept;
 
     HFONT GetIconFont() const noexcept { return _hIconFont; }
     HTHEME GetTextStyle() const noexcept { return _hTextStyle; }

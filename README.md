@@ -77,12 +77,9 @@ To create the component first build the x86 configuration and next the x64 confi
 
 ## Change Log
 
-v1.4.3.0, 2026-08-04
+v1.4.4.0, 2026-08-10
 
-* Improved: Rendering of tree node drag & drop.
-  * Reduced flicker.
-  * Removed all artifacts caused by the insertion marker (hopefully).
-  * Since the switch to custom rendering the drag image was broken.
+* Fixed: A couple of small render bugs when switching between the light and dark theme.
 
 ## Acknowledgements / Credits
 

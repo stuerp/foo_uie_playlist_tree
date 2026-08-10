@@ -1,5 +1,5 @@
 
-/** $VER: State.cpp (2026.08.01) P. Stuer **/
+/** $VER: State.cpp (2026.08.10) P. Stuer **/
 
 #include "pch.h"
 
@@ -23,7 +23,7 @@ void state_t::Reset() noexcept
     _TextFormat           = "%node_name%$if(%node_is_folder%,,' ('%node_item_count%')')";
     _ToolTipFormat        = "$if(%node_is_folder%,,$if(%playlist_size_natural%,%playlist_size_natural%$crlf()$if2(%playlist_duration_natural%,', N/A'),'N/A'))";
     _ImageSize            = (uint32_t) ::GetSystemMetrics(SM_CXSMICON);
-    _IsQuickSearchVisible = true;
+    _UseQuickSearch = true;
 
     _Images.clear();
 
@@ -45,7 +45,7 @@ state_t & state_t::operator=(const state_t & other) noexcept
     _TextFormat           = other._TextFormat;
     _ToolTipFormat        = other._ToolTipFormat;
     _ImageSize            = other._ImageSize;
-    _IsQuickSearchVisible = other._IsQuickSearchVisible;
+    _UseQuickSearch = other._UseQuickSearch;
 
     _Images               = other._Images;
 
@@ -68,7 +68,7 @@ void state_t::FromJSON(const char * data, size_t size) noexcept
 
     const auto & QuickSearch = Object.value("quickSearch", json::object());
 
-    _IsQuickSearchVisible = QuickSearch.value("visible", _IsQuickSearchVisible);
+    _UseQuickSearch = QuickSearch.value("visible", _UseQuickSearch);
 
     size_t Index = 0;
 
@@ -114,7 +114,7 @@ json state_t::ToJSON() const noexcept
         (
             "quickSearch", json::object
             ({
-                { "visible", _IsQuickSearchVisible },
+                { "visible", _UseQuickSearch },
             })
         ),
     };

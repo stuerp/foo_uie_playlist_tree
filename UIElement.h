@@ -1,5 +1,5 @@
 
-/** $VER: UIElement.h (2026.07.25) P. Stuer **/
+/** $VER: UIElement.h (2026.08.10) P. Stuer **/
 
 #pragma once
 
@@ -28,10 +28,10 @@ public:
 
     static CWndClassInfo & GetWndClassInfo();
 
+    #pragma endregion
+
     virtual void OnColorsChanged() noexcept;
     virtual void OnFontsChanged() noexcept;
-
-    #pragma endregion
 
 protected:
     /// <summary>
@@ -46,24 +46,6 @@ protected:
 
     virtual void GetColors() noexcept = 0;
     virtual void GetFonts() noexcept = 0;
-
-    #pragma region CWindowImpl
-
-protected:
-    virtual LRESULT OnCreate(CREATESTRUCT * cs) noexcept;
-    virtual void OnDestroy() noexcept;
-
-    virtual void OnSize(UINT nType, CSize size) noexcept;
-
-private:
-    BEGIN_MSG_MAP_EX(uielement_t)
-        MSG_WM_CREATE(OnCreate)
-//      MSG_WM_DESTROY(OnDestroy)
-
-        MSG_WM_SIZE(OnSize)
-    END_MSG_MAP()
-
-    #pragma endregion
 
 protected:
     fb2k::CCoreDarkModeHooks _DarkMode;

@@ -1,5 +1,5 @@
 
-/** $VER: State.h (2026.08.01) P. Stuer **/
+/** $VER: State.h (2026.08.10) P. Stuer **/
 
 #pragma once
 
@@ -50,7 +50,7 @@ public:
     std::string _TextFormat;
     std::string _ToolTipFormat;
     uint32_t _ImageSize;
-    bool _IsQuickSearchVisible;
+    bool _UseQuickSearch;
 
     std::vector<image_t> _Images;
 

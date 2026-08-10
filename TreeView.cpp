@@ -1,5 +1,5 @@
 
-/** $VER: TreeView.cpp (2026.08.04) P. Stuer **/
+/** $VER: TreeView.cpp (2026.08.10) P. Stuer **/
 
 #include "pch.h"
 
@@ -15,7 +15,7 @@ bool tree_view_t::Create(HWND hWndParent, size_t id) noexcept
 {
     _Id = id;
 
-    constexpr DWORD Styles = WS_CHILD | WS_VISIBLE | WS_VSCROLL | TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | TVS_EDITLABELS | TVS_SHOWSELALWAYS | TVS_TRACKSELECT | TVS_INFOTIP; // | TVS_SINGLEEXPAND | TVS_FULLROWSELECT;
+    constexpr DWORD Styles   = WS_CHILD | WS_CLIPCHILDREN | WS_TABSTOP | WS_VISIBLE | WS_VSCROLL | TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | TVS_EDITLABELS | TVS_SHOWSELALWAYS | TVS_TRACKSELECT | TVS_INFOTIP; // | TVS_SINGLEEXPAND | TVS_FULLROWSELECT;
     constexpr DWORD ExStyles = TVS_EX_DOUBLEBUFFER;
 
     _hTreeView = ::CreateWindowExW(ExStyles, WC_TREEVIEW, L"", Styles, 0, 0, 0, 0, hWndParent, (HMENU) id, THIS_HINSTANCE, nullptr);

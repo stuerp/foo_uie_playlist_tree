@@ -1,5 +1,5 @@
 
-/** $VER: pch.h (2026.07.05) P. Stuer **/
+/** $VER: pch.h (2026.08.10) P. Stuer **/
 
 #pragma once
 
@@ -11,10 +11,11 @@
 
 #define NOMINMAX
 
-#include <helpers\foobar2000+atl.h>
-#include <helpers\helpers.h>
+#include <helpers/foobar2000+atl.h>
+#include <helpers/helpers.h>
+#include <helpers/DarkMode.h>
 
-#include <sdk\autoplaylist.h>
+#include <sdk/autoplaylist.h>
 
 #include <comdef.h> // For _com_error
 

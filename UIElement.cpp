@@ -1,5 +1,5 @@
 
-/** $VER: UIElement.cpp (2026.07.25) P. Stuer **/
+/** $VER: UIElement.cpp (2026.08.10) P. Stuer **/
 
 #include "pch.h"
 
@@ -12,7 +12,7 @@
 /// <summary>
 /// Initializes a new instance.
 /// </summary>
-uielement_t::uielement_t() : m_bMsgHandled(FALSE)
+uielement_t::uielement_t()
 {
 }
 
@@ -20,28 +20,6 @@ uielement_t::uielement_t() : m_bMsgHandled(FALSE)
 /// Deletes this instance.
 /// </summary>
 uielement_t::~uielement_t()
-{
-}
-
-/// <summary>
-/// Creates the window.
-/// </summary>
-LRESULT uielement_t::OnCreate(CREATESTRUCT * cs) noexcept
-{
-    return 0;
-}
-
-/// <summary>
-/// Destroys the window.
-/// </summary>
-void uielement_t::OnDestroy() noexcept
-{
-}
-
-/// <summary>
-/// Handles the WM_SIZE message.
-/// </summary>
-void uielement_t::OnSize(UINT type, CSize size) noexcept
 {
 }
 
@@ -59,8 +37,6 @@ void uielement_t::OnColorsChanged() noexcept
 void uielement_t::OnFontsChanged() noexcept
 {
     GetFonts();
-
-    ::InvalidateRect(m_hWnd, nullptr, TRUE);
 }
 
 #pragma region CWindowImpl<uielement_t>
