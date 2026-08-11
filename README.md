@@ -14,6 +14,7 @@ It attempts to recreate the functionality of [foo_plorg](https://wiki.hydrogenau
 - Configurable tree node images.
 - Drag & drop from foobar2000, Explorer and other applications.
 - Supports the foobar2000 playlist recycle bin.
+- Supports foobar2000 playlist locks.
 
 ## Requirements
 
