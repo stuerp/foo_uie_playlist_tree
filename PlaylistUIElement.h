@@ -74,11 +74,13 @@ private:
     LRESULT OnGetInfoTip(NMHDR * nmhd) noexcept;
     LRESULT OnSelectionChanged(NMHDR * nmhd) noexcept;
     LRESULT OnGetDisplayInfo(NMHDR * nmhd) noexcept;
-    LRESULT OnItemExpanded(NMHDR * nmhd) noexcept;
-    LRESULT OnBeginDrag(NMHDR * nmhd) noexcept;
     LRESULT OnDeletingItem(NMHDR * nmhd) noexcept;
     LRESULT OnBeginLabelEdit(NMHDR * nmhd) noexcept;
     LRESULT OnEndLabelEdit(NMHDR * nmhd) noexcept;
+    LRESULT OnBeginDrag(NMHDR * nmhd) noexcept;
+    LRESULT OnItemExpanded(NMHDR * nmhd) noexcept;
+
+    HBRUSH OnCtlColorEdit(CDCHandle dc, CEdit edit) const noexcept;
 
     BEGIN_MSG_MAP_EX(playlist_uielement_t)
         MSG_WM_CREATE(OnCreate)
@@ -95,6 +97,7 @@ private:
 
         COMMAND_HANDLER_EX(IDC_EDITBOX, EN_CHANGE, OnEditChange)
         MSG_WM_COMMAND(OnCommand)
+        MSG_WM_CTLCOLOREDIT(OnCtlColorEdit)
 
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, NM_CUSTOMDRAW, OnCustomDraw)
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, NM_RCLICK, OnRightClick)
@@ -109,6 +112,7 @@ private:
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_BEGINLABELEDIT, OnBeginLabelEdit)
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_ENDLABELEDIT, OnEndLabelEdit)
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_BEGINDRAG, OnBeginDrag)
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_ITEMEXPANDED, OnItemExpanded)
 
 //      CHAIN_MSG_MAP(multi_select_tree_view_t)
     END_MSG_MAP()

@@ -19,7 +19,7 @@ It attempts to recreate the functionality of [foo_plorg](https://wiki.hydrogenau
 ## Requirements
 
 - [foobar2000](https://www.foobar2000.org/download) v2.0 or later. ![foobar2000](https://www.foobar2000.org/button-small.png)
-- Tested on Microsoft Windows 10 and later.
+- Tested on Microsoft Windows 11.
 - Tested with [Columns UI](https://yuo.be/columns-ui) 2.1.0.
 
 ## Getting started
@@ -29,6 +29,10 @@ It attempts to recreate the functionality of [foo_plorg](https://wiki.hydrogenau
 or
 
 - Import `foo_uie_playlist_tree.fbk2-component` into foobar2000 using the "*File / Preferences / Components / Install...*" menu item.
+
+## Usage
+
+You can find the user guide [here](docs/README.md).
 
 ## Developing
 
@@ -78,9 +82,14 @@ To create the component first build the x86 configuration and next the x64 confi
 
 ## Change Log
 
-v1.4.4.0, 2026-08-10
+v1.4.4.0, 2026-08-xx
 
-* Fixed: A couple of small render bugs when switching between the light and dark theme.
+- Improved: A couple of usability tweaks
+  - Press Ctrl when you expand or collapse a folder item to expand or collapse the complete branch.
+  - When creating a new folder the tree item will automatically enter Edit mode.
+- Fixed: A couple of small render bugs when switching between the light and dark theme.
+- Fixed: The item indentation was not calculated correctly.
+- Fixed: Dark Mode support for the Search box.
 
 ## Acknowledgements / Credits
 

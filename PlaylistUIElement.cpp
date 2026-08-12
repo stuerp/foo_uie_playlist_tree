@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.cpp (2026.08.10) P. Stuer **/
+/** $VER: PlaylistsUIElement.cpp (2026.08.12) P. Stuer **/
 
 #include "pch.h"
 
@@ -207,8 +207,6 @@ void playlist_uielement_t::OnDestroy() noexcept
     }
 
     _UIElementTracker.Remove(this);
-
-    SetMsgHandled(TRUE);
 }
 
 /// <summary>
@@ -271,8 +269,6 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
 {
     if (notifyCode != 0)
         return;
-
-    SetMsgHandled(TRUE);
 
     switch (id)
     {
@@ -536,6 +532,18 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
 }
 
 /// <summary>
+/// Handles the WM_CTLCOLOREDIT message.
+/// </summary>
+HBRUSH playlist_uielement_t::OnCtlColorEdit(CDCHandle dc, CEdit) const noexcept
+{
+    // CCoreDarkModeHooks does not seem to handle this.
+    dc.SetBkColor(_Theme.GetWindowColor());
+    dc.SetTextColor(_Theme.GetWindowTextColor());
+
+    return _Theme.GetWindowBrush();
+}
+
+/// <summary>
 /// Handles the EN_CHANGE notification.
 /// </summary>
 void playlist_uielement_t::OnEditChange(UINT notifyCode, int id, CWindow wnd)
@@ -546,8 +554,6 @@ void playlist_uielement_t::OnEditChange(UINT notifyCode, int id, CWindow wnd)
         return;
 
     _TreeView.SelectItem(msc::WideToUTF8(Text));
-
-    SetMsgHandled(TRUE);
 }
 
 /// <summary>
@@ -556,8 +562,6 @@ void playlist_uielement_t::OnEditChange(UINT notifyCode, int id, CWindow wnd)
 void playlist_uielement_t::OnMouseMove(UINT flags, CPoint point) noexcept
 {
     _TreeView.DragMove(point);
-
-    SetMsgHandled(TRUE);
 }
 
 /// <summary>
@@ -566,8 +570,6 @@ void playlist_uielement_t::OnMouseMove(UINT flags, CPoint point) noexcept
 void playlist_uielement_t::OnMouseLeave() noexcept
 {
     _TreeView.RemoveInsertMarker();
-
-    SetMsgHandled(TRUE);
 }
 
 /// <summary>
@@ -576,8 +578,6 @@ void playlist_uielement_t::OnMouseLeave() noexcept
 void playlist_uielement_t::OnLButtonUp(UINT flags, CPoint point) noexcept
 {
     _TreeView.EndDrag(false);
-
-    SetMsgHandled(TRUE);
 }
 
 /// <summary>
@@ -586,8 +586,6 @@ void playlist_uielement_t::OnLButtonUp(UINT flags, CPoint point) noexcept
 void playlist_uielement_t::OnCaptureChanged(CWindow wnd) noexcept
 {
     _TreeView.EndDrag(true);
-
-    SetMsgHandled(TRUE);
 }
 
 /// <summary>
@@ -605,8 +603,6 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
     {
         case CDDS_PREPAINT:
         {
-            SetMsgHandled(TRUE);
-
             // Draw the control background ourselves because a light/dark switch is not handled by fb2k::CCoreDarkModeHooks.
             ::FillRect(hDC, &rcItem, _Theme.GetWindowBrush());
 
@@ -615,8 +611,6 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
 
         case CDDS_ITEMPREPAINT:
         {
-            SetMsgHandled(TRUE);
-
             if ((rcItem.right - rcItem.left) <= 0)
                 return CDRF_DODEFAULT;
 
@@ -828,8 +822,6 @@ LRESULT playlist_uielement_t::OnRightClick(NMHDR * nmhd) noexcept
 
         if (hPlaylist != NULL)
             ::DestroyMenu(hPlaylist);
-
-        SetMsgHandled(TRUE);
     }
 
     ::DestroyMenu(hMenu);
@@ -862,8 +854,6 @@ LRESULT playlist_uielement_t::OnMiddleClick(NMHDR * nmhd) noexcept
 
         _TreeView.RemoveItem(_hHighlightedtem);
     }
-
-    SetMsgHandled(TRUE);
 
     return 0;
 }
@@ -941,8 +931,6 @@ LRESULT playlist_uielement_t::OnGetDisplayInfo(NMHDR * nmhd) noexcept
 
         tvi.iImage = tvi.iSelectedImage = Image;
     }
-
-    SetMsgHandled(TRUE);
 
     return FALSE;
 }
@@ -1167,6 +1155,55 @@ LRESULT playlist_uielement_t::OnBeginDrag(NMHDR * nmhd) noexcept
     _TreeView.BeginDrag(nmtv);
 
     SetMsgHandled(FALSE);
+
+    return FALSE;
+}
+
+/// <summary>
+/// Handles the TVN_ITEMEXPANDED notification.
+/// </summary>
+LRESULT playlist_uielement_t::OnItemExpanded(NMHDR * nmhd) noexcept
+{
+    const auto nmtv = (NMTREEVIEWW *) nmhd;
+
+    const auto CtrlState = ::GetKeyState(VK_CONTROL);
+
+    if ((CtrlState & 0x8000) != 0)
+    {
+        std::string Text;
+
+        _TreeView.GetText(nmtv->itemNew.hItem, Text);
+
+        Log.Write(Text.c_str());
+
+        if (nmtv->action == TVE_COLLAPSE)
+        {
+            _TreeView.tree_view_t::Walk(nmtv->itemNew.hItem, [&](HTREEITEM hItem, void * context) -> bool
+            {
+                _TreeView.GetText(hItem, Text);
+
+                Log.Write("> %s", Text.c_str());
+
+                _TreeView.CollapseItem(hItem);
+
+                return true; // Continue walking.
+            }, nullptr);
+        }
+        else
+        if (nmtv->action == TVE_EXPAND)
+        {
+            _TreeView.tree_view_t::Walk(nmtv->itemNew.hItem, [&](HTREEITEM hItem, void * context) -> bool
+            {
+                _TreeView.GetText(hItem, Text);
+
+                Log.Write("< %s", Text.c_str());
+
+                _TreeView.ExpandItem(hItem);
+
+                return true; // Continue walking.
+            }, nullptr);
+        }
+    }
 
     return FALSE;
 }
@@ -1468,6 +1505,8 @@ void playlist_uielement_t::OnFolderCreated(const GUID & id, const std::string & 
         if (Count == 1)
             ::InvalidateRect(_TreeView.Get(), NULL, TRUE);
     }
+
+    _TreeView.EditSelectedItem();
 };
 
 /// <summary>

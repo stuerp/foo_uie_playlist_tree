@@ -264,9 +264,12 @@ void playlist_tree_view_t::DrawItem(HDC hDC, HTREEITEM hItem, int level, int scr
     const auto IsHighlighted = ((tvi.state & TVIS_DROPHILITED) != 0) & !isDragImage;
 
     // Calculate the start position of the item content.
+
+const auto Indent = TreeView_GetIndent(Get());
+
     RECT rc = rcItem;
 
-    rc.left += (imageWidth * level) - scrollX;
+    rc.left += (Indent * level) - scrollX;
 
     // Calculate the image width including horizontal padding.
     const LONG ImageWidth = (1 + (LONG) imageWidth + 1) + 3;
@@ -285,7 +288,18 @@ void playlist_tree_view_t::DrawItem(HDC hDC, HTREEITEM hItem, int level, int scr
         // Draw a chevron if the folder has children.
         if (tvi.cChildren != 0)
         {
-            RECT rcChevron = { rc.left, rc.top, rcChevron.left + TextHeight, rc.bottom };
+            SIZE GlyphSize = { (LONG) imageWidth, (LONG) imageWidth };
+
+            HTHEME hTheme = ::OpenThemeData(Get(), L"TREEVIEW");
+
+            if (hTheme)
+            {
+                ::GetThemePartSize(hTheme, NULL, TVP_GLYPH, GLPS_CLOSED, NULL, TS_TRUE, &GlyphSize);
+
+                ::CloseThemeData(hTheme);
+            }
+
+            RECT rcChevron = { rc.left, rc.top, rcChevron.left + GlyphSize.cx, rc.bottom };
 
             const auto hOldFont = ::SelectObject(hDC, _Theme.GetIconFont());
 
@@ -387,7 +401,7 @@ void playlist_tree_view_t::MeasureDragImage(HTREEITEM hItem, RECT & rect) const 
     TreeView_GetItemRect(Get(), hItem, &rect, TRUE);
 
     // Add room for the icon.
-    HIMAGELIST hImageList = GetNormalImageList();
+    const auto hImageList = GetNormalImageList();
 
     int IconWidth, IconHeight;
 
@@ -413,4 +427,3 @@ void playlist_tree_view_t::DrawDragImage(HDC hDC, HTREEITEM hItem, const RECT & 
 
     DrawItem(hDC, hItem, 0, 0, rcItem, hImageList, (uint32_t) IconWidth, false, false, false, true);
 }
-
