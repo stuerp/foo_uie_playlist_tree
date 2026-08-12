@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.cpp (2026.08.10) P. Stuer **/
+/** $VER: Preferences.cpp (2026.08.12) P. Stuer **/
 
 #include "pch.h"
 
@@ -210,7 +210,7 @@ private:
 
             w.ResetContent();
 
-            static const WCHAR * Labels[] = { L"Folder", L"Folder (Locked)", L"Playlist", L"Playlist (Playing)", L"Playlist (Locked)" };
+            static const WCHAR * Labels[] = { L"Folder", L"Folder (Locked)", L"Playlist", L"Playlist (Playing)", L"Playlist (Locked)", L"Autoplaylist", L"Autoplaylist (Playing)" };
 
             assert(_countof(Labels) == ((size_t) ItemImage::Count));
 
@@ -573,6 +573,9 @@ private:
             ItemImage::Playlist,
             ItemImage::PlaylistPlaying,
             ItemImage::PlaylistLocked,
+
+            ItemImage::AutoPlaylist,
+            ItemImage::AutoPlaylistPlaying,
         };
 
         assert(_countof(Map) == ((size_t) ItemImage::Count));

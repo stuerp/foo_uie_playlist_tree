@@ -50,9 +50,12 @@ public:
         if (!TreeView_SelectItem(_hTreeView, hTreeItem))
             return false;
 
-        TreeView_EnsureVisible(_hTreeView, hTreeItem);
+        return EnsureVisible(hTreeItem);
+    }
 
-        return true;
+    bool EnsureVisible(HTREEITEM hTreeItem) const noexcept
+    {
+        return (bool) TreeView_EnsureVisible(_hTreeView, hTreeItem);
     }
 
     HTREEITEM GetSelectedItem() const noexcept
@@ -117,9 +120,29 @@ public:
         return (bool) TreeView_Expand(_hTreeView, hItem, TVE_EXPAND);
     }
 
+    void ExpandAll(HTREEITEM hItem) const noexcept
+    {
+        Walk(hItem, [&](HTREEITEM hItem, void * context) -> bool
+        {
+            ExpandItem(hItem);
+
+            return true; // Continue walking.
+        }, nullptr);
+    }
+
     bool CollapseItem(HTREEITEM hItem) const noexcept
     {
         return (bool) TreeView_Expand(_hTreeView, hItem, TVE_COLLAPSE);
+    }
+
+    void CollapseAll(HTREEITEM hItem) const noexcept
+    {
+        Walk(hItem, [&](HTREEITEM hItem, void * context) -> bool
+        {
+            CollapseItem(hItem);
+
+            return true; // Continue walking.
+        }, nullptr);
     }
 
     bool ToggleItem(HTREEITEM hItem) const noexcept

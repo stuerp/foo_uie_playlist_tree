@@ -62,6 +62,26 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCTW * cs) noexcept
             if (!SUCCEEDED(hr))
                 Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to initialize image list: 0x%08X.", hr);
         }
+/*
+        // Remove the vertical scroll bar.
+        {
+            auto Style = ::GetWindowLongPtrW(_TreeView.Get(), GWL_STYLE) | TVS_NOSCROLL;
+
+            ::SetWindowLongPtrW(_TreeView.Get(), GWL_STYLE, Style);
+
+            ::SetWindowPos(_TreeView.Get(), NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+        }
+*/
+/*
+        // Remove the horizontal scroll bar.
+        {
+            auto Style = ::GetWindowLongPtrW(_TreeView.Get(), GWL_STYLE) | TVS_NOHSCROLL;
+
+            ::SetWindowLongPtrW(_TreeView.Get(), GWL_STYLE, Style);
+
+            ::SetWindowPos(_TreeView.Get(), NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+        }
+*/
     }
 
     // Create the edit box.
@@ -906,25 +926,34 @@ LRESULT playlist_uielement_t::OnGetDisplayInfo(NMHDR * nmhd) noexcept
         }
         else
         {
-            Image = ItemImage::Playlist;
-
-            // Is the playlist locked?
             auto Index = _PlaylistManager->find_playlist_by_guid(Node->Id);
 
-            if ((Index != SIZE_MAX) && _PlaylistManager->playlist_lock_is_present(Index))
-                Image = ItemImage::PlaylistLocked;
-
-            // Is the playlist playing?
-            if (_IsPlaying)
+            if (Index != SIZE_MAX)
             {
-                Index = _PlaylistManager->get_playing_playlist();
+                // Is the playlist an autoplaylist?
+                const auto apm = autoplaylist_manager::get();
 
-                if (Index != SIZE_MAX)
+                const auto IsAutoplaylist = apm->is_client_present(Index);
+
+                if (IsAutoplaylist)
+                    Image = ItemImage::AutoPlaylist;
+                else
+                // Is the playlist locked?
+                if (_PlaylistManager->playlist_lock_is_present(Index))
+                    Image = ItemImage::PlaylistLocked;
+
+                // Is the playlist playing?
+                if (_IsPlaying)
                 {
-                    const auto Id = _PlaylistManager->playlist_get_guid(Index);
+                    Index = _PlaylistManager->get_playing_playlist();
 
-                    if (Id == Node->Id)
-                        Image = ItemImage::PlaylistPlaying;
+                    if (Index != SIZE_MAX)
+                    {
+                        const auto Id = _PlaylistManager->playlist_get_guid(Index);
+
+                        if (Id == Node->Id)
+                            Image = IsAutoplaylist ? ItemImage::AutoPlaylistPlaying : ItemImage::PlaylistPlaying;
+                    }
                 }
             }
         }
@@ -1164,46 +1193,18 @@ LRESULT playlist_uielement_t::OnBeginDrag(NMHDR * nmhd) noexcept
 /// </summary>
 LRESULT playlist_uielement_t::OnItemExpanded(NMHDR * nmhd) noexcept
 {
-    const auto nmtv = (NMTREEVIEWW *) nmhd;
-
     const auto CtrlState = ::GetKeyState(VK_CONTROL);
 
-    if ((CtrlState & 0x8000) != 0)
-    {
-        std::string Text;
+    if ((CtrlState & 0x8000) == 0)
+        return FALSE;
 
-        _TreeView.GetText(nmtv->itemNew.hItem, Text);
+    const auto nmtv = (NMTREEVIEWW *) nmhd;
 
-        Log.Write(Text.c_str());
-
-        if (nmtv->action == TVE_COLLAPSE)
-        {
-            _TreeView.tree_view_t::Walk(nmtv->itemNew.hItem, [&](HTREEITEM hItem, void * context) -> bool
-            {
-                _TreeView.GetText(hItem, Text);
-
-                Log.Write("> %s", Text.c_str());
-
-                _TreeView.CollapseItem(hItem);
-
-                return true; // Continue walking.
-            }, nullptr);
-        }
-        else
-        if (nmtv->action == TVE_EXPAND)
-        {
-            _TreeView.tree_view_t::Walk(nmtv->itemNew.hItem, [&](HTREEITEM hItem, void * context) -> bool
-            {
-                _TreeView.GetText(hItem, Text);
-
-                Log.Write("< %s", Text.c_str());
-
-                _TreeView.ExpandItem(hItem);
-
-                return true; // Continue walking.
-            }, nullptr);
-        }
-    }
+    if (nmtv->action == TVE_COLLAPSE)
+        _TreeView.CollapseAll(nmtv->itemNew.hItem);
+    else
+    if (nmtv->action == TVE_EXPAND)
+        _TreeView.ExpandAll(nmtv->itemNew.hItem);
 
     return FALSE;
 }

@@ -1,5 +1,5 @@
 
-/** $VER: State.cpp (2026.08.10) P. Stuer **/
+/** $VER: State.cpp (2026.08.12) P. Stuer **/
 
 #include "pch.h"
 
@@ -33,6 +33,8 @@ void state_t::Reset() noexcept
     _Images.push_back({ "imageres.dll", 125 }); // Playlist (Playing)
     _Images.push_back({ "shell32.dll",   47 }); // Playlist (Locked)
     _Images.push_back({ "imageres.dll",   8 }); // Folder (Locked)
+    _Images.push_back({ "imageres.dll", 126 }); // AutoPlaylist
+    _Images.push_back({ "imageres.dll", 125 }); // AutoPlaylist (Playing)
 
     _Object.clear();
 }
@@ -42,12 +44,12 @@ void state_t::Reset() noexcept
 /// </summary>
 state_t & state_t::operator=(const state_t & other) noexcept
 {
-    _TextFormat           = other._TextFormat;
-    _ToolTipFormat        = other._ToolTipFormat;
-    _ImageSize            = other._ImageSize;
+    _TextFormat     = other._TextFormat;
+    _ToolTipFormat  = other._ToolTipFormat;
+    _ImageSize      = other._ImageSize;
     _UseQuickSearch = other._UseQuickSearch;
 
-    _Images               = other._Images;
+    _Images         = other._Images;
 
     return *this;
 }

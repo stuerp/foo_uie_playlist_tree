@@ -1,5 +1,5 @@
 
-/** $VER: State.h (2026.08.10) P. Stuer **/
+/** $VER: State.h (2026.08.12) P. Stuer **/
 
 #pragma once
 
@@ -14,11 +14,13 @@ using json = nlohmann::ordered_json;
 
 enum ItemImage : int
 {
-    Folder          = 0,
-    Playlist        = 1,
-    PlaylistPlaying = 2,
-    PlaylistLocked  = 3,
-    FolderLocked    = 4,
+    Folder              = 0,
+    Playlist            = 1,
+    PlaylistPlaying     = 2,
+    PlaylistLocked      = 3,
+    FolderLocked        = 4,
+    AutoPlaylist        = 5,
+    AutoPlaylistPlaying = 6,
 
     Count,
 };

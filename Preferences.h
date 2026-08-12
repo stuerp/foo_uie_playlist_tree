@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.h (2026.08.02) **/
+/** $VER: Preferences.h (2026.08.12) **/
 
 #pragma once
 
@@ -73,7 +73,7 @@
 // ComboBox
 #define X_A14   X_A13 + W_A13 + IX
 #define Y_A14   Y_A13
-#define W_A14   70
+#define W_A14   86
 #define H_A14   H_CBX
 
 /** Image Size **/
