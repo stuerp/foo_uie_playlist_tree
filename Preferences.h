@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.h (2026.08.12) **/
+/** $VER: Preferences.h (2026.08.13) **/
 
 #pragma once
 
@@ -11,6 +11,7 @@
 #define IDC_FILE_PATH_SELECT    1005
 #define IDC_IMAGE_LIST          1006
 #define IDC_QUICK_SEARCH        1007
+#define IDC_HSCROLLBAR          1008
 
 #define IDC_LOG_LEVEL           9999
 
@@ -126,6 +127,14 @@
 #define H_A24   H_CHB
 #define X_A24   X_A18
 #define Y_A24   Y_A18 + H_A18 + IY
+
+/** Horizontal scrollbar **/
+
+// Checkbox: Horizontal scrollbar
+#define W_A25   78
+#define H_A25   H_CHB
+#define X_A25   X_A24
+#define Y_A25   Y_A24 + H_A24 + IY
 
 // Groupbox: Component
 #define X_A99   0

@@ -37,7 +37,7 @@ public:
 
     bool SetName(const GUID & id, const std::string & name) const noexcept;
 
-    node_t * AddItem(const GUID & parentId, const GUID & insertAfterId, const GUID & id, const std::string & name, bool isFolder, bool isExpanded) const noexcept;
+    node_t * AddItem(const GUID & parentId, const GUID & insertAfterId, const GUID & id, const std::string & name, bool isFolder, bool isExpanded, bool isFrozen) const noexcept;
     bool RemoveItem(const GUID & id) const noexcept;
     bool SelectItem(const GUID & id) const noexcept;
     bool SelectItem(const std::string & name) const noexcept;

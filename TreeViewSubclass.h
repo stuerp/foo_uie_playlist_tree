@@ -1,5 +1,5 @@
 
-/** $VER: TreeViewSubClass.h (2026.07.23) P. Stuer **/
+/** $VER: TreeViewSubClass.h (2026.08.13) P. Stuer **/
 
 #pragma once
 
@@ -50,9 +50,9 @@ private:
     /// </summary>
     static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
-        auto self = (treeview_subclass_t *) ::GetWindowLongPtrW(hWnd, GWLP_USERDATA);
+        const auto This = (treeview_subclass_t *) ::GetWindowLongPtrW(hWnd, GWLP_USERDATA);
 
-        if ((self == nullptr) || (self->_OldWndProc == nullptr))
+        if ((This == nullptr) || (This->_OldWndProc == nullptr))
             return ::DefWindowProcW(hWnd, msg, wParam, lParam);
 
         // Send a middle mouse button click notification.
@@ -70,7 +70,10 @@ private:
             return 0;
         }
 
-        return ::CallWindowProcW(self->_OldWndProc, hWnd, msg, wParam, lParam);
+        if (msg == WM_NCDESTROY)
+            This->Detach(hWnd);
+
+        return ::CallWindowProcW(This->_OldWndProc, hWnd, msg, wParam, lParam);
     }
 
 private:

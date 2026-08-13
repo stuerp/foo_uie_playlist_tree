@@ -1,5 +1,5 @@
 
-/** $VER: TreeView.h (2026.08.12) P. Stuer **/
+/** $VER: TreeView.h (2026.08.13) P. Stuer **/
 
 #pragma once
 
@@ -295,6 +295,41 @@ public:
         ::SetFocus(_hTreeView);
     }
 
+    /// <summary>
+    /// Shows or hides the horizontal scrollbar.
+    /// </summary>
+    void SetHorizontalScrollbar(bool visible) const noexcept
+    {
+        const auto Style = ::GetWindowLongPtrW(_hTreeView, GWL_STYLE);
+
+        auto NewStyle = Style;
+
+        if (visible)
+            NewStyle &= ~(LONG_PTR) TVS_NOHSCROLL;
+        else
+            NewStyle |=  (LONG_PTR) TVS_NOHSCROLL;
+
+        if (NewStyle == Style)
+            return;
+
+        ::SetWindowLongPtrW(_hTreeView, GWL_STYLE, NewStyle);
+
+        ::SetWindowPos(_hTreeView, NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+
+        // Work-around tree view bug when modifying the style.
+        ::ShowScrollBar(_hTreeView, SB_HORZ, visible ? TRUE : FALSE);
+        ::InvalidateRect(_hTreeView, nullptr, TRUE);
+    }
+/*
+    // Remove the vertical scroll bar.
+    {
+        auto Style = ::GetWindowLongPtrW(_TreeView.Get(), GWL_STYLE) | TVS_NOSCROLL;
+
+        ::SetWindowLongPtrW(_TreeView.Get(), GWL_STYLE, Style);
+
+        ::SetWindowPos(_TreeView.Get(), NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+    }
+*/
 protected:
     virtual bool AllowDrop(DropZone dropZone) noexcept { return false; };
 

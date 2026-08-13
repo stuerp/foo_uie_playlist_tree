@@ -1,5 +1,5 @@
 
-/** $VER: EditSubclass.h (2026.07.23) P. Stuer **/
+/** $VER: EditSubclass.h (2026.08.13) P. Stuer **/
 
 #pragma once
 
@@ -45,15 +45,19 @@ public:
 private:
     static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
-        auto self = (edit_subclass_t *) ::GetWindowLongPtrW(hWnd, GWLP_USERDATA);
+        const auto This = (edit_subclass_t *) ::GetWindowLongPtrW(hWnd, GWLP_USERDATA);
 
-        if ((self == nullptr) || (self->_OldWndProc == nullptr))
+        if ((This == nullptr) || (This->_OldWndProc == nullptr))
             return ::DefWindowProcW(hWnd, msg, wParam, lParam);
 
         if (msg == WM_GETDLGCODE)
-            return DLGC_WANTALLKEYS | CallWindowProc(self->_OldWndProc, hWnd, msg, wParam, lParam); // Request all keys so the Edit control doesn't swallow Enter/Escape.
+            // Request all keys so the Edit control doesn't swallow Enter/Escape. We need it to control the AutoComplete drop down.
+            return DLGC_WANTALLKEYS | ::CallWindowProcW(This->_OldWndProc, hWnd, msg, wParam, lParam);
 
-        return ::CallWindowProcW(self->_OldWndProc, hWnd, msg, wParam, lParam);
+        if (msg == WM_NCDESTROY)
+            This->Detach(hWnd);
+
+        return ::CallWindowProcW(This->_OldWndProc, hWnd, msg, wParam, lParam);
     }
 
 private:

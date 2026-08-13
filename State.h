@@ -1,5 +1,5 @@
 
-/** $VER: State.h (2026.08.12) P. Stuer **/
+/** $VER: State.h (2026.08.13) P. Stuer **/
 
 #pragma once
 
@@ -21,6 +21,7 @@ enum ItemImage : int
     FolderLocked        = 4,
     AutoPlaylist        = 5,
     AutoPlaylistPlaying = 6,
+    FolderFrozen        = 7,
 
     Count,
 };
@@ -53,6 +54,7 @@ public:
     std::string _ToolTipFormat;
     uint32_t _ImageSize;
     bool _UseQuickSearch;
+    bool _UseHorizontalScrollbar;
 
     std::vector<image_t> _Images;
 

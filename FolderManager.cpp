@@ -156,4 +156,4 @@ private:
     std::unordered_set<folder_manager_callback_t *> _Callbacks;
 };
 
-static service_factory_single_t<folder_manager_impl> _FolderManagerFactory;
+FB2K_SERVICE_FACTORY(folder_manager_impl);

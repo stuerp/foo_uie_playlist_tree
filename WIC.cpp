@@ -7,7 +7,7 @@
 
 #pragma comment(lib, "windowscodecs")
 
-const GUID wic_t::class_guid = { 0x5af88ed, 0xa6be, 0x4600, { 0x85, 0x28, 0x75, 0xd3, 0x1b, 0x89, 0xb3, 0x4b } };
+const GUID wic_t::class_guid = { 0x268cb436, 0x1cbb, 0x47f2, { 0x9c, 0x15, 0xe6, 0x96, 0xbc, 0xc3, 0x84, 0x7c } };
 
 /// <summary>
 /// Implements the wic_t service.
@@ -60,7 +60,7 @@ private:
     ComPtr<IWICImagingFactory> _Factory;
 };
 
-static service_factory_single_t<wic_t_impl> _WICFactoryFactory;
+FB2K_SERVICE_FACTORY(wic_t_impl);
 
 /// <summary>
 /// Creates a WIC bitmap frame from raw image data.

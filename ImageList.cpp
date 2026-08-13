@@ -5,6 +5,7 @@
 
 #include "ImageList.h"
 #include "RAII.h"
+#include "Log.h"
 #include "WIC.h"
 
 #include <wrl/client.h>

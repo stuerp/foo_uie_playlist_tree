@@ -78,6 +78,7 @@ private:
     LRESULT OnBeginLabelEdit(NMHDR * nmhd) noexcept;
     LRESULT OnEndLabelEdit(NMHDR * nmhd) noexcept;
     LRESULT OnBeginDrag(NMHDR * nmhd) noexcept;
+    LRESULT OnItemExpanding(NMHDR * nmhd) noexcept;
     LRESULT OnItemExpanded(NMHDR * nmhd) noexcept;
 
     HBRUSH OnCtlColorEdit(CDCHandle dc, CEdit edit) const noexcept;
@@ -112,6 +113,7 @@ private:
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_BEGINLABELEDIT, OnBeginLabelEdit)
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_ENDLABELEDIT, OnEndLabelEdit)
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_BEGINDRAG, OnBeginDrag)
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_ITEMEXPANDING, OnItemExpanding)
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_ITEMEXPANDED, OnItemExpanded)
 
 //      CHAIN_MSG_MAP(multi_select_tree_view_t)

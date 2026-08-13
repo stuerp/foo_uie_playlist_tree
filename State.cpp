@@ -1,5 +1,5 @@
 
-/** $VER: State.cpp (2026.08.12) P. Stuer **/
+/** $VER: State.cpp (2026.08.13) P. Stuer **/
 
 #include "pch.h"
 
@@ -20,10 +20,11 @@ state_t::state_t() noexcept
 /// </summary>
 void state_t::Reset() noexcept
 {
-    _TextFormat           = "%node_name%$if(%node_is_folder%,,' ('%node_item_count%')')";
-    _ToolTipFormat        = "$if(%node_is_folder%,,$if(%playlist_size_natural%,%playlist_size_natural%$crlf()$if2(%playlist_duration_natural%,', N/A'),'N/A'))";
-    _ImageSize            = (uint32_t) ::GetSystemMetrics(SM_CXSMICON);
-    _UseQuickSearch = true;
+    _TextFormat             = "%node_name%$if(%node_is_folder%,,' ('%node_item_count%')')";
+    _ToolTipFormat          = "$if(%node_is_folder%,,$if(%playlist_size_natural%,%playlist_size_natural%$crlf()$if2(%playlist_duration_natural%,', N/A'),'N/A'))";
+    _ImageSize              = (uint32_t) ::GetSystemMetrics(SM_CXSMICON);
+    _UseQuickSearch         = true;
+    _UseHorizontalScrollbar = true;
 
     _Images.clear();
 
@@ -35,6 +36,7 @@ void state_t::Reset() noexcept
     _Images.push_back({ "imageres.dll",   8 }); // Folder (Locked)
     _Images.push_back({ "imageres.dll", 126 }); // AutoPlaylist
     _Images.push_back({ "imageres.dll", 125 }); // AutoPlaylist (Playing)
+    _Images.push_back({ "imageres.dll",   8 }); // Folder (Frozen)
 
     _Object.clear();
 }
@@ -44,12 +46,13 @@ void state_t::Reset() noexcept
 /// </summary>
 state_t & state_t::operator=(const state_t & other) noexcept
 {
-    _TextFormat     = other._TextFormat;
-    _ToolTipFormat  = other._ToolTipFormat;
-    _ImageSize      = other._ImageSize;
-    _UseQuickSearch = other._UseQuickSearch;
+    _TextFormat             = other._TextFormat;
+    _ToolTipFormat          = other._ToolTipFormat;
+    _ImageSize              = other._ImageSize;
+    _UseQuickSearch         = other._UseQuickSearch;
+    _UseHorizontalScrollbar = other._UseHorizontalScrollbar;
 
-    _Images         = other._Images;
+    _Images                = other._Images;
 
     return *this;
 }
@@ -64,13 +67,17 @@ void state_t::FromJSON(const char * data, size_t size) noexcept
 
     const json Object = json::parse(data, data + size, nullptr, true);
 
-    _TextFormat           = Object.value("nameFormat", _TextFormat).c_str();
-    _ToolTipFormat        = Object.value("toolTip",    _ToolTipFormat).c_str();
-    _ImageSize            = Object.value("imageSize",  _ImageSize);
+    _TextFormat    = Object.value("nameFormat", _TextFormat).c_str();
+    _ToolTipFormat = Object.value("toolTip",    _ToolTipFormat).c_str();
+    _ImageSize     = Object.value("imageSize",  _ImageSize);
 
     const auto & QuickSearch = Object.value("quickSearch", json::object());
 
     _UseQuickSearch = QuickSearch.value("visible", _UseQuickSearch);
+
+    const auto & HorizontalScrollbar = Object.value("horizontalScrollbar", json::object());
+
+    _UseHorizontalScrollbar = HorizontalScrollbar.value("visible", _UseHorizontalScrollbar);
 
     size_t Index = 0;
 
@@ -117,6 +124,14 @@ json state_t::ToJSON() const noexcept
             "quickSearch", json::object
             ({
                 { "visible", _UseQuickSearch },
+            })
+        ),
+
+        json::object_t::value_type
+        (
+            "horizontalScrollbar", json::object
+            ({
+                { "visible", _UseHorizontalScrollbar },
             })
         ),
     };

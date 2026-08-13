@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.cpp (2026.08.12) P. Stuer **/
+/** $VER: Preferences.cpp (2026.08.13) P. Stuer **/
 
 #include "pch.h"
 
@@ -118,6 +118,7 @@ public:
 
         COMMAND_HANDLER_EX(IDC_FILE_PATH_SELECT,    BN_CLICKED,     OnButtonClick)
         COMMAND_HANDLER_EX(IDC_QUICK_SEARCH,        BN_CLICKED,     OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_HSCROLLBAR,          BN_CLICKED,     OnButtonClick)
 
         MSG_WM_NOTIFY(OnNotify);
     END_MSG_MAP()
@@ -142,6 +143,7 @@ private:
             { IDC_IMAGE_LIST, "Selects the image for the selected node type from this list." },
 
             { IDC_QUICK_SEARCH, "Enable this setting to display the Quick Search text box at the bottom of the panel." },
+            { IDC_HSCROLLBAR, "Enable this setting to display the horizontal scrollbar in the tree view when the node text becomes too long." },
 
             // Component
             { IDC_LOG_LEVEL, "Sets the verbosity of the log information that gets written to the console." },
@@ -210,7 +212,7 @@ private:
 
             w.ResetContent();
 
-            static const WCHAR * Labels[] = { L"Folder", L"Folder (Locked)", L"Playlist", L"Playlist (Playing)", L"Playlist (Locked)", L"Autoplaylist", L"Autoplaylist (Playing)" };
+            static const WCHAR * Labels[] = { L"Folder", L"Folder (Locked)", L"Folder (Frozen)", L"Playlist", L"Playlist (Playing)", L"Playlist (Locked)", L"Autoplaylist", L"Autoplaylist (Playing)" };
 
             assert(_countof(Labels) == ((size_t) ItemImage::Count));
 
@@ -243,6 +245,11 @@ private:
         // Quick Search
         {
             SendDlgItemMessageW(IDC_QUICK_SEARCH, BM_SETCHECK, _NewState._UseQuickSearch);
+        }
+
+        // Horizontal Scrollbar
+        {
+            SendDlgItemMessageW(IDC_HSCROLLBAR, BM_SETCHECK, _NewState._UseHorizontalScrollbar);
         }
 
         // Component
@@ -430,6 +437,12 @@ private:
                 _NewState._UseQuickSearch = (bool) SendDlgItemMessageW(id, BM_GETCHECK);
                 break;
             }
+
+            case IDC_HSCROLLBAR:
+            {
+                _NewState._UseHorizontalScrollbar = (bool) SendDlgItemMessageW(id, BM_GETCHECK);
+                break;
+            }
         }
 
         OnChanged();
@@ -510,6 +523,12 @@ private:
                 return true;
         }
 
+        // Horizontal scrollbar
+        {
+            if (_NewState._UseHorizontalScrollbar != _State._UseHorizontalScrollbar)
+                return true;
+        }
+
         return false;
     }
 
@@ -524,6 +543,9 @@ private:
         pfc::string Text;
 
         HRESULT hr = title_formatter_t::Evaluate(Image._FilePath, nullptr, GUID_NULL, Text);
+
+        if (!SUCCEEDED(hr))
+            Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to evaluate \"%s\": 0x%08X", Image._FilePath.c_str(), hr);
 
         const auto FilePath = SUCCEEDED(hr) ? Text.c_str() : Image._FilePath;
 
@@ -569,6 +591,7 @@ private:
         {
             ItemImage::Folder,
             ItemImage::FolderLocked,
+            ItemImage::FolderFrozen,
 
             ItemImage::Playlist,
             ItemImage::PlaylistPlaying,

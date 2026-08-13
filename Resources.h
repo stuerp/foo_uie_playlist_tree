@@ -1,5 +1,5 @@
 
-/** $VER: Resources.h (2026.08.10) P. Stuer **/
+/** $VER: Resources.h (2026.08.13) P. Stuer **/
 
 #pragma once
 
@@ -74,6 +74,7 @@
 
 #define IDM_RENAME              20
 #define IDM_REMOVE              21
+#define IDM_FROZEN        22
 
 #define IDM_LOCK_ADD_ITEMS      30
 #define IDM_LOCK_REMOVE_ITEMS   31
@@ -88,6 +89,7 @@
 #define IDM_LOCK_NONE           39
 
 #define IDM_SORT                50
+#define IDM_PREFERENCES         51
 
 #define IDM_LOAD                60
 #define IDM_SAVE                61

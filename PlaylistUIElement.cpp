@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.cpp (2026.08.12) P. Stuer **/
+/** $VER: PlaylistsUIElement.cpp (2026.08.13) P. Stuer **/
 
 #include "pch.h"
 
@@ -62,26 +62,8 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCTW * cs) noexcept
             if (!SUCCEEDED(hr))
                 Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to initialize image list: 0x%08X.", hr);
         }
-/*
-        // Remove the vertical scroll bar.
-        {
-            auto Style = ::GetWindowLongPtrW(_TreeView.Get(), GWL_STYLE) | TVS_NOSCROLL;
 
-            ::SetWindowLongPtrW(_TreeView.Get(), GWL_STYLE, Style);
-
-            ::SetWindowPos(_TreeView.Get(), NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
-        }
-*/
-/*
-        // Remove the horizontal scroll bar.
-        {
-            auto Style = ::GetWindowLongPtrW(_TreeView.Get(), GWL_STYLE) | TVS_NOHSCROLL;
-
-            ::SetWindowLongPtrW(_TreeView.Get(), GWL_STYLE, Style);
-
-            ::SetWindowPos(_TreeView.Get(), NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
-        }
-*/
+        _TreeView.SetHorizontalScrollbar(_State._UseHorizontalScrollbar);
     }
 
     // Create the edit box.
@@ -103,7 +85,7 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCTW * cs) noexcept
 
             if (SUCCEEDED(hr))
             {
-                hr = ::SHAutoComplete(_EditBox, 0);
+                hr = ::SHAutoComplete(_EditBox, 0); // TODO: Use IAutoComplete2 for more control.
 
                 if (SUCCEEDED(hr))
                 {
@@ -336,6 +318,18 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
             return;
         }
 
+        case IDM_FROZEN:
+        {
+            const auto Node = (node_t *) _TreeView.GetData(_hHighlightedtem);
+
+            if ((Node == nullptr) || !Node->IsFolder)
+                return;
+
+            Node->IsFrozen = !Node->IsFrozen;
+
+            return;
+        }
+
         // Handles the lock commands.
         case IDM_LOCK_ADD_ITEMS:
         {
@@ -411,6 +405,16 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
         {
             if (!_TreeView.Sort(_hHighlightedtem))
                 Log.AtError().Write(STR_COMPONENT_BASENAME " failed to sort.");
+
+            return;
+        }
+
+        // Handles the "Preferences" command.
+        case IDM_PREFERENCES:
+        {
+            static_api_ptr_t<ui_control> UIControl;
+
+            UIControl->show_preferences(GUID_PREFERENCES);
 
             return;
         }
@@ -559,6 +563,7 @@ HBRUSH playlist_uielement_t::OnCtlColorEdit(CDCHandle dc, CEdit) const noexcept
     // CCoreDarkModeHooks does not seem to handle this.
     dc.SetBkColor(_Theme.GetWindowColor());
     dc.SetTextColor(_Theme.GetWindowTextColor());
+    dc.SelectFont(_Theme.GetPlaylistFont());
 
     return _Theme.GetWindowBrush();
 }
@@ -712,6 +717,12 @@ LRESULT playlist_uielement_t::OnRightClick(NMHDR * nmhd) noexcept
         ::EnableMenuItem(hPopup, 4, (UINT) (MF_BYPOSITION | (IsPlaylist ? MF_ENABLED : MF_DISABLED | MF_GRAYED)));
 
         ::EnableMenuItem(hPopup, IDM_REMOVE, !IsProhibited(Node, playlist_lock::filter_remove_playlist) ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+
+        if (Node != nullptr)
+        {
+            ::EnableMenuItem(hPopup, IDM_FROZEN, Node->IsFolder ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+            ::CheckMenuItem (hPopup, IDM_FROZEN, Node->IsFrozen ? MF_CHECKED : 0);
+        }
 
         if (IsPlaylist)
         {
@@ -923,6 +934,9 @@ LRESULT playlist_uielement_t::OnGetDisplayInfo(NMHDR * nmhd) noexcept
             // Is the folder locked?
             if (IsProhibited(Node, playlist_lock::filter_remove_playlist))
                 Image = ItemImage::FolderLocked;
+            else
+            if (Node->IsFrozen)
+                Image = ItemImage::FolderFrozen;
         }
         else
         {
@@ -1189,6 +1203,21 @@ LRESULT playlist_uielement_t::OnBeginDrag(NMHDR * nmhd) noexcept
 }
 
 /// <summary>
+/// Handles the TVN_ITEMEXPANDING notification.
+/// </summary>
+LRESULT playlist_uielement_t::OnItemExpanding(NMHDR * nmhd) noexcept
+{
+    const auto nmtv = (NMTREEVIEWW *) nmhd;
+
+    const auto Node = (node_t *) _TreeView.GetData(nmtv->itemNew.hItem);
+
+    if ((Node == nullptr) || !Node->IsFolder)
+        return FALSE;
+
+    return Node->IsFrozen ? TRUE : FALSE;
+}
+
+/// <summary>
 /// Handles the TVN_ITEMEXPANDED notification.
 /// </summary>
 LRESULT playlist_uielement_t::OnItemExpanded(NMHDR * nmhd) noexcept
@@ -1322,7 +1351,7 @@ void playlist_uielement_t::on_playlist_created(size_t index, const char * name, 
             InsertAfterId = Parent->Id;
     }
 
-    _TreeView.AddItem(ParentId, InsertAfterId, Id, name, false, false);
+    _TreeView.AddItem(ParentId, InsertAfterId, Id, name, false, false, false);
 
     // Activate the newly created playlist.
     _PlaylistManager->set_active_playlist(index);
@@ -1489,7 +1518,7 @@ void playlist_uielement_t::OnFolderCreated(const GUID & id, const std::string & 
             InsertAfterId = Parent->Id;
     }
 
-    _TreeView.AddItem(ParentId, InsertAfterId, id, name, true, false);
+    _TreeView.AddItem(ParentId, InsertAfterId, id, name, true, false, false);
 
     _TreeView.SelectItem(id);
 
@@ -1580,7 +1609,7 @@ void playlist_uielement_t::FromJSON(json object) noexcept
 
         _PlaylistManager->playlist_get_name(PlaylistIndex, Name);
 
-        _TreeView.AddItem(GUID_NULL, GUID_NULL, Id, Name.c_str(), false, false);
+        _TreeView.AddItem(GUID_NULL, GUID_NULL, Id, Name.c_str(), false, false, false);
     }
 }
 
@@ -1599,6 +1628,7 @@ void playlist_uielement_t::FromJSON(json object, const GUID & parentId) noexcept
 
         const bool IsFolder   = Node.value("isFolder",   false);
         const bool IsExpanded = Node.value("isExpanded", false);
+        const bool IsFrozen   = Node.value("isFrozen",   false);
 
         const uint32_t FilterMask = Node.value("filterMask", 0u);
 
@@ -1615,7 +1645,7 @@ void playlist_uielement_t::FromJSON(json object, const GUID & parentId) noexcept
                 _FolderManager->CreateFolder(Id, Name);
             }
 
-            _TreeView.AddItem(parentId, { }, Id, Name, IsFolder, IsExpanded);
+            _TreeView.AddItem(parentId, { }, Id, Name, IsFolder, IsExpanded, IsFrozen);
 
             const auto & Children = Node["nodes"];
 
@@ -1632,7 +1662,7 @@ void playlist_uielement_t::FromJSON(json object, const GUID & parentId) noexcept
             // Restore our lock.
             _LockManager->LockPlaylist(Id, FilterMask);
 
-            _TreeView.AddItem(parentId, GUID_NULL, Id, Name, IsFolder, IsExpanded);
+            _TreeView.AddItem(parentId, GUID_NULL, Id, Name, false, false, false);
         }
     }
 }
@@ -1739,6 +1769,9 @@ void playlist_uielement_t::Refresh() noexcept
 
         ::SendMessageW(m_hWnd, WM_SIZE, SIZE_RESTORED, MAKELPARAM(rc.right, rc.bottom));
     }
+
+    // Horizontal scrollbar visible or not?
+    _TreeView.SetHorizontalScrollbar(_State._UseHorizontalScrollbar);
 }
 
 /// <summary>
@@ -1815,7 +1848,10 @@ std::string playlist_uielement_t::GetConfiguration() const noexcept
             (*node)["isFolder"] = Node->IsFolder;
 
             if (Node->IsFolder)
+            {
                 (*node)["isExpanded"] = _TreeView.IsExpanded(Node->Id);
+                (*node)["isFrozen"]   = Node->IsFrozen;
+            }
 
             (*node)["filterMask"] = FilterMask;
 
@@ -1879,7 +1915,17 @@ HRESULT playlist_uielement_t::InitImageList() noexcept
 
         if (Iter == ImageLists.end())
         {
-            imagelist_t NewImageList = image_list_factory_t::Create(Image._FilePath, _State._ImageSize);
+            // Create the file path.
+            pfc::string Text;
+
+            HRESULT hr = title_formatter_t::Evaluate(Image._FilePath, nullptr, GUID_NULL, Text);
+
+            if (!SUCCEEDED(hr))
+                Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to evaluate \"%s\": 0x%08X", Image._FilePath.c_str(), hr);
+
+            const auto FilePath = SUCCEEDED(hr) ? Text.c_str() : Image._FilePath;
+
+            imagelist_t NewImageList = image_list_factory_t::Create(FilePath, _State._ImageSize);
 
             if (!NewImageList)
                 return HRESULT_FROM_WIN32(::GetLastError());
