@@ -52,6 +52,7 @@ public:
 
 private:
     static const std::string ExpandEnvironmentStrings(const std::string & src) noexcept;
+    static const std::string FormatNumber(int64_t number) noexcept;
 
     double GetPlaylistDuration(size_t index) const noexcept;
     t_filesize GetPlaylistSize(size_t index) const noexcept;

@@ -1,5 +1,5 @@
 
-/** $VER: TitleFormat.cpp (2026.08.02) P. Stuer **/
+/** $VER: TitleFormat.cpp (2026.08.13) P. Stuer **/
 
 #include "pch.h"
 
@@ -75,11 +75,7 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
             if (ItemCount == SIZE_MAX)
                 return false;
 
-            std::locale Locale(""); // User default Windows locale.
-
-            const auto Text = std::format(Locale, "{:L}", ItemCount);
-
-            out->write(titleformat_inputtypes::unknown, Text.c_str());
+            out->write(titleformat_inputtypes::unknown, FormatNumber((int64_t) ItemCount).c_str());
 
             isFound = true;
 
@@ -131,16 +127,12 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
 
         std::pair{ "playlist_duration", [&]() -> bool
         {
-            auto Seconds = GetPlaylistDuration(Index);
+            const auto Seconds = GetPlaylistDuration(Index);
 
             if (Seconds < 0.)
                 return false;
 
-            std::locale Locale(""); // User default Windows locale.
-
-            const auto Text = std::format(Locale, "{:L}", Seconds);
-
-            out->write(titleformat_inputtypes::unknown, Text.c_str());
+            out->write(titleformat_inputtypes::unknown, FormatNumber((int64_t) Seconds).c_str());
 
             isFound = true;
 
@@ -196,17 +188,12 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
 
         std::pair{ "playlist_size", [&]() -> bool
         {
-            auto Size = GetPlaylistSize(Index);
+            const auto Size = GetPlaylistSize(Index);
 
             if ((int64_t) Size < 0)
                 return false;
 
-            std::string Text;
-            std::locale Locale(""); // User default Windows locale.
-
-            Text = std::format(Locale, "{:L}", Size);
-
-            out->write(titleformat_inputtypes::unknown, Text.c_str());
+            out->write(titleformat_inputtypes::unknown, FormatNumber((int64_t) Size).c_str());
 
             isFound = true;
 
@@ -328,6 +315,40 @@ const std::string custom_titleformat_hook_t::ExpandEnvironmentStrings(const std:
     ::ExpandEnvironmentStringsA(src.c_str(), (LPSTR) Dst.data(), (DWORD) Dst.size());
 
     return Dst;
+}
+
+/// <summary>
+/// Formats a number using the user locale.
+/// </summary>
+const std::string custom_titleformat_hook_t::FormatNumber(int64_t number) noexcept
+{
+    wchar_t Grouping[16]    = { };
+    wchar_t DecimalSep[16]  = { };
+    wchar_t ThousandSep[16] = { };
+
+    ::GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LOCALE_SGROUPING, Grouping,    _countof(Grouping));
+    ::GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LOCALE_SDECIMAL,  DecimalSep,  _countof(DecimalSep));
+    ::GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LOCALE_STHOUSAND, ThousandSep, _countof(ThousandSep));
+
+    const NUMBERFMTW Format =
+    {
+        .NumDigits     = 0, // Suppress fractional digits
+        .LeadingZero   = 1,
+        .Grouping      = 3,
+        .lpDecimalSep  = DecimalSep,
+        .lpThousandSep = ThousandSep,
+        .NegativeOrder = 1
+    };
+
+    wchar_t Text[32] = { };
+
+    ::_i64tow_s(number, Text, _countof(Text), 10);
+
+    wchar_t FormattedText[64] = { };
+
+    ::GetNumberFormatEx(LOCALE_NAME_USER_DEFAULT, 0, Text, &Format, FormattedText, _countof(FormattedText));
+
+    return msc::WideToUTF8(FormattedText);
 }
 
 /// <summary>

@@ -94,6 +94,7 @@ v1.4.4.0, 2026-08-xx
 - Fixed: A couple of small render bugs when switching between the light and dark theme.
 - Fixed: The item indentation was not calculated correctly.
 - Fixed: Dark Mode support for the Search box.
+- Fixed: Loading images from path that contains title formatting fields.
 
 ## Acknowledgements / Credits
 
