@@ -60,6 +60,7 @@ You can experiment with the component without modifying your layout by selecting
 - Configurable tree node images
 - Drag & drop from foobar2000, Explorer and other applications.
 - Supports the foobar2000 playlist recycle bin.
+- Supports foobar2000 playlist locks.
 
 ---
 
@@ -67,8 +68,18 @@ You can experiment with the component without modifying your layout by selecting
 
 The first time the component opens it loads all the playlists that are currently open and adds them to the root of the tree.
 
-At the bottom of the panel there's a Quick Search text box. Typing the name of a folder or playlist will highlight it's node in the tree.
+The idea is to create a tree structure using folders to group your playlists any way you see fit.
+
+Navigate the tree just like you would any other Windows tree view.
+
+> [!Note]
+> Hold the `Ctrl` key when you click the chevron of a folder to collapse or expand the complete branch.
+
+At the bottom of the panel there's a Quick Search text box. Typing the name of a folder or playlist will highlight its node in the tree.
 The text box has an Auto Complete feature that contains all the nodes names of the tree.
+
+> [!Note]
+> Press the `Escape` key to close the drop down.
 
 ---
 
@@ -84,6 +95,9 @@ By default the new item gets created as a child of a folder item or below a play
 
 If no item is highlighted the new item gets created at the bottom of the tree.
 
+> [!Note]
+> You can specify an icon image to recognize a folder or a playlist.
+
 ### Rename
 
 Allows you to rename the highlighted item. You can not rename a playlist that is [locked for renaming](#rename-playlist). The menu item will be disabled.
@@ -98,9 +112,20 @@ A folder that contains at least one playlist that is [locked for removal](#remov
 > Removing a folder also removes all the items it contains.
 > A click with the middle mouse button will also remove the highlighed item.
 
+### Frozen
+
+Sometimes you don't want the collapsed or expanded state of a folder to change. The `Frozen`menu item is enabled only for a folder and allows you to *freeze* the current state of a folder.
+
+> [!Note]
+> You can specify an icon image to recognize a frozen folder.
+
 ### Sort
 
 Sorts the contents of the highlighed folder or the siblings of the selected playlist.
+
+### Preferences
+
+Opens the foobar2000 preferences dialog with the component page selected.
 
 ### Save playlist...
 
@@ -120,6 +145,7 @@ This menu item allows you to call up a dialog to edit an autoplaylist.
 
 > [!Note]
 > This menu item only appears when the highlighted playlist is an autoplaylist.
+> You can specify an icon image to recognize autoplaylists.
 
 ### Restore Submenu
 
@@ -135,8 +161,9 @@ The `Lock` submenu allows you to lock a playlist or inspect an existing lock fro
 
 > [!Note]
 > This submenu only appears when the highlighted playlist is locked.
+> You can specify an icon image to recognize a locked folder or playlist.
 
-The name of the component that lock a playlist is displayed at the bottom of the submenu. If another component has applied the lock the menu items will be disabled. You'll have to use the lock owner component to modify the locks.
+The name of the component that locked the playlist is displayed at the bottom of the submenu. If another component has applied the lock the menu items will be disabled. You'll have to use the lock owner component to modify the locks.
 
 ![Screenshot](assets/Lock-Menu.png?raw=true "Screenshot")
 
@@ -262,6 +289,9 @@ The component provides the following custom formatting fields:
 | %fb2k_profile_path%              | The directory path of the foobar2000 profile.                                         |
 | Any Windows environment variable | For example %UserProfile% or %WinDir% (See [Full List of Environment Variables](https://gist.github.com/RebeccaWhit3/5dad8627b8227142e1bea432db3f8824)) |
 
+> [!Note]
+> `%node_item_count%`, `%playlist_duration%` and `%playlist_size%` are formatted using your Windows Locale number format settings.
+
 ### Text Format
 
 This setting determines how the text of a tree node gets formatted using foobar2000 [Title Formatting](https://wiki.hydrogenaudio.org/index.php?title=Foobar2000:Title_Formatting_Introduction).
@@ -333,7 +363,11 @@ Select the image for the selected node type from this list.
 
 ### Quick Search
 
-Enable this setting to display the Quick Search text box at the bottom of the panel.
+Enable this setting to display the Quick Search text box at the bottom of the panel (Default: on).
+
+### Horizontal scrollbar
+
+Enable this setting to display the horizontal scrollbar in the tree view (Default: on).
 
 ---
 
@@ -345,7 +379,8 @@ Enable this setting to display the Quick Search text box at the bottom of the pa
 
 ## FAQs
 
-🔧 *Work in Progress*
+- Q: When I open a second instance of the component the tree structure becomes unstable.
+- A: The current version of the component does not support multiple instances.
 
 ---
 

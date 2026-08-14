@@ -78,11 +78,11 @@ Open `foo_uie_playlist_tree.sln` with Visual Studio and build the solution.
 
 ### Packaging
 
-To create the component first build the x86 configuration and next the x64 configuration.
+To create the component first build the x86, x64 and/or ARMEC64 configuration.
 
 ## Change Log
 
-v1.4.4.0, 2026-08-xx
+v1.5.0.0, 2026-08-15
 
 - Improved: A couple of usability tweaks
   - Press Ctrl when you expand or collapse a folder item to expand or collapse the complete branch.
@@ -91,10 +91,11 @@ v1.4.4.0, 2026-08-xx
   - New context menu item to display the preferences page.
   - New context menu item to 'freeze' the expanded or collapsed state of a folder.
   - New images for an autoplaylist, a playing autoplaylist and a frozen folder.
+  - Auto Complete shows any node that contains the typed text, not just the nodes that start with the text.
 - Fixed: A couple of small render bugs when switching between the light and dark theme.
 - Fixed: The item indentation was not calculated correctly.
-- Fixed: Dark Mode support for the Search box.
-- Fixed: Loading images from path that contains title formatting fields.
+- Fixed: Dark Mode support for the Search box when focused.
+- Fixed: Loading images from path that contains title formatting fields. (Regression)
 
 ## Acknowledgements / Credits
 

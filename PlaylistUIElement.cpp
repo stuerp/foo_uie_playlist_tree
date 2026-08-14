@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.cpp (2026.08.13) P. Stuer **/
+/** $VER: PlaylistsUIElement.cpp (2026.08.14) P. Stuer **/
 
 #include "pch.h"
 
@@ -74,43 +74,11 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCTW * cs) noexcept
         if (!_EditBox.Create(m_hWnd, NULL, nullptr, Styles, ExStyles, IDC_EDITBOX, nullptr))
             return -1;
 
-        // Add Auto Complete to the edit box.
         {
-            // Enumerates the node names for Auto Complete to display.
-            _StringEnumerator = new string_enumerator_t();
+            HRESULT hr = AttachAutoComplete(_EditBox);
 
-            IAutoComplete * ac = nullptr;
-
-            HRESULT hr = ::CoCreateInstance(CLSID_AutoComplete, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&ac));
-
-            if (SUCCEEDED(hr))
-            {
-                hr = ::SHAutoComplete(_EditBox, 0); // TODO: Use IAutoComplete2 for more control.
-
-                if (SUCCEEDED(hr))
-                {
-                    ac->Init(_EditBox, _StringEnumerator, nullptr, nullptr);
-
-                    {
-                        IAutoComplete2 * ac2 = nullptr;
-
-                        hr = ac->QueryInterface(IID_PPV_ARGS(&ac2));
-
-                        if (SUCCEEDED(hr))
-                        {
-                            ac2->SetOptions(ACO_AUTOSUGGEST | ACO_UPDOWNKEYDROPSLIST);
-
-                            ac2->Release();
-                        }
-                        else
-                            Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to set auto complete options: 0x%08X.", hr);
-                    }
-                }
-
-                ac->Release();
-            }
-            else
-                Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to install auto complete on edit box: 0x%08X.", hr);
+            if (!SUCCEEDED(hr))
+                Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to attach auto complete to edit box: 0x%08X.", hr);
         }
 
         _EditBox.ShowWindow(_State._UseQuickSearch ? SW_SHOW : SW_HIDE);
@@ -188,12 +156,7 @@ void playlist_uielement_t::OnDestroy() noexcept
         _EditBox.DestroyWindow();
 
         // Destroy the string enumerator.
-        if (_StringEnumerator != nullptr)
-        {
-            delete _StringEnumerator;
-
-            _StringEnumerator = nullptr;
-        }
+        _StringEnumerator.reset();
     }
 
     // Destroy the tree view.
@@ -579,6 +542,11 @@ void playlist_uielement_t::OnEditChange(UINT notifyCode, int id, CWindow wnd)
         return;
 
     _TreeView.SelectItem(msc::WideToUTF8(Text));
+
+    _StringEnumerator->FilterItems(Text);
+
+    if (_ACDropDown)
+        _ACDropDown->ResetEnumerator();
 }
 
 /// <summary>
@@ -2073,11 +2041,58 @@ LONG playlist_uielement_t::CalculateEditHeight(HWND hWnd, HFONT hFont) noexcept
 }
 
 /// <summary>
+/// Attaches AutoComplete to the specified edit control.
+/// </summary>
+HRESULT playlist_uielement_t::AttachAutoComplete(HWND hEdit) noexcept
+{
+    // Enumerates the node names for Auto Complete to display.
+    _StringEnumerator = std::make_unique<string_enumerator_t>();
+
+    CComPtr<IAutoComplete> ac;
+
+    HRESULT hr = ::CoCreateInstance(CLSID_AutoComplete, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&ac));
+
+    if (!SUCCEEDED(hr))
+        return hr;
+
+    hr = ::SHAutoComplete(_EditBox, 0); // TODO: Use IAutoComplete2 for more control.
+
+    if (!SUCCEEDED(hr))
+        return hr;
+
+    hr = ac->Init(_EditBox, _StringEnumerator.get(), nullptr, nullptr);
+
+    if (!SUCCEEDED(hr))
+        return hr;
+
+    CComPtr<IAutoComplete2> ac2;
+
+    hr = ac->QueryInterface(IID_PPV_ARGS(&ac2));
+
+    if (SUCCEEDED(hr))
+    {
+        hr = ac2->SetOptions(ACO_AUTOSUGGEST | ACO_UPDOWNKEYDROPSLIST | ACO_NOPREFIXFILTERING);
+
+        if (!SUCCEEDED(hr))
+            Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to set auto complete options: 0x%08X.", hr);
+
+        hr = ac2->QueryInterface(IID_PPV_ARGS(&_ACDropDown));
+
+        if (!SUCCEEDED(hr))
+            Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to get IAutoCompleteDropDown interface: 0x%08X.", hr);
+    }
+    else
+        Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to get IAutoComplete2 interface: 0x%08X.", hr);
+
+    return S_OK;
+}
+
+/// <summary>
 /// Resets AutoComplete.
 /// </summary>
 void playlist_uielement_t::ResetAutoComplete() noexcept
 {
-    if (_StringEnumerator == nullptr)
+    if (!_StringEnumerator)
         return;
 
     Log.AtDebug().Write(STR_COMPONENT_BASENAME " is resetting auto complete.");
@@ -2092,6 +2107,11 @@ void playlist_uielement_t::ResetAutoComplete() noexcept
     });
 
     try { _EditBox.SetWindowTextW(L""); } catch (...) { }
+
+    _StringEnumerator->FilterItems(L"");
+
+    if (_ACDropDown)
+        _ACDropDown->ResetEnumerator();
 }
 
 tracker_t<playlist_uielement_t> _UIElementTracker;

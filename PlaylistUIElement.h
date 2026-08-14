@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.h (2026.08.12) P. Stuer **/
+/** $VER: PlaylistsUIElement.h (2026.08.14) P. Stuer **/
 
 #pragma once
 
@@ -187,6 +187,9 @@ private:
     bool IsProhibited(const node_t * node, uint32_t filterMask) const noexcept;
 
     LONG CalculateEditHeight(HWND hWnd, HFONT hFont) noexcept;
+
+    HRESULT AttachAutoComplete(HWND hWnd) noexcept;
+//  HRESULT AttachFuzzyAutoComplete(HWND hWnd) noexcept;
     void ResetAutoComplete() noexcept;
 
 protected:
@@ -211,7 +214,9 @@ private:
     bool _IsUser = false;
 
     drop_target_t * _DropTarget = nullptr;
-    string_enumerator_t * _StringEnumerator = nullptr;
+
+    std::unique_ptr<string_enumerator_t> _StringEnumerator;
+    CComPtr<IAutoCompleteDropDown> _ACDropDown;
 };
 
 /// <summary>
