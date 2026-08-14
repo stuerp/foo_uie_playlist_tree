@@ -88,6 +88,7 @@ v1.5.0.0, 2026-08-15
   - Press Ctrl when you expand or collapse a folder item to expand or collapse the complete branch.
   - When creating a new folder the tree item will automatically enter Edit mode.
   - New setting to disable the horizontal scrollbar.
+  - New setting to disable expanding the drop target after a drop.
   - New context menu item to display the preferences page.
   - New context menu item to 'freeze' the expanded or collapsed state of a folder.
   - New images for an autoplaylist, a playing autoplaylist and a frozen folder.
@@ -95,7 +96,7 @@ v1.5.0.0, 2026-08-15
 - Fixed: A couple of small render bugs when switching between the light and dark theme.
 - Fixed: The item indentation was not calculated correctly.
 - Fixed: Dark Mode support for the Search box when focused.
-- Fixed: Loading images from path that contains title formatting fields. (Regression)
+- Fixed: Loading images from a path that contains title formatting fields. (Regression)
 
 ## Acknowledgements / Credits
 

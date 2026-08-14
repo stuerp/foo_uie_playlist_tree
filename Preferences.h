@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.h (2026.08.13) **/
+/** $VER: Preferences.h (2026.08.14) **/
 
 #pragma once
 
@@ -12,6 +12,7 @@
 #define IDC_IMAGE_LIST          1006
 #define IDC_QUICK_SEARCH        1007
 #define IDC_HSCROLLBAR          1008
+#define IDC_EXPAND_DROP_TARGET  1009
 
 #define IDC_LOG_LEVEL           9999
 
@@ -135,6 +136,14 @@
 #define H_A25   H_CHB
 #define X_A25   X_A24
 #define Y_A25   Y_A24 + H_A24 + IY
+
+/** Expand drop target **/
+
+// Checkbox: Expand drop target
+#define W_A26   78
+#define H_A26   H_CHB
+#define X_A26   X_A25
+#define Y_A26   Y_A25 + H_A25 + IY
 
 // Groupbox: Component
 #define X_A99   0

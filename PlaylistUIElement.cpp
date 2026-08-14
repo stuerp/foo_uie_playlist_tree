@@ -64,6 +64,7 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCTW * cs) noexcept
         }
 
         _TreeView.SetHorizontalScrollbar(_State._UseHorizontalScrollbar);
+        _TreeView.SetExpandDropTarget(_State._ExpandDropTarget);
     }
 
     // Create the edit box.
@@ -154,6 +155,8 @@ void playlist_uielement_t::OnDestroy() noexcept
     {
         // Important: Destroy the edit box first because there's no way to remove auto-complete from it.
         _EditBox.DestroyWindow();
+
+        _ACDropDown.Release();
 
         // Destroy the string enumerator.
         _StringEnumerator.reset();
@@ -1738,8 +1741,8 @@ void playlist_uielement_t::Refresh() noexcept
         ::SendMessageW(m_hWnd, WM_SIZE, SIZE_RESTORED, MAKELPARAM(rc.right, rc.bottom));
     }
 
-    // Horizontal scrollbar visible or not?
     _TreeView.SetHorizontalScrollbar(_State._UseHorizontalScrollbar);
+    _TreeView.SetExpandDropTarget(_State._ExpandDropTarget);
 }
 
 /// <summary>

@@ -330,6 +330,15 @@ public:
         ::SetWindowPos(_TreeView.Get(), NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
     }
 */
+
+    /// <summary>
+    /// Enables or disables expanding the drop target after a drop.
+    /// </summary>
+    void SetExpandDropTarget(bool expandDropTarget) noexcept
+    {
+        _ExpandDropTarget = expandDropTarget;
+    }
+
 protected:
     virtual bool AllowDrop(DropZone dropZone) noexcept { return false; };
 
@@ -340,7 +349,8 @@ private:
 protected:
     HTREEITEM _hDragSource = NULL;
     HTREEITEM _hDropTarget = NULL;
-    BOOL _PlaceAfter = FALSE;
+    bool _PlaceAfter = FALSE;
+    bool _ExpandDropTarget = true;
 
 private:
     HWND _hTreeView;

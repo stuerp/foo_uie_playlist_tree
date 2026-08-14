@@ -1,5 +1,5 @@
 
-/** $VER: TreeView.cpp (2026.08.10) P. Stuer **/
+/** $VER: TreeView.cpp (2026.08.14) P. Stuer **/
 
 #include "pch.h"
 
@@ -427,7 +427,7 @@ void tree_view_t::DragMove(const POINT & point) noexcept
     ::ImageList_DragShowNolock(FALSE);
 
     // Remove the insertion marker.
-    TreeView_SetInsertMark(_hTreeView, NULL, _PlaceAfter);
+    TreeView_SetInsertMark(_hTreeView, NULL, (BOOL) _PlaceAfter);
 
     // Determine the drop target and highlight it.
     const TVHITTESTINFO tvhi = { .pt = pt };
@@ -454,10 +454,10 @@ void tree_view_t::DragMove(const POINT & point) noexcept
 
             if (_DropZone != DropZone::Middle)
             {
-                _PlaceAfter = (_DropZone == DropZone::Bottom) ? TRUE : FALSE;
+                _PlaceAfter = (_DropZone == DropZone::Bottom);
 
                 // Add the insertion marker.
-                TreeView_SetInsertMark(_hTreeView, _hDropTarget, _PlaceAfter);
+                TreeView_SetInsertMark(_hTreeView, _hDropTarget, (BOOL) _PlaceAfter);
             }
         }
     }
@@ -519,7 +519,8 @@ void tree_view_t::EndDrag(bool isDragCancelled) noexcept
     {
         MoveItem(_hDropTarget, _hDragSource, _DropZone);
 
-        TreeView_Expand(_hTreeView, _hDropTarget, TVE_EXPAND);
+        if (_ExpandDropTarget)
+            TreeView_Expand(_hTreeView, _hDropTarget, TVE_EXPAND);
     }
 
     // Remove the drop target highlight.

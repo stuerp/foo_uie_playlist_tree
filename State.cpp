@@ -1,5 +1,5 @@
 
-/** $VER: State.cpp (2026.08.13) P. Stuer **/
+/** $VER: State.cpp (2026.08.14) P. Stuer **/
 
 #include "pch.h"
 
@@ -25,6 +25,7 @@ void state_t::Reset() noexcept
     _ImageSize              = (uint32_t) ::GetSystemMetrics(SM_CXSMICON);
     _UseQuickSearch         = true;
     _UseHorizontalScrollbar = true;
+    _ExpandDropTarget       = true;
 
     _Images.clear();
 
@@ -51,6 +52,7 @@ state_t & state_t::operator=(const state_t & other) noexcept
     _ImageSize              = other._ImageSize;
     _UseQuickSearch         = other._UseQuickSearch;
     _UseHorizontalScrollbar = other._UseHorizontalScrollbar;
+    _ExpandDropTarget       = other._ExpandDropTarget;
 
     _Images                = other._Images;
 
@@ -78,6 +80,8 @@ void state_t::FromJSON(const char * data, size_t size) noexcept
     const auto & HorizontalScrollbar = Object.value("horizontalScrollbar", json::object());
 
     _UseHorizontalScrollbar = HorizontalScrollbar.value("visible", _UseHorizontalScrollbar);
+
+    _ExpandDropTarget = Object.value("expandDropTarget", _ExpandDropTarget);
 
     size_t Index = 0;
 
@@ -107,7 +111,7 @@ void state_t::FromJSON(const char * data, size_t size) noexcept
 }
 
 /// <summary>
-/// Serializes this instance to JSON string.
+/// Serializes this instance to a JSON object.
 /// </summary>
 json state_t::ToJSON() const noexcept
 {
@@ -134,6 +138,8 @@ json state_t::ToJSON() const noexcept
                 { "visible", _UseHorizontalScrollbar },
             })
         ),
+
+        { "expandDropTarget", _ExpandDropTarget },
     };
 
     json::array_t Images;

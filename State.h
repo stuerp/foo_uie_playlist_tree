@@ -1,5 +1,5 @@
 
-/** $VER: State.h (2026.08.13) P. Stuer **/
+/** $VER: State.h (2026.08.14) P. Stuer **/
 
 #pragma once
 
@@ -55,6 +55,7 @@ public:
     uint32_t _ImageSize;
     bool _UseQuickSearch;
     bool _UseHorizontalScrollbar;
+    bool _ExpandDropTarget;
 
     std::vector<image_t> _Images;
 

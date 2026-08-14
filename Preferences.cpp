@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.cpp (2026.08.13) P. Stuer **/
+/** $VER: Preferences.cpp (2026.08.14) P. Stuer **/
 
 #include "pch.h"
 
@@ -119,6 +119,7 @@ public:
         COMMAND_HANDLER_EX(IDC_FILE_PATH_SELECT,    BN_CLICKED,     OnButtonClick)
         COMMAND_HANDLER_EX(IDC_QUICK_SEARCH,        BN_CLICKED,     OnButtonClick)
         COMMAND_HANDLER_EX(IDC_HSCROLLBAR,          BN_CLICKED,     OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_EXPAND_DROP_TARGET,  BN_CLICKED,     OnButtonClick)
 
         MSG_WM_NOTIFY(OnNotify);
     END_MSG_MAP()
@@ -144,6 +145,7 @@ private:
 
             { IDC_QUICK_SEARCH, "Enable this setting to display the Quick Search text box at the bottom of the panel." },
             { IDC_HSCROLLBAR, "Enable this setting to display the horizontal scrollbar in the tree view when the node text becomes too long." },
+            { IDC_EXPAND_DROP_TARGET, "Enable this setting to expand the drop target folder when dropping an item on it." },
 
             // Component
             { IDC_LOG_LEVEL, "Sets the verbosity of the log information that gets written to the console." },
@@ -185,7 +187,7 @@ private:
     /// </summary>
     HBRUSH OnCtlColorDlg(HDC, HWND) const noexcept
     {
-        return ::CreateSolidBrush(RGB(220, 220, 220));
+        return ::CreateSolidBrush(0xE8E8E8);
     }
     #endif
 
@@ -250,6 +252,11 @@ private:
         // Horizontal Scrollbar
         {
             SendDlgItemMessageW(IDC_HSCROLLBAR, BM_SETCHECK, _NewState._UseHorizontalScrollbar);
+        }
+
+        // Expand Drop Target
+        {
+            SendDlgItemMessageW(IDC_EXPAND_DROP_TARGET, BM_SETCHECK, _NewState._ExpandDropTarget);
         }
 
         // Component
@@ -443,6 +450,12 @@ private:
                 _NewState._UseHorizontalScrollbar = (bool) SendDlgItemMessageW(id, BM_GETCHECK);
                 break;
             }
+
+            case IDC_EXPAND_DROP_TARGET:
+            {
+                _NewState._ExpandDropTarget = (bool) SendDlgItemMessageW(id, BM_GETCHECK);
+                break;
+            }
         }
 
         OnChanged();
@@ -526,6 +539,12 @@ private:
         // Horizontal scrollbar
         {
             if (_NewState._UseHorizontalScrollbar != _State._UseHorizontalScrollbar)
+                return true;
+        }
+
+        // Expand drop target
+        {
+            if (_NewState._ExpandDropTarget != _State._ExpandDropTarget)
                 return true;
         }
 

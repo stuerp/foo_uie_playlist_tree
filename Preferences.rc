@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.rc (2026.08.13) P. Stuer **/
+/** $VER: Preferences.rc (2026.08.14) P. Stuer **/
 
 #include "Resources.h"
 
@@ -33,8 +33,9 @@ font 8, "MS Shell Dlg", 400, 0, 1
 
     control     "",             IDC_IMAGE_LIST,         WC_ICON_LIST, WS_CHILD | WS_VISIBLE | WS_TABSTOP, X_A18, Y_A18, W_A18, H_A18
 
-    control     "Quick search",         IDC_QUICK_SEARCH, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A24, Y_A24, W_A24, H_A24
-    control     "Horizontal scrollbar", IDC_HSCROLLBAR,   "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A25, Y_A25, W_A25, H_A25
+    control     "Quick search",         IDC_QUICK_SEARCH,       "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A24, Y_A24, W_A24, H_A24
+    control     "Horizontal scrollbar", IDC_HSCROLLBAR,         "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A25, Y_A25, W_A25, H_A25
+    control     "Expand drop target",   IDC_EXPAND_DROP_TARGET, "Button", BS_AUTOCHECKBOX | WS_TABSTOP, X_A26, Y_A26, W_A26, H_A26
 
     groupbox "Component", IDC_STATIC, X_A99, Y_A99, W_A99, H_A99, BS_GROUPBOX, WS_EX_TRANSPARENT
 
