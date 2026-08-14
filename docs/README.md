@@ -278,11 +278,14 @@ The component provides the following custom formatting fields:
 | %node_name%                      | The name of the item, either a playlist or a folder.                                  |
 | %node_is_folder%                 | Boolean value for use in $if( ...) expressions and is true when the item is a folder. |
 | %node_item_count%                | The number of nodes in a folder or the number of items in a playlist.                 |
+| %node_item_count_locale%         | The number of nodes in a folder or the number of items in a playlist, formatted.      |
 | %node_is_locked%                 | Boolean value for use in $if( ...) expressions and is true when the item is locked.   |
 | %node_lock_name%                 | The name of the lock if the item is locked.                                           |
 | %playlist_duration%              | The duration of the playlist (in seconds).                                            |
+| %playlist_duration_locale%       | The duration of the playlist (in seconds), formatted.                                 |
 | %playlist_duration_natural%      | The duration of the playlist in weeks, days, hours, minutes and seconds.              |
 | %playlist_size%                  | The size of the playlist (in bytes).                                                  |
+| %playlist_size_locale%           | The size of the playlist (in bytes), formatted.                                       |
 | %playlist_size_natural%          | The size of the playlist in TB, GB, MB, KB or bytes.                                  |
 | %fb2k_path%                      | The directory path of the foobar2000 installation.                                    |
 | %fb2k_component_path%            | The directory path of the component.                                                  |
@@ -290,7 +293,7 @@ The component provides the following custom formatting fields:
 | Any Windows environment variable | For example %UserProfile% or %WinDir% (See [Full List of Environment Variables](https://gist.github.com/RebeccaWhit3/5dad8627b8227142e1bea432db3f8824)) |
 
 > [!Note]
-> `%node_item_count%`, `%playlist_duration%` and `%playlist_size%` are formatted using your Windows Locale number format settings.
+> `%node_item_count_locale%`, `%playlist_duration_locale%` and `%playlist_size_locale%` are formatted using your Windows Regional Number format settings.
 
 ### Text Format
 
@@ -299,9 +302,9 @@ This setting determines how the text of a tree node gets formatted using foobar2
 Here are some examples:
 
 ``` foobar2000
-%node_name%$if(%node_is_folder%,,' ('%node_item_count%')')
+%node_name%$if(%node_is_folder%,,' ('%node_item_count_locale%')')
 
-%node_name%$if(%node_is_folder%,,' ('%node_item_count%') '%playlist_size%' bytes')
+%node_name%$if(%node_is_folder%,,' ('%node_item_count_locale%') '%playlist_size_locale%' bytes')
 ```
 
 > [!Note]

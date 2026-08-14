@@ -20,7 +20,7 @@ state_t::state_t() noexcept
 /// </summary>
 void state_t::Reset() noexcept
 {
-    _TextFormat             = "%node_name%$if(%node_is_folder%,,' ('%node_item_count%')')";
+    _TextFormat             = "%node_name%$if(%node_is_folder%,,' ('%node_item_count_locale%')')";
     _ToolTipFormat          = "$if(%node_is_folder%,,$if(%playlist_size_natural%,%playlist_size_natural%$crlf()$if2(%playlist_duration_natural%,', N/A'),'N/A'))";
     _ImageSize              = (uint32_t) ::GetSystemMetrics(SM_CXSMICON);
     _UseQuickSearch         = true;

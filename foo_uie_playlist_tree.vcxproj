@@ -109,17 +109,14 @@
     <IntDir>$(SolutionDir)..\int\$(PlatformTarget)-$(Configuration)-$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)..\out\$(PlatformTarget)-$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)..\int\$(PlatformTarget)-$(Configuration)-$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)..\out\$(PlatformTarget)-$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)..\int\$(PlatformTarget)-$(Configuration)-$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64EC'">
-    <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)..\out\$(PlatformTarget)-$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)..\int\$(PlatformTarget)-$(Configuration)-$(ProjectName)\</IntDir>
   </PropertyGroup>
@@ -188,6 +185,7 @@
       <AdditionalDependencies>$(SolutionDir)..\sdk\foobar2000\shared\shared-$(Platform).lib;$(SolutionDir)..\out\$(PlatformTarget)-$(Configuration)\columns_ui_sdk.lib</AdditionalDependencies>
       <EnableUAC>false</EnableUAC>
       <AdditionalManifestDependencies>%(AdditionalManifestDependencies)</AdditionalManifestDependencies>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
       <Command>pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(TargetName) $(TargetFileName) $(Platform) $(OutputPath)</Command>
@@ -294,6 +292,7 @@
       <AdditionalDependencies>$(SolutionDir)..\sdk\foobar2000\shared\shared-$(Platform).lib;$(SolutionDir)..\out\$(PlatformTarget)-$(Configuration)\columns_ui_sdk.lib</AdditionalDependencies>
       <EnableUAC>false</EnableUAC>
       <AdditionalManifestDependencies>%(AdditionalManifestDependencies)</AdditionalManifestDependencies>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
       <Command>pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(TargetName) $(TargetFileName) $(Platform) $(OutputPath)</Command>
@@ -334,6 +333,7 @@
       <AdditionalDependencies>$(SolutionDir)..\sdk\foobar2000\shared\shared-$(Platform).lib;$(SolutionDir)..\out\$(PlatformTarget)-$(Configuration)\columns_ui_sdk.lib</AdditionalDependencies>
       <EnableUAC>false</EnableUAC>
       <AdditionalManifestDependencies>%(AdditionalManifestDependencies)</AdditionalManifestDependencies>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
       <Command>pwsh.exe -NoLogo -NonInteractive -NoProfile -File Build-FB2KComponent.ps1 $(TargetName) $(TargetFileName) $(Platform) $(OutputPath)</Command>

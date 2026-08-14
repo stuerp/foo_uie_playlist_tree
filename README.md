@@ -82,7 +82,7 @@ To create the component first build the x86, x64 and/or ARMEC64 configuration.
 
 ## Change Log
 
-v1.5.0.0, 2026-08-15
+v1.5.0.0, 2026-08-14
 
 - Improved: A couple of usability tweaks
   - Press Ctrl when you expand or collapse a folder item to expand or collapse the complete branch.
@@ -93,10 +93,14 @@ v1.5.0.0, 2026-08-15
   - New context menu item to 'freeze' the expanded or collapsed state of a folder.
   - New images for an autoplaylist, a playing autoplaylist and a frozen folder.
   - Auto Complete shows any node that contains the typed text, not just the nodes that start with the text.
+- Breaking change:
+  - `%node_item_count%`, `%playlist_duration%` and `%playlist_size%` are now unformatted so that they can be used by the foobar2000 math functions.
+  - `%node_item_count_locale%`, `%playlist_duration_locale%` and `%playlist_size_locale%` are formatted using your Windows Locale number format settings.
 - Fixed: A couple of small render bugs when switching between the light and dark theme.
 - Fixed: The item indentation was not calculated correctly.
 - Fixed: Dark Mode support for the Search box when focused.
 - Fixed: Loading images from a path that contains title formatting fields. (Regression)
+- Fixed: Some regional number formats (such as french/France "fr-FR") containing a Narrow No-Break Space (0x202F) did not render correctly.
 
 ## Acknowledgements / Credits
 
