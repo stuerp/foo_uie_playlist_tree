@@ -6,6 +6,7 @@
     <ClCompile Include="src\Support.cpp" />
     <ClCompile Include="src\Stream.cpp" />
     <ClCompile Include="src\Win32.cpp" />
+    <ClCompile Include="src\NLS.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Encoding.h" />
@@ -25,6 +26,7 @@
     <ClInclude Include="include\Enum.h" />
     <ClInclude Include="include\Win32.h" />
     <ClInclude Include="include\Direct2D.h" />
+    <ClInclude Include="include\NLS.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />

@@ -1,5 +1,5 @@
 
-/** $VER: CUIElement.cpp (2026.07.25) P. Stuer **/
+/** $VER: CUIElement.cpp (2026.08.10) P. Stuer **/
 
 #include "pch.h"
 
@@ -25,7 +25,6 @@ static cui::fonts::client::factory<cui_font_client_t> _CUIFontClientFactory;
 /// </summary>
 cui_element_t::cui_element_t()
 {
-    _Theme._IsDUI = false;
 }
 
 /// <summary>
@@ -70,10 +69,7 @@ HWND cui_element_t::create_or_transfer_window(HWND hParent, const window_host_pt
             Client->_Element = this;
     }
 
-    _Theme.Initialize(m_hWnd);
-
-    GetColors();
-    GetFonts();
+    _Theme.Initialize(m_hWnd, false);
 
     return *this;
 }
@@ -128,11 +124,6 @@ void cui_element_t::GetColors() noexcept
 
     _Theme.SetHighlightColor            (Helper.get_colour(cui::colours::colour_selection_background));
     _Theme.SetHighlightTextColor        (Helper.get_colour(cui::colours::colour_selection_text));
-
-    TreeView_SetBkColor  (_TreeView.Get(), _Theme.GetWindowColor());
-    TreeView_SetTextColor(_TreeView.Get(), _Theme.GetWindowTextColor());
-
-    ::InvalidateRect(_TreeView.Get(), nullptr, TRUE);
 }
 
 /// <summary>
@@ -143,12 +134,6 @@ void cui_element_t::GetFonts() noexcept
     cui::fonts::helper Helper(GUID_UI_ELEMENT); // Use pfc::guid_null for Global
 
     _Theme.SetPlaylistFont(Helper.get_font());
-
-    if (_TreeView.Get() != NULL)
-        _TreeView.SetFont(_Theme.GetPlaylistFont());
-
-    if (_EditBox.IsWindow())
-        _EditBox.SetFont(_Theme.GetPlaylistFont());
 }
 
 }

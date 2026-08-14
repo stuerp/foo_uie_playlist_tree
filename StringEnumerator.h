@@ -1,5 +1,5 @@
 
-/** $VER: StringEnumerator.h (2026.07.29) P. Stuer - Implements an IEnumString enumerator for AutoComplete **/
+/** $VER: StringEnumerator.h (2026.08.14) P. Stuer - Implements an IEnumString enumerator for AutoComplete **/
 
 #pragma once
 
@@ -29,10 +29,7 @@ public:
         _Items.push_back(item);
     }
 
-    void SetItems(const std::vector<std::wstring> & items) noexcept
-    {
-        _Items = std::move(items);
-    }
+    void FilterItems(const std::wstring & text) noexcept;
 
     // IUnknown
     HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void ** ppv) noexcept final;
@@ -46,7 +43,12 @@ public:
     HRESULT STDMETHODCALLTYPE Clone(IEnumString ** other) noexcept final;
 
 private:
+    static LPOLESTR CreateOLEString(const std::wstring & s) noexcept;
+
+private:
     std::vector<std::wstring> _Items;
+    std::vector<std::wstring> _FilteredItems;
+
     ULONG _Index = 0;
 
     LONG _ReferenceCount = 1;

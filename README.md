@@ -14,11 +14,12 @@ It attempts to recreate the functionality of [foo_plorg](https://wiki.hydrogenau
 - Configurable tree node images.
 - Drag & drop from foobar2000, Explorer and other applications.
 - Supports the foobar2000 playlist recycle bin.
+- Supports foobar2000 playlist locks.
 
 ## Requirements
 
 - [foobar2000](https://www.foobar2000.org/download) v2.0 or later. ![foobar2000](https://www.foobar2000.org/button-small.png)
-- Tested on Microsoft Windows 10 and later.
+- Tested on Microsoft Windows 11.
 - Tested with [Columns UI](https://yuo.be/columns-ui) 2.1.0.
 
 ## Getting started
@@ -28,6 +29,10 @@ It attempts to recreate the functionality of [foo_plorg](https://wiki.hydrogenau
 or
 
 - Import `foo_uie_playlist_tree.fbk2-component` into foobar2000 using the "*File / Preferences / Components / Install...*" menu item.
+
+## Usage
+
+You can find the user guide [here](docs/README.md).
 
 ## Developing
 
@@ -73,16 +78,29 @@ Open `foo_uie_playlist_tree.sln` with Visual Studio and build the solution.
 
 ### Packaging
 
-To create the component first build the x86 configuration and next the x64 configuration.
+To create the component first build the x86, x64 and/or ARMEC64 configuration.
 
 ## Change Log
 
-v1.4.3.0, 2026-08-04
+v1.5.0.0, 2026-08-14
 
-* Improved: Rendering of tree node drag & drop.
-  * Reduced flicker.
-  * Removed all artifacts caused by the insertion marker (hopefully).
-  * Since the switch to custom rendering the drag image was broken.
+- Improved: A couple of usability tweaks
+  - Press Ctrl when you expand or collapse a folder item to expand or collapse the complete branch.
+  - When creating a new folder the tree item will automatically enter Edit mode.
+  - New setting to disable the horizontal scrollbar.
+  - New setting to disable expanding the drop target after a drop.
+  - New context menu item to display the preferences page.
+  - New context menu item to 'freeze' the expanded or collapsed state of a folder.
+  - New images for an autoplaylist, a playing autoplaylist and a frozen folder.
+  - Auto Complete shows any node that contains the typed text, not just the nodes that start with the text.
+- Breaking change:
+  - `%node_item_count%`, `%playlist_duration%` and `%playlist_size%` are now unformatted so that they can be used by the foobar2000 math functions.
+  - `%node_item_count_locale%`, `%playlist_duration_locale%` and `%playlist_size_locale%` are formatted using your Windows Locale number format settings.
+- Fixed: A couple of small render bugs when switching between the light and dark theme.
+- Fixed: The item indentation was not calculated correctly.
+- Fixed: Dark Mode support for the Search box when focused.
+- Fixed: Loading images from a path that contains title formatting fields. (Regression)
+- Fixed: Some regional number formats (such as french/France "fr-FR") containing a Narrow No-Break Space (0x202F) did not render correctly.
 
 ## Acknowledgements / Credits
 

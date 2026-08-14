@@ -1,5 +1,5 @@
 
-/** $VER: TitleFormat.cpp (2026.08.02) P. Stuer **/
+/** $VER: TitleFormat.cpp (2026.08.14) P. Stuer **/
 
 #include "pch.h"
 
@@ -75,11 +75,30 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
             if (ItemCount == SIZE_MAX)
                 return false;
 
-            std::locale Locale(""); // User default Windows locale.
+            char Text[32] = { };
 
-            const auto Text = std::format(Locale, "{:L}", ItemCount);
+            ::_i64toa_s((int64_t) ItemCount, Text, _countof(Text), 10);
 
-            out->write(titleformat_inputtypes::unknown, Text.c_str());
+            out->write(titleformat_inputtypes::unknown, Text);
+
+            isFound = true;
+
+            return true;
+        }},
+
+        std::pair{ "node_item_count_locale", [&]() -> bool
+        {
+            size_t ItemCount;
+
+            if (IsFolder)
+                ItemCount = (_TreeView != nullptr) ? _TreeView->GetChildCount(_Id) : SIZE_MAX;
+            else
+                ItemCount = _PlaylistManager->playlist_get_item_count(Index);
+
+            if (ItemCount == SIZE_MAX)
+                return false;
+
+            out->write(titleformat_inputtypes::unknown, msc::WideToUTF8(_Locale.FormatNumber((int64_t) ItemCount)).c_str());
 
             isFound = true;
 
@@ -131,16 +150,30 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
 
         std::pair{ "playlist_duration", [&]() -> bool
         {
-            auto Seconds = GetPlaylistDuration(Index);
+            const auto Seconds = GetPlaylistDuration(Index);
 
             if (Seconds < 0.)
                 return false;
 
-            std::locale Locale(""); // User default Windows locale.
+            char Text[32] = { };
 
-            const auto Text = std::format(Locale, "{:L}", Seconds);
+            ::_i64toa_s((int64_t) Seconds, Text, _countof(Text), 10);
 
-            out->write(titleformat_inputtypes::unknown, Text.c_str());
+            out->write(titleformat_inputtypes::unknown, Text);
+
+            isFound = true;
+
+            return true;
+        }},
+
+        std::pair{ "playlist_duration_locale", [&]() -> bool
+        {
+            const auto Seconds = GetPlaylistDuration(Index);
+
+            if (Seconds < 0.)
+                return false;
+
+            out->write(titleformat_inputtypes::unknown, msc::WideToUTF8(_Locale.FormatNumber((int64_t) Seconds)).c_str());
 
             isFound = true;
 
@@ -196,17 +229,28 @@ bool custom_titleformat_hook_t::process_field(titleformat_text_out * out, const 
 
         std::pair{ "playlist_size", [&]() -> bool
         {
-            auto Size = GetPlaylistSize(Index);
+            const auto Size = GetPlaylistSize(Index);
 
             if ((int64_t) Size < 0)
                 return false;
 
-            std::string Text;
-            std::locale Locale(""); // User default Windows locale.
+            char Text[32] = { };
 
-            Text = std::format(Locale, "{:L}", Size);
+            ::_i64toa_s((int64_t) Size, Text, _countof(Text), 10);
 
-            out->write(titleformat_inputtypes::unknown, Text.c_str());
+            isFound = true;
+
+            return true;
+        }},
+
+        std::pair{ "playlist_size_locale", [&]() -> bool
+        {
+            const auto Size = GetPlaylistSize(Index);
+
+            if ((int64_t) Size < 0)
+                return false;
+
+            out->write(titleformat_inputtypes::unknown, msc::WideToUTF8(_Locale.FormatNumber((int64_t) Size)).c_str());
 
             isFound = true;
 

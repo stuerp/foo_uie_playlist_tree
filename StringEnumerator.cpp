@@ -1,9 +1,12 @@
 
-/** $VER: StringEnumerator.cpp (2026.07.29) P. Stuer - Implements an IEnumString enumerator for AutoComplete **/
+/** $VER: StringEnumerator.cpp (2026.08.14) P. Stuer - Implements an IEnumString enumerator for AutoComplete **/
 
 #include "pch.h"
 
 #include "StringEnumerator.h"
+
+#include <algorithm>
+#include <shlwapi.h>
 
 #pragma hdrstop
 
@@ -57,23 +60,19 @@ HRESULT STDMETHODCALLTYPE string_enumerator_t::Next(ULONG itemCount, LPOLESTR * 
 
     ULONG NumFetched = 0;
 
-    while ((NumFetched < itemCount) && (_Index < _Items.size()))
+    while ((NumFetched < itemCount) && (_Index < _FilteredItems.size()))
     {
-        const auto & Item = _Items[_Index++];
+        const auto & Item = _FilteredItems[_Index++];
 
-        const size_t Size = Item.size() + 1;
-
-        items[NumFetched] = (LPOLESTR) ::CoTaskMemAlloc(Size * sizeof(WCHAR)); // The caller (AutoComplete) frees the memory with CoTaskMemFree().
+        items[NumFetched] = CreateOLEString(Item);
 
         if (items[NumFetched] == nullptr)
             return E_OUTOFMEMORY;
 
-        ::wcscpy_s(items[NumFetched], Size, Item.c_str());
-
         ++NumFetched;
     }
 
-    if (fetchCount)
+    if (fetchCount != nullptr)
         *fetchCount = NumFetched;
 
     return (NumFetched == itemCount) ? S_OK : S_FALSE;
@@ -118,4 +117,46 @@ HRESULT STDMETHODCALLTYPE string_enumerator_t::Clone(IEnumString ** other) noexc
     *other = p;
 
     return S_OK;
+}
+
+/// <summary>
+/// Creates an OLE string from the specified wide string.
+/// </summary>
+LPOLESTR string_enumerator_t::CreateOLEString(const std::wstring & s) noexcept
+{
+    const size_t Size = (s.size() + 1) * sizeof(WCHAR);
+
+    const auto p = (LPOLESTR) ::CoTaskMemAlloc(Size); // The caller (AutoComplete) frees the memory with CoTaskMemFree().
+
+    if (p == nullptr)
+        return p;
+
+    ::memcpy(p, s.c_str(), Size);
+
+    return p;
+}
+
+/// <summary>
+/// Filters the items and retains those that contain the specified text.
+/// </summary>
+void string_enumerator_t::FilterItems(const std::wstring & text) noexcept
+{
+    _Index = 0;
+
+    if (text.empty())
+    {
+        _FilteredItems = _Items;
+
+        return;
+    }
+
+    _FilteredItems.clear();
+
+    for (auto & Item : _Items)
+    {
+        if (::StrStrIW(Item.c_str(), text.c_str()) != nullptr)
+            _FilteredItems.push_back(Item);
+    }
+
+    std::sort(_FilteredItems.begin(), _FilteredItems.end(), [](const std::wstring & x, const std::wstring & y) { return x < y; });
 }

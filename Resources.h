@@ -1,5 +1,5 @@
 
-/** $VER: Resources.h (2026.08.04) P. Stuer **/
+/** $VER: Resources.h (2026.08.14) P. Stuer **/
 
 #pragma once
 
@@ -7,13 +7,13 @@
 #define TOSTRING(x) TOSTRING_IMPL(x)
 
 #define NUM_FILE_MAJOR          1
-#define NUM_FILE_MINOR          4
-#define NUM_FILE_PATCH          3
+#define NUM_FILE_MINOR          5
+#define NUM_FILE_PATCH          0
 #define NUM_FILE_PRERELEASE     0
 
 #define NUM_PRODUCT_MAJOR       1
-#define NUM_PRODUCT_MINOR       4
-#define NUM_PRODUCT_PATCH       3
+#define NUM_PRODUCT_MINOR       5
+#define NUM_PRODUCT_PATCH       0
 #define NUM_PRODUCT_PRERELEASE  0
 
 #define STR_PRERELEASE          ""
@@ -74,6 +74,7 @@
 
 #define IDM_RENAME              20
 #define IDM_REMOVE              21
+#define IDM_FROZEN        22
 
 #define IDM_LOCK_ADD_ITEMS      30
 #define IDM_LOCK_REMOVE_ITEMS   31
@@ -88,6 +89,7 @@
 #define IDM_LOCK_NONE           39
 
 #define IDM_SORT                50
+#define IDM_PREFERENCES         51
 
 #define IDM_LOAD                60
 #define IDM_SAVE                61

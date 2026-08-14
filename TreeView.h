@@ -1,5 +1,5 @@
 
-/** $VER: TreeView.h (2026.08.04) P. Stuer **/
+/** $VER: TreeView.h (2026.08.13) P. Stuer **/
 
 #pragma once
 
@@ -50,9 +50,12 @@ public:
         if (!TreeView_SelectItem(_hTreeView, hTreeItem))
             return false;
 
-        TreeView_EnsureVisible(_hTreeView, hTreeItem);
+        return EnsureVisible(hTreeItem);
+    }
 
-        return true;
+    bool EnsureVisible(HTREEITEM hTreeItem) const noexcept
+    {
+        return (bool) TreeView_EnsureVisible(_hTreeView, hTreeItem);
     }
 
     HTREEITEM GetSelectedItem() const noexcept
@@ -117,9 +120,29 @@ public:
         return (bool) TreeView_Expand(_hTreeView, hItem, TVE_EXPAND);
     }
 
+    void ExpandAll(HTREEITEM hItem) const noexcept
+    {
+        Walk(hItem, [&](HTREEITEM hItem, void * context) -> bool
+        {
+            ExpandItem(hItem);
+
+            return true; // Continue walking.
+        }, nullptr);
+    }
+
     bool CollapseItem(HTREEITEM hItem) const noexcept
     {
         return (bool) TreeView_Expand(_hTreeView, hItem, TVE_COLLAPSE);
+    }
+
+    void CollapseAll(HTREEITEM hItem) const noexcept
+    {
+        Walk(hItem, [&](HTREEITEM hItem, void * context) -> bool
+        {
+            CollapseItem(hItem);
+
+            return true; // Continue walking.
+        }, nullptr);
     }
 
     bool ToggleItem(HTREEITEM hItem) const noexcept
@@ -150,6 +173,12 @@ public:
     HIMAGELIST GetStateImageList() const noexcept
     {
         return TreeView_GetImageList(_hTreeView, TVSIL_STATE);
+    }
+
+    void SetColors(COLORREF backgroundColor, COLORREF foregroundColor) const noexcept
+    {
+        TreeView_SetBkColor  (_hTreeView, backgroundColor);
+        TreeView_SetTextColor(_hTreeView, foregroundColor);
     }
 
     void SetFont(HFONT hFont) const noexcept
@@ -266,6 +295,50 @@ public:
         ::SetFocus(_hTreeView);
     }
 
+    /// <summary>
+    /// Shows or hides the horizontal scrollbar.
+    /// </summary>
+    void SetHorizontalScrollbar(bool visible) const noexcept
+    {
+        const auto Style = ::GetWindowLongPtrW(_hTreeView, GWL_STYLE);
+
+        auto NewStyle = Style;
+
+        if (visible)
+            NewStyle &= ~(LONG_PTR) TVS_NOHSCROLL;
+        else
+            NewStyle |=  (LONG_PTR) TVS_NOHSCROLL;
+
+        if (NewStyle == Style)
+            return;
+
+        ::SetWindowLongPtrW(_hTreeView, GWL_STYLE, NewStyle);
+
+        ::SetWindowPos(_hTreeView, NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+
+        // Work-around tree view bug when modifying the style.
+        ::ShowScrollBar(_hTreeView, SB_HORZ, visible ? TRUE : FALSE);
+        ::InvalidateRect(_hTreeView, nullptr, TRUE);
+    }
+/*
+    // Remove the vertical scroll bar.
+    {
+        auto Style = ::GetWindowLongPtrW(_TreeView.Get(), GWL_STYLE) | TVS_NOSCROLL;
+
+        ::SetWindowLongPtrW(_TreeView.Get(), GWL_STYLE, Style);
+
+        ::SetWindowPos(_TreeView.Get(), NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+    }
+*/
+
+    /// <summary>
+    /// Enables or disables expanding the drop target after a drop.
+    /// </summary>
+    void SetExpandDropTarget(bool expandDropTarget) noexcept
+    {
+        _ExpandDropTarget = expandDropTarget;
+    }
+
 protected:
     virtual bool AllowDrop(DropZone dropZone) noexcept { return false; };
 
@@ -276,7 +349,8 @@ private:
 protected:
     HTREEITEM _hDragSource = NULL;
     HTREEITEM _hDropTarget = NULL;
-    BOOL _PlaceAfter = FALSE;
+    bool _PlaceAfter = FALSE;
+    bool _ExpandDropTarget = true;
 
 private:
     HWND _hTreeView;

@@ -1,5 +1,5 @@
 
-/** $VER: Theme.cpp (2026.07.17) P. Stuer **/
+/** $VER: Theme.cpp (2026.08.10) P. Stuer **/
 
 #include "pch.h"
 
@@ -25,9 +25,18 @@ theme_t::~theme_t() noexcept
 /// </summary>
 HRESULT theme_t::Initialize(HWND hWnd) noexcept
 {
+    return Initialize(hWnd, _IsDUI);
+}
+
+/// <summary>
+/// Initializes some GDI object used by custom draw.
+/// </summary>
+HRESULT theme_t::Initialize(HWND hWnd, bool isDUI) noexcept
+{
     Dispose();
 
-    _hWnd = hWnd;
+    _hWnd  = hWnd;
+    _IsDUI = isDUI;
 
     // Get the font height.
     NONCLIENTMETRICSW ncm { sizeof(ncm) };
@@ -105,7 +114,7 @@ void theme_t::SetHighlightColor(COLORREF color) noexcept
 
 void theme_t::SetPlaylistFont(HFONT hFont) noexcept
 {
-    _hPlaylistFont = hFont;
+    _hPlaylistFont = hFont; // Don't take ownership.
 
     HDC hDC = ::GetDC(_hWnd);
 

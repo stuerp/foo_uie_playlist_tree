@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.h (2026.08.02) P. Stuer **/
+/** $VER: PlaylistsUIElement.h (2026.08.14) P. Stuer **/
 
 #pragma once
 
@@ -16,8 +16,6 @@
 #include "Tracker.h"
 #include "TreeViewSubclass.h"
 #include "UIElement.h"
-
-#include <sdk/playlist.h>
 
 /// <summary>
 /// Implements the user interface element base class.
@@ -39,7 +37,8 @@ public:
 
     void Refresh() noexcept;
 
-    virtual void OnFontsChanged() noexcept override;
+    void OnColorsChanged() noexcept override;
+    void OnFontsChanged() noexcept override;
 
 protected:
     void SetConfiguration(const char * data, size_t size) noexcept;
@@ -50,11 +49,11 @@ protected:
 private:
     #pragma region CWindowImpl
 
-    virtual LRESULT OnCreate(CREATESTRUCT * cs) noexcept override;
-    virtual void OnDestroy() noexcept override;
-    virtual void OnSize(UINT nType, CSize size) noexcept override;
-
+    LRESULT OnCreate(CREATESTRUCTW * cs) noexcept;
+    void OnDestroy() noexcept;
+    void OnSize(UINT type, CSize size) noexcept;
     void OnPaint(CDCHandle dc) noexcept;
+
     void OnSetFocus(CWindow wndOld) noexcept;
 
     // Required for drag & drop.
@@ -75,13 +74,19 @@ private:
     LRESULT OnGetInfoTip(NMHDR * nmhd) noexcept;
     LRESULT OnSelectionChanged(NMHDR * nmhd) noexcept;
     LRESULT OnGetDisplayInfo(NMHDR * nmhd) noexcept;
-    LRESULT OnItemExpanded(NMHDR * nmhd) noexcept;
-    LRESULT OnBeginDrag(NMHDR * nmhd) noexcept;
     LRESULT OnDeletingItem(NMHDR * nmhd) noexcept;
     LRESULT OnBeginLabelEdit(NMHDR * nmhd) noexcept;
     LRESULT OnEndLabelEdit(NMHDR * nmhd) noexcept;
+    LRESULT OnBeginDrag(NMHDR * nmhd) noexcept;
+    LRESULT OnItemExpanding(NMHDR * nmhd) noexcept;
+    LRESULT OnItemExpanded(NMHDR * nmhd) noexcept;
+
+    HBRUSH OnCtlColorEdit(CDCHandle dc, CEdit edit) const noexcept;
 
     BEGIN_MSG_MAP_EX(playlist_uielement_t)
+        MSG_WM_CREATE(OnCreate)
+        MSG_WM_DESTROY(OnDestroy)
+        MSG_WM_SIZE(OnSize)
         MSG_WM_PAINT(OnPaint)
 
         MSG_WM_SETFOCUS(OnSetFocus)
@@ -93,6 +98,7 @@ private:
 
         COMMAND_HANDLER_EX(IDC_EDITBOX, EN_CHANGE, OnEditChange)
         MSG_WM_COMMAND(OnCommand)
+        MSG_WM_CTLCOLOREDIT(OnCtlColorEdit)
 
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, NM_CUSTOMDRAW, OnCustomDraw)
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, NM_RCLICK, OnRightClick)
@@ -107,9 +113,10 @@ private:
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_BEGINLABELEDIT, OnBeginLabelEdit)
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_ENDLABELEDIT, OnEndLabelEdit)
         NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_BEGINDRAG, OnBeginDrag)
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_ITEMEXPANDING, OnItemExpanding)
+        NOTIFY_HANDLER_EX(IDC_TREEVIEW, TVN_ITEMEXPANDED, OnItemExpanded)
 
 //      CHAIN_MSG_MAP(multi_select_tree_view_t)
-        CHAIN_MSG_MAP(uielement_t)
     END_MSG_MAP()
 
     #pragma endregion
@@ -180,6 +187,9 @@ private:
     bool IsProhibited(const node_t * node, uint32_t filterMask) const noexcept;
 
     LONG CalculateEditHeight(HWND hWnd, HFONT hFont) noexcept;
+
+    HRESULT AttachAutoComplete(HWND hWnd) noexcept;
+//  HRESULT AttachFuzzyAutoComplete(HWND hWnd) noexcept;
     void ResetAutoComplete() noexcept;
 
 protected:
@@ -204,7 +214,9 @@ private:
     bool _IsUser = false;
 
     drop_target_t * _DropTarget = nullptr;
-    string_enumerator_t * _StringEnumerator = nullptr;
+
+    std::unique_ptr<string_enumerator_t> _StringEnumerator;
+    CComPtr<IAutoCompleteDropDown> _ACDropDown;
 };
 
 /// <summary>

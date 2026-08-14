@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.cpp (2026.08.02) P. Stuer **/
+/** $VER: Preferences.cpp (2026.08.14) P. Stuer **/
 
 #include "pch.h"
 
@@ -33,7 +33,7 @@ class preferences_t : public CDialogImpl<preferences_t>, public preferences_page
 public:
     preferences_t(preferences_page_callback::ptr callback) : m_bMsgHandled(FALSE), _Callback(callback)
     {
-        _Theme.Initialize(m_hWnd);
+        _Theme.Initialize(m_hWnd, true);
 
         icon_list_t::Register(THIS_HINSTANCE);
     }
@@ -118,6 +118,8 @@ public:
 
         COMMAND_HANDLER_EX(IDC_FILE_PATH_SELECT,    BN_CLICKED,     OnButtonClick)
         COMMAND_HANDLER_EX(IDC_QUICK_SEARCH,        BN_CLICKED,     OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_HSCROLLBAR,          BN_CLICKED,     OnButtonClick)
+        COMMAND_HANDLER_EX(IDC_EXPAND_DROP_TARGET,  BN_CLICKED,     OnButtonClick)
 
         MSG_WM_NOTIFY(OnNotify);
     END_MSG_MAP()
@@ -142,6 +144,8 @@ private:
             { IDC_IMAGE_LIST, "Selects the image for the selected node type from this list." },
 
             { IDC_QUICK_SEARCH, "Enable this setting to display the Quick Search text box at the bottom of the panel." },
+            { IDC_HSCROLLBAR, "Enable this setting to display the horizontal scrollbar in the tree view when the node text becomes too long." },
+            { IDC_EXPAND_DROP_TARGET, "Enable this setting to expand the drop target folder when dropping an item on it." },
 
             // Component
             { IDC_LOG_LEVEL, "Sets the verbosity of the log information that gets written to the console." },
@@ -183,7 +187,7 @@ private:
     /// </summary>
     HBRUSH OnCtlColorDlg(HDC, HWND) const noexcept
     {
-        return ::CreateSolidBrush(RGB(220, 220, 220));
+        return ::CreateSolidBrush(0xE8E8E8);
     }
     #endif
 
@@ -210,7 +214,7 @@ private:
 
             w.ResetContent();
 
-            static const WCHAR * Labels[] = { L"Folder", L"Folder (Locked)", L"Playlist", L"Playlist (Playing)", L"Playlist (Locked)" };
+            static const WCHAR * Labels[] = { L"Folder", L"Folder (Locked)", L"Folder (Frozen)", L"Playlist", L"Playlist (Playing)", L"Playlist (Locked)", L"Autoplaylist", L"Autoplaylist (Playing)" };
 
             assert(_countof(Labels) == ((size_t) ItemImage::Count));
 
@@ -242,7 +246,17 @@ private:
 
         // Quick Search
         {
-            SendDlgItemMessageW(IDC_QUICK_SEARCH, BM_SETCHECK, _NewState._IsQuickSearchVisible);
+            SendDlgItemMessageW(IDC_QUICK_SEARCH, BM_SETCHECK, _NewState._UseQuickSearch);
+        }
+
+        // Horizontal Scrollbar
+        {
+            SendDlgItemMessageW(IDC_HSCROLLBAR, BM_SETCHECK, _NewState._UseHorizontalScrollbar);
+        }
+
+        // Expand Drop Target
+        {
+            SendDlgItemMessageW(IDC_EXPAND_DROP_TARGET, BM_SETCHECK, _NewState._ExpandDropTarget);
         }
 
         // Component
@@ -427,7 +441,19 @@ private:
 
             case IDC_QUICK_SEARCH:
             {
-                _NewState._IsQuickSearchVisible = (bool) SendDlgItemMessageW(id, BM_GETCHECK);
+                _NewState._UseQuickSearch = (bool) SendDlgItemMessageW(id, BM_GETCHECK);
+                break;
+            }
+
+            case IDC_HSCROLLBAR:
+            {
+                _NewState._UseHorizontalScrollbar = (bool) SendDlgItemMessageW(id, BM_GETCHECK);
+                break;
+            }
+
+            case IDC_EXPAND_DROP_TARGET:
+            {
+                _NewState._ExpandDropTarget = (bool) SendDlgItemMessageW(id, BM_GETCHECK);
                 break;
             }
         }
@@ -506,7 +532,19 @@ private:
 
         // Quick Search
         {
-            if (_NewState._IsQuickSearchVisible != _State._IsQuickSearchVisible)
+            if (_NewState._UseQuickSearch != _State._UseQuickSearch)
+                return true;
+        }
+
+        // Horizontal scrollbar
+        {
+            if (_NewState._UseHorizontalScrollbar != _State._UseHorizontalScrollbar)
+                return true;
+        }
+
+        // Expand drop target
+        {
+            if (_NewState._ExpandDropTarget != _State._ExpandDropTarget)
                 return true;
         }
 
@@ -524,6 +562,9 @@ private:
         pfc::string Text;
 
         HRESULT hr = title_formatter_t::Evaluate(Image._FilePath, nullptr, GUID_NULL, Text);
+
+        if (!SUCCEEDED(hr))
+            Log.AtWarn().Write(STR_COMPONENT_BASENAME " failed to evaluate \"%s\": 0x%08X", Image._FilePath.c_str(), hr);
 
         const auto FilePath = SUCCEEDED(hr) ? Text.c_str() : Image._FilePath;
 
@@ -569,10 +610,14 @@ private:
         {
             ItemImage::Folder,
             ItemImage::FolderLocked,
+            ItemImage::FolderFrozen,
 
             ItemImage::Playlist,
             ItemImage::PlaylistPlaying,
             ItemImage::PlaylistLocked,
+
+            ItemImage::AutoPlaylist,
+            ItemImage::AutoPlaylistPlaying,
         };
 
         assert(_countof(Map) == ((size_t) ItemImage::Count));

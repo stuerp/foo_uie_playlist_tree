@@ -1,5 +1,5 @@
 
-/** $VER: TitleFormat.h (2026.07.06) P. Stuer - Implements a custom hook to expand title formatting **/
+/** $VER: TitleFormat.h (2026.08.14) P. Stuer - Implements a custom hook to expand title formatting **/
 
 #pragma once
 
@@ -15,6 +15,8 @@
 
 #include <sdk/foobar2000-lite.h>
 #include <sdk/titleformat.h>
+
+#include <libmsc.h>
 
 #include "FolderManager.h"
 #include "PlaylistTreeView.h"
@@ -39,7 +41,10 @@ public:
 class custom_titleformat_hook_t : public titleformat_hook
 {
 public:
-    custom_titleformat_hook_t(const playlist_tree_view_t * treeView, const GUID & id) : _TreeView(treeView), _Id(id) { }
+    custom_titleformat_hook_t(const playlist_tree_view_t * treeView, const GUID & id) : _TreeView(treeView), _Id(id)
+    {
+        _Locale._NumberFormat.NumDigits = 0; // Set number of decimat digits.
+    }
 
     virtual ~custom_titleformat_hook_t() noexcept { }
 
@@ -62,4 +67,6 @@ private:
 
     const playlist_tree_view_t * _TreeView;
     const GUID & _Id;
+
+    locale_t _Locale;
 };
