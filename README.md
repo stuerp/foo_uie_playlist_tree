@@ -82,28 +82,8 @@ To create the component first build the x86, x64 and/or ARMEC64 configuration.
 
 ## Change Log
 
-v1.5.1.0, 2026-08-15
-- Fixed: Calculation of display dimensions during startup. (Regression)
-
-v1.5.0.0, 2026-08-14
-
-- Improved: A couple of usability tweaks
-  - Press Ctrl when you expand or collapse a folder item to expand or collapse the complete branch.
-  - When creating a new folder the tree item will automatically enter Edit mode.
-  - New setting to disable the horizontal scrollbar.
-  - New setting to disable expanding the drop target after a drop.
-  - New context menu item to display the preferences page.
-  - New context menu item to 'freeze' the expanded or collapsed state of a folder.
-  - New images for an autoplaylist, a playing autoplaylist and a frozen folder.
-  - Auto Complete shows any node that contains the typed text, not just the nodes that start with the text.
-- Breaking change:
-  - `%node_item_count%`, `%playlist_duration%` and `%playlist_size%` are now unformatted so that they can be used by the foobar2000 math functions.
-  - `%node_item_count_locale%`, `%playlist_duration_locale%` and `%playlist_size_locale%` are formatted using your Windows Locale number format settings.
-- Fixed: A couple of small render bugs when switching between the light and dark theme.
-- Fixed: The item indentation was not calculated correctly.
-- Fixed: Dark Mode support for the Search box when focused.
-- Fixed: Loading images from a path that contains title formatting fields. (Regression)
-- Fixed: Some regional number formats (such as french/France "fr-FR") containing a Narrow No-Break Space (0x202F) did not render correctly.
+v1.5.2.0, 2026-xx-xx
+- Fixed: The name of the owner of a playlist lock was not added to the Lock menu. (1.5.0.0 regression)
 
 ## Acknowledgements / Credits
 

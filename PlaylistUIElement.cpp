@@ -647,6 +647,32 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
     }
 }
 
+int FindMenuItemPosition(HMENU hMenu, const std::wstring & menuName)
+{
+    const int Count = ::GetMenuItemCount(hMenu);
+
+    for (int i = 0; i < Count; ++i)
+    {
+        wchar_t Name[64];
+
+        MENUITEMINFOW mii =
+        {
+            .cbSize     = sizeof(mii),
+            .fMask      = MIIM_STRING,
+            .dwTypeData = Name,
+            .cch        = _countof(Name),
+        };
+
+        if (!::GetMenuItemInfoW(hMenu, (UINT) i, TRUE, &mii))
+            return -1;
+
+        if (::wcscmp(Name, menuName.c_str()) == 0)
+            return i;
+    }
+
+    return -1;
+}
+
 /// <summary>
 /// Handles the NM_RCLICK notification.
 /// </summary>
@@ -674,9 +700,9 @@ LRESULT playlist_uielement_t::OnRightClick(NMHDR * nmhd) noexcept
     if (hMenu == NULL)
         return FALSE;
 
-    const HMENU hPopup = ::GetSubMenu(hMenu, 0);
+    const HMENU hPopupMenu = ::GetSubMenu(hMenu, 0);
 
-    if (hPopup != NULL)
+    if (hPopupMenu != NULL)
     {
         static_api_ptr_t<contextmenu_manager> ContextMenuManager;
 
@@ -688,14 +714,16 @@ LRESULT playlist_uielement_t::OnRightClick(NMHDR * nmhd) noexcept
         const bool IsPlaylist = (Index != SIZE_MAX);
 
         // Disable the Lock menu when we're not over a playlist.
-        ::EnableMenuItem(hPopup, 5, (UINT) (MF_BYPOSITION | (IsPlaylist ? MF_ENABLED : MF_DISABLED | MF_GRAYED)));
+        const int MenuPosition = FindMenuItemPosition(hPopupMenu, L"Lock");
 
-        ::EnableMenuItem(hPopup, IDM_REMOVE, !IsProhibited(Node, playlist_lock::filter_remove_playlist) ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+        ::EnableMenuItem(hPopupMenu, MenuPosition, (UINT) (MF_BYPOSITION | (IsPlaylist ? MF_ENABLED : MF_DISABLED | MF_GRAYED)));
+
+        ::EnableMenuItem(hPopupMenu, IDM_REMOVE, !IsProhibited(Node, playlist_lock::filter_remove_playlist) ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
 
         if (Node != nullptr)
         {
-            ::EnableMenuItem(hPopup, IDM_FROZEN, Node->IsFolder ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
-            ::CheckMenuItem (hPopup, IDM_FROZEN, Node->IsFrozen ? MF_CHECKED : 0);
+            ::EnableMenuItem(hPopupMenu, IDM_FROZEN, Node->IsFolder ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+            ::CheckMenuItem (hPopupMenu, IDM_FROZEN, Node->IsFrozen ? MF_CHECKED : 0);
         }
 
         if (IsPlaylist)
@@ -704,44 +732,47 @@ LRESULT playlist_uielement_t::OnRightClick(NMHDR * nmhd) noexcept
 
             if (FilterMask != 0)
             {
-                ::EnableMenuItem(hPopup, IDM_RENAME, !playlist_lock_t::IsRenamePlaylistProhibited(FilterMask) ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+                ::EnableMenuItem(hPopupMenu, IDM_RENAME, !playlist_lock_t::IsRenamePlaylistProhibited(FilterMask) ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
 
                 // Update the Lock submenu.
                 {
-                    ::CheckMenuItem(hPopup, IDM_LOCK_ADD_ITEMS,      playlist_lock_t::IsAddProhibited(FilterMask)            ? MF_CHECKED : 0);
-                    ::CheckMenuItem(hPopup, IDM_LOCK_REMOVE_ITEMS,   playlist_lock_t::IsRemoveProhibited(FilterMask)         ? MF_CHECKED : 0);
-                    ::CheckMenuItem(hPopup, IDM_LOCK_REORDER_ITEMS,  playlist_lock_t::IsReorderProhibited(FilterMask)        ? MF_CHECKED : 0);
-                    ::CheckMenuItem(hPopup, IDM_LOCK_REPLACE_ITEMS,  playlist_lock_t::IsReplaceProhibited(FilterMask)        ? MF_CHECKED : 0);
+                    ::CheckMenuItem(hPopupMenu, IDM_LOCK_ADD_ITEMS,      playlist_lock_t::IsAddProhibited(FilterMask)            ? MF_CHECKED : 0);
+                    ::CheckMenuItem(hPopupMenu, IDM_LOCK_REMOVE_ITEMS,   playlist_lock_t::IsRemoveProhibited(FilterMask)         ? MF_CHECKED : 0);
+                    ::CheckMenuItem(hPopupMenu, IDM_LOCK_REORDER_ITEMS,  playlist_lock_t::IsReorderProhibited(FilterMask)        ? MF_CHECKED : 0);
+                    ::CheckMenuItem(hPopupMenu, IDM_LOCK_REPLACE_ITEMS,  playlist_lock_t::IsReplaceProhibited(FilterMask)        ? MF_CHECKED : 0);
 
-                    ::CheckMenuItem(hPopup, IDM_LOCK_RENAME,         playlist_lock_t::IsRenamePlaylistProhibited(FilterMask) ? MF_CHECKED : 0);
-                    ::CheckMenuItem(hPopup, IDM_LOCK_REMOVE,         playlist_lock_t::IsRemovePlaylistProhibited(FilterMask) ? MF_CHECKED : 0);
+                    ::CheckMenuItem(hPopupMenu, IDM_LOCK_RENAME,         playlist_lock_t::IsRenamePlaylistProhibited(FilterMask) ? MF_CHECKED : 0);
+                    ::CheckMenuItem(hPopupMenu, IDM_LOCK_REMOVE,         playlist_lock_t::IsRemovePlaylistProhibited(FilterMask) ? MF_CHECKED : 0);
 
-                    ::CheckMenuItem(hPopup, IDM_LOCK_DEFAULT_ACTION, playlist_lock_t::IsDefaultActionProhibited(FilterMask)  ? MF_CHECKED : 0);
+                    ::CheckMenuItem(hPopupMenu, IDM_LOCK_DEFAULT_ACTION, playlist_lock_t::IsDefaultActionProhibited(FilterMask)  ? MF_CHECKED : 0);
 
                     const auto IsOurLock = _LockManager->IsLockedByMe(Node->Id);
 
-                    ::EnableMenuItem(hPopup, IDM_LOCK_ADD_ITEMS,      IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
-                    ::EnableMenuItem(hPopup, IDM_LOCK_REMOVE_ITEMS,   IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
-                    ::EnableMenuItem(hPopup, IDM_LOCK_REORDER_ITEMS,  IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
-                    ::EnableMenuItem(hPopup, IDM_LOCK_REPLACE_ITEMS,  IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+                    ::EnableMenuItem(hPopupMenu, IDM_LOCK_ADD_ITEMS,      IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+                    ::EnableMenuItem(hPopupMenu, IDM_LOCK_REMOVE_ITEMS,   IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+                    ::EnableMenuItem(hPopupMenu, IDM_LOCK_REORDER_ITEMS,  IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+                    ::EnableMenuItem(hPopupMenu, IDM_LOCK_REPLACE_ITEMS,  IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
 
-                    ::EnableMenuItem(hPopup, IDM_LOCK_RENAME,         IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
-                    ::EnableMenuItem(hPopup, IDM_LOCK_REMOVE,         IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+                    ::EnableMenuItem(hPopupMenu, IDM_LOCK_RENAME,         IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+                    ::EnableMenuItem(hPopupMenu, IDM_LOCK_REMOVE,         IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
 
-                    ::EnableMenuItem(hPopup, IDM_LOCK_DEFAULT_ACTION, IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+                    ::EnableMenuItem(hPopupMenu, IDM_LOCK_DEFAULT_ACTION, IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
 
-                    ::EnableMenuItem(hPopup, IDM_LOCK_ALL,            IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
-                    ::EnableMenuItem(hPopup, IDM_LOCK_NONE,           IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+                    ::EnableMenuItem(hPopupMenu, IDM_LOCK_ALL,            IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+                    ::EnableMenuItem(hPopupMenu, IDM_LOCK_NONE,           IsOurLock ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
 
                     pfc::string LockName;
 
                     if (!_PlaylistManager->playlist_lock_query_name(Index, LockName))
                         LockName = "<Unknown>";
 
-                    const HMENU hLock = ::GetSubMenu(hPopup, 4);
+                    const HMENU hLockMenu = ::GetSubMenu(hPopupMenu, MenuPosition);
 
-                    ::AppendMenuW(hLock, MF_SEPARATOR, 0, NULL);
-                    ::AppendMenuW(hLock, MF_STRING | MF_GRAYED | MF_DISABLED, 0, msc::FormatText(L"Locked with %S", LockName.c_str()).c_str());
+                    if (hLockMenu != NULL)
+                    {
+                        ::AppendMenuW(hLockMenu, MF_SEPARATOR, 0, NULL);
+                        ::AppendMenuW(hLockMenu, MF_STRING | MF_GRAYED | MF_DISABLED, 0, msc::FormatText(L"Locked with %S", LockName.c_str()).c_str());
+                    }
                 }
             }
 
@@ -757,20 +788,20 @@ LRESULT playlist_uielement_t::OnRightClick(NMHDR * nmhd) noexcept
 
                 ContextMenuManager->win32_build_menu(hPlaylist, IDM_PLAYLIST, ~0);
 
-                ::AppendMenuW(hPopup, MF_SEPARATOR, 0, NULL);
-                ::AppendMenuW(hPopup, MF_STRING | MF_POPUP, (UINT_PTR) hPlaylist, L"Playlist");
+                ::AppendMenuW(hPopupMenu, MF_SEPARATOR, 0, NULL);
+                ::AppendMenuW(hPopupMenu, MF_STRING | MF_POPUP, (UINT_PTR) hPlaylist, L"Playlist");
             }
 
             // Append a menu item to show the UI of an autoplaylist.
             if (autoplaylist_manager::get()->is_client_present(Index))
-                ::AppendMenuW(hPopup, MF_STRING, IDM_AUTOPLAYLIST, L"Autoplaylist...");
+                ::AppendMenuW(hPopupMenu, MF_STRING, IDM_AUTOPLAYLIST, L"Autoplaylist...");
         }
 
         {
-            ::EnableMenuItem(hPopup, IDM_SAVE,     IsPlaylist ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+            ::EnableMenuItem(hPopupMenu, IDM_SAVE,     IsPlaylist ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
 
-            ::EnableMenuItem(hPopup, IDM_SAVE_ALL, !OnItem ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
-            ::EnableMenuItem(hPopup, IDM_LOAD,     !OnItem ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+            ::EnableMenuItem(hPopupMenu, IDM_SAVE_ALL, !OnItem ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
+            ::EnableMenuItem(hPopupMenu, IDM_LOAD,     !OnItem ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
         }
 
         // Create and append the Restore submenu.
@@ -794,7 +825,7 @@ LRESULT playlist_uielement_t::OnRightClick(NMHDR * nmhd) noexcept
                 ::AppendMenuW(hRestore, MF_STRING, IDM_CLEAR_HISTORY, L"Clear history");
 
                 // Append the Restore menu to the popup menu.
-                ::AppendMenuW(hPopup, MF_SEPARATOR, 0, NULL);
+                ::AppendMenuW(hPopupMenu, MF_SEPARATOR, 0, NULL);
 
                 const MENUITEMINFOW mii =
                 {
@@ -804,18 +835,18 @@ LRESULT playlist_uielement_t::OnRightClick(NMHDR * nmhd) noexcept
                     .dwTypeData = (LPWSTR) L"Restore",
                 };
 
-                ::InsertMenuItemW(hPopup, (UINT) ::GetMenuItemCount(hPopup), TRUE, &mii);
+                ::InsertMenuItemW(hPopupMenu, (UINT) ::GetMenuItemCount(hPopupMenu), TRUE, &mii);
             }
         }
 
         // Append a troubleshooting menu item.
         if ((::GetKeyState(VK_CONTROL) & 0x8000) && (::GetKeyState(VK_SHIFT) & 0x8000))
         {
-            ::AppendMenuW(hPopup, MF_SEPARATOR, 0, NULL);
-            ::AppendMenuW(hPopup, MF_STRING, IDM_DUMP, L"Dump configuration");
+            ::AppendMenuW(hPopupMenu, MF_SEPARATOR, 0, NULL);
+            ::AppendMenuW(hPopupMenu, MF_STRING, IDM_DUMP, L"Dump configuration");
         }
 
-        const auto Command = (int) ::TrackPopupMenu(hPopup, TPM_RETURNCMD | TPM_RIGHTBUTTON | TPM_NONOTIFY, pt.x, pt.y, 0, m_hWnd, nullptr); 
+        const auto Command = (int) ::TrackPopupMenu(hPopupMenu, TPM_RETURNCMD | TPM_RIGHTBUTTON | TPM_NONOTIFY, pt.x, pt.y, 0, m_hWnd, nullptr); 
 
         ::PostMessageW(m_hWnd, WM_NULL, 0, 0);
 
