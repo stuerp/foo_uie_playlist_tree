@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsUIElement.cpp (2026.08.14) P. Stuer **/
+/** $VER: PlaylistsUIElement.cpp (2026.08.15) P. Stuer **/
 
 #include "pch.h"
 
@@ -121,6 +121,9 @@ LRESULT playlist_uielement_t::OnCreate(CREATESTRUCTW * cs) noexcept
 
     GetColors();
     GetFonts();
+
+    OnColorsChanged();
+    OnFontsChanged();
 
     _DarkMode.AddControls(m_hWnd);
 
@@ -685,7 +688,7 @@ LRESULT playlist_uielement_t::OnRightClick(NMHDR * nmhd) noexcept
         const bool IsPlaylist = (Index != SIZE_MAX);
 
         // Disable the Lock menu when we're not over a playlist.
-        ::EnableMenuItem(hPopup, 4, (UINT) (MF_BYPOSITION | (IsPlaylist ? MF_ENABLED : MF_DISABLED | MF_GRAYED)));
+        ::EnableMenuItem(hPopup, 5, (UINT) (MF_BYPOSITION | (IsPlaylist ? MF_ENABLED : MF_DISABLED | MF_GRAYED)));
 
         ::EnableMenuItem(hPopup, IDM_REMOVE, !IsProhibited(Node, playlist_lock::filter_remove_playlist) ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
 
@@ -1770,6 +1773,12 @@ void playlist_uielement_t::OnFontsChanged() noexcept
 
     if (_EditBox.IsWindow())
         _EditBox.SetFont(_Theme.GetPlaylistFont());
+
+    RECT rc;
+
+    ::GetClientRect(m_hWnd, &rc);
+
+    OnSize(SIZE_RESTORED, { rc.right, rc.bottom });
 
     ::RedrawWindow(m_hWnd, nullptr, NULL, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN);
 }

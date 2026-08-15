@@ -82,6 +82,9 @@ To create the component first build the x86, x64 and/or ARMEC64 configuration.
 
 ## Change Log
 
+v1.5.1.0, 2026-08-15
+- Fixed: Calculation of display dimensions during startup. (Regression)
+
 v1.5.0.0, 2026-08-14
 
 - Improved: A couple of usability tweaks

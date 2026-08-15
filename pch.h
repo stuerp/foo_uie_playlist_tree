@@ -1,11 +1,11 @@
 
-/** $VER: pch.h (2026.08.10) P. Stuer **/
+/** $VER: pch.h (2026.08.15) P. Stuer **/
 
 #pragma once
 
 #include <CppCoreCheck/Warnings.h>
 
-#pragma warning(disable: 4100 4625 4626 4710 4711 4738 5039 5045 ALL_CPPCORECHECK_WARNINGS)
+#pragma warning(disable: 4100 4625 4626 4710 4711 4738 4746 5039 5045 ALL_CPPCORECHECK_WARNINGS)
 
 #include <SDKDDKVer.h>
 
