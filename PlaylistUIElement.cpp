@@ -1530,7 +1530,7 @@ void playlist_uielement_t::OnFolderCreated(const GUID & id, const std::string & 
         _FolderManager->GetFolderCount(Count);
 
         if (Count == 1)
-            ::InvalidateRect(_TreeView.Get(), NULL, TRUE);
+            ::InvalidateRect(_TreeView.Get(), nullptr, TRUE);
     }
 
     _TreeView.EditSelectedItem();
@@ -1566,7 +1566,7 @@ void playlist_uielement_t::OnFolderRemoved(const GUID & id) noexcept
         _FolderManager->GetFolderCount(Count);
 
         if (Count == 0)
-            ::InvalidateRect(_TreeView.Get(), NULL, TRUE);
+            ::InvalidateRect(_TreeView.Get(), nullptr, TRUE);
     }
 
     if (_IgnoreNotifications)

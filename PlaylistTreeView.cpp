@@ -181,21 +181,21 @@ node_t * playlist_tree_view_t::GetSelectedItem() const noexcept
 /// <summary>
 /// Refreshes the specified item.
 /// </summary>
-bool playlist_tree_view_t::RefreshItem(const GUID & id) const noexcept
+HTREEITEM playlist_tree_view_t::RefreshItem(const GUID & id) const noexcept
 {
     HTREEITEM hItem = FindItem(id);
 
     if (hItem == NULL)
-        return false;
-
-    __super::RefreshItem(hItem);
+        return hItem;
 
     auto Node = (node_t *) GetData(hItem);
 
     if (Node != nullptr)
         Node->FormattedText.clear();
 
-    return true;
+    __super::RefreshItem(hItem);
+
+    return hItem;
 }
 
 /// <summary>
