@@ -82,7 +82,8 @@ To create the component first build the x86, x64 and/or ARMEC64 configuration.
 
 ## Change Log
 
-v1.5.2.0, 2026-xx-xx
+v1.5.2.0-alpha1, 2026-09-xx
+- Improved: Formatted nodes names are now cached which should improve startup and overall display performance when using a lot of playlists.
 - Fixed: The name of the owner of a playlist lock was not added to the Lock menu. (1.5.0.0 regression)
 
 ## Acknowledgements / Credits

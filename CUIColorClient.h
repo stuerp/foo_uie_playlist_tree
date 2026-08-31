@@ -25,7 +25,7 @@ public:
     cui_color_client_t(cui_color_client_t &&) = delete;
     cui_color_client_t & operator=(cui_color_client_t &&) = delete;
 
-    virtual ~cui_color_client_t() { }
+    virtual ~cui_color_client_t() noexcept { }
 
     #pragma region cui::colours::client
 

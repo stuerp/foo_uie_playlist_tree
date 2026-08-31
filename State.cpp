@@ -1,5 +1,5 @@
 
-/** $VER: State.cpp (2026.08.14) P. Stuer **/
+/** $VER: State.cpp (2026.08.31) P. Stuer **/
 
 #include "pch.h"
 
@@ -157,5 +157,3 @@ json state_t::ToJSON() const noexcept
 
     return Object;
 }
-
-state_t _State;

@@ -391,6 +391,7 @@
     <ClInclude Include="PlaylistLockManager.h" />
     <ClInclude Include="PlaylistTreeView.h" />
     <ClInclude Include="Preferences.h" />
+    <ClInclude Include="SharedState.h" />
     <ClInclude Include="StringEnumerator.h" />
     <ClInclude Include="Theme.h" />
     <ClInclude Include="TitleFormat.h" />

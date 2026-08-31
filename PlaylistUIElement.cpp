@@ -8,6 +8,7 @@
 #include "ImageList.h"
 #include "TitleFormat.h"
 #include "Node.h"
+#include "SharedState.h"
 #include "State.h"
 #include "Theme.h"
 #include "Toggle.h"
@@ -16,6 +17,8 @@
 #include <unordered_map>
 
 #pragma hdrstop
+
+static int FindMenuItemPosition(HMENU hMenu, const std::wstring & menuName) noexcept;
 
 /// <summary>
 /// Initializes a new instance. Note to self: Don't put anything expensive here. Brain-dead CUI constructs and destructs UI elements at will.
@@ -206,7 +209,7 @@ void playlist_uielement_t::OnSize(UINT type, CSize size) noexcept
 /// </summary>
 void playlist_uielement_t::OnPaint(CDCHandle) noexcept
 {
-    Log.AtDebug().Write(STR_COMPONENT_BASENAME "::" __FUNCTION__ );
+//  Log.AtDebug().Write(STR_COMPONENT_BASENAME "::" __FUNCTION__ );
 
     PAINTSTRUCT ps;
 
@@ -381,9 +384,16 @@ void playlist_uielement_t::OnCommand(UINT notifyCode, int id, CWindow wnd) noexc
         // Handles the "Preferences" command.
         case IDM_PREFERENCES:
         {
-            static_api_ptr_t<ui_control> UIControl;
+            shared_state_t::Instance().Put(&_State);
 
-            UIControl->show_preferences(GUID_PREFERENCES);
+            try
+            {
+                static_api_ptr_t<ui_control>()->show_preferences(GUID_PREFERENCES);
+            }
+            catch (...)
+            {
+                shared_state_t::Instance().Clear();
+            }
 
             return;
         }
@@ -538,7 +548,7 @@ HBRUSH playlist_uielement_t::OnCtlColorEdit(CDCHandle dc, CEdit) const noexcept
 }
 
 /// <summary>
-/// Handles the EN_CHANGE notification.
+/// Handles the EN_CHANGE notification from the search box.
 /// </summary>
 void playlist_uielement_t::OnEditChange(UINT notifyCode, int id, CWindow wnd)
 {
@@ -547,7 +557,10 @@ void playlist_uielement_t::OnEditChange(UINT notifyCode, int id, CWindow wnd)
     if (_EditBox.GetWindowTextW(Text, _countof(Text)) == 0)
         return;
 
-    _TreeView.SelectItem(msc::WideToUTF8(Text));
+    const auto hSelectedItem = _TreeView.SelectItem(msc::WideToUTF8(Text));
+
+    if (hSelectedItem == NULL)
+        return;
 
     _StringEnumerator->FilterItems(Text);
 
@@ -647,32 +660,6 @@ LRESULT playlist_uielement_t::OnCustomDraw(NMHDR * nmhd) noexcept
     }
 }
 
-int FindMenuItemPosition(HMENU hMenu, const std::wstring & menuName)
-{
-    const int Count = ::GetMenuItemCount(hMenu);
-
-    for (int i = 0; i < Count; ++i)
-    {
-        wchar_t Name[64];
-
-        MENUITEMINFOW mii =
-        {
-            .cbSize     = sizeof(mii),
-            .fMask      = MIIM_STRING,
-            .dwTypeData = Name,
-            .cch        = _countof(Name),
-        };
-
-        if (!::GetMenuItemInfoW(hMenu, (UINT) i, TRUE, &mii))
-            return -1;
-
-        if (::wcscmp(Name, menuName.c_str()) == 0)
-            return i;
-    }
-
-    return -1;
-}
-
 /// <summary>
 /// Handles the NM_RCLICK notification.
 /// </summary>
@@ -716,7 +703,7 @@ LRESULT playlist_uielement_t::OnRightClick(NMHDR * nmhd) noexcept
         // Disable the Lock menu when we're not over a playlist.
         const int MenuPosition = FindMenuItemPosition(hPopupMenu, L"Lock");
 
-        ::EnableMenuItem(hPopupMenu, MenuPosition, (UINT) (MF_BYPOSITION | (IsPlaylist ? MF_ENABLED : MF_DISABLED | MF_GRAYED)));
+        ::EnableMenuItem(hPopupMenu, (UINT) MenuPosition, (UINT) (MF_BYPOSITION | (IsPlaylist ? MF_ENABLED : MF_DISABLED | MF_GRAYED)));
 
         ::EnableMenuItem(hPopupMenu, IDM_REMOVE, !IsProhibited(Node, playlist_lock::filter_remove_playlist) ? MF_ENABLED : MF_DISABLED | MF_GRAYED);
 
@@ -918,14 +905,19 @@ LRESULT playlist_uielement_t::OnGetDisplayInfo(NMHDR * nmhd) noexcept
 
     if (tvi.mask & TVIF_TEXT)
     {
-        pfc::string Text;
+        if (Node->FormattedText.empty())
+        {
+            pfc::string Text;
 
-        HRESULT hr = title_formatter_t::Evaluate(_State._TextFormat, &_TreeView, Node->Id, Text);
+            HRESULT hr = title_formatter_t::Evaluate(_State._TextFormat, &_TreeView, Node->Id, Text);
 
-        if (!SUCCEEDED(hr))
-            return FALSE;
+            if (!SUCCEEDED(hr))
+                return FALSE;
 
-        ::wcscpy_s(tvi.pszText, (size_t) tvi.cchTextMax, msc::UTF8ToWide(Text.c_str()).c_str());
+            Node->FormattedText = msc::UTF8ToWide(Text.c_str());
+        }
+
+        ::wcscpy_s(tvi.pszText, (size_t) tvi.cchTextMax, Node->FormattedText.c_str());
     }
 
     if (tvi.mask & (TVIF_IMAGE | TVIF_SELECTEDIMAGE))
@@ -1549,10 +1541,13 @@ void playlist_uielement_t::OnFolderCreated(const GUID & id, const std::string & 
 /// </summary>
 void playlist_uielement_t::OnFolderRemoving(const GUID & id) noexcept
 {
+    if (_IgnoreNotifications || (id == GUID_NULL))
+        return;
+
     Log.AtDebug().Write(STR_COMPONENT_BASENAME " is removing folder %s from the tree.", msc::GUIDToUTF8(id).c_str());
 
-    if (_IgnoreNotifications)
-        return;
+    if (!_TreeView.RemoveItem(id))
+        Log.AtError().Write(STR_COMPONENT_BASENAME " failed to remove folder item %s.", msc::GUIDToUTF8(id).c_str());
 };
 
 /// <summary>
@@ -1584,6 +1579,18 @@ void playlist_uielement_t::OnFolderRemoved(const GUID & id) noexcept
 void playlist_uielement_t::OnFolderRenamed(const GUID & id, const std::string & oldName, const std::string & newName) noexcept
 {
     Log.AtDebug().Write(STR_COMPONENT_BASENAME " is renamed folder %s from \"%s\" to \"%s\".", msc::GUIDToUTF8(id).c_str(), oldName.c_str(), newName.c_str());
+
+    const auto hItem = _TreeView.FindItem(id);
+
+    if (hItem == NULL)
+        return;
+
+    const auto Node = (node_t *) _TreeView.GetData(hItem);
+
+    if (Node == nullptr)
+        return;
+
+    Node->FormattedText.clear();
 
     ResetAutoComplete();
 
@@ -2155,6 +2162,35 @@ void playlist_uielement_t::ResetAutoComplete() noexcept
 
     if (_ACDropDown)
         _ACDropDown->ResetEnumerator();
+}
+
+/// <summary>
+/// Finds the position of a menu item in a menu.
+/// </summary>
+static int FindMenuItemPosition(HMENU hMenu, const std::wstring & menuName) noexcept
+{
+    const int Count = ::GetMenuItemCount(hMenu);
+
+    for (int i = 0; i < Count; ++i)
+    {
+        wchar_t Name[64];
+
+        MENUITEMINFOW mii =
+        {
+            .cbSize     = sizeof(mii),
+            .fMask      = MIIM_STRING,
+            .dwTypeData = Name,
+            .cch        = _countof(Name),
+        };
+
+        if (!::GetMenuItemInfoW(hMenu, (UINT) i, TRUE, &mii))
+            return -1;
+
+        if (::wcscmp(Name, menuName.c_str()) == 0)
+            return i;
+    }
+
+    return -1;
 }
 
 tracker_t<playlist_uielement_t> _UIElementTracker;

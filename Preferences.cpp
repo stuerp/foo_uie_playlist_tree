@@ -1,5 +1,5 @@
 
-/** $VER: Preferences.cpp (2026.08.14) P. Stuer **/
+/** $VER: Preferences.cpp (2026.08.31) P. Stuer **/
 
 #include "pch.h"
 
@@ -17,6 +17,7 @@
 #include "Tracker.h"
 #include "Resources.h"
 #include "Preferences.h"
+#include "SharedState.h"
 #include "State.h"
 #include "IconList.h"
 #include "ImageList.h"
@@ -31,10 +32,8 @@
 class preferences_t : public CDialogImpl<preferences_t>, public preferences_page_instance, public ui_config_callback
 {
 public:
-    preferences_t(preferences_page_callback::ptr callback) : m_bMsgHandled(FALSE), _Callback(callback)
+    preferences_t(preferences_page_callback::ptr callback) : m_bMsgHandled(FALSE), _Callback(callback), _State()
     {
-        _Theme.Initialize(m_hWnd, true);
-
         icon_list_t::Register(THIS_HINSTANCE);
     }
 
@@ -75,7 +74,7 @@ public:
     /// </summary>
     virtual void apply() final
     {
-        _State = _NewState;
+        *_State = _NewState;
 
         auto CurrentElement = _UIElementTracker.GetCurrent();
 
@@ -130,7 +129,7 @@ private:
     /// </summary>
     BOOL OnInitDialog(CWindow, LPARAM) noexcept
     {
-        const std::unordered_map<int, const char *> Tips =
+        static const std::unordered_map<int, const char *> Tips =
         {
             { IDC_TEXT_FORMAT, "Determines how the text of a tree node gets formatted using Title Formatting." },
             { IDC_TOOL_TIP, "Specifies Title Formatting for the tooltip displayed in the tree view." },
@@ -151,6 +150,17 @@ private:
             { IDC_LOG_LEVEL, "Sets the verbosity of the log information that gets written to the console." },
         };
 
+        _State = shared_state_t::Instance().Get();
+
+        if (_State == nullptr)
+        {
+            Log.AtError().Write(STR_COMPONENT_NAME " is not able to show preferences: Protocol error.");
+
+            return TRUE;
+        }
+
+        _Theme.Initialize(m_hWnd, true);
+
         // Create the tooltip control.
         _ToolTipControl.Create(m_hWnd, nullptr, nullptr, TTS_ALWAYSTIP | TTS_NOANIMATE);
 
@@ -166,7 +176,7 @@ private:
 
         _DarkMode.AddDialogWithControls(*this);
 
-        _NewState = _State;
+        _NewState = *_State;
 
         InitializeControls();
 
@@ -503,13 +513,13 @@ private:
 
         // Text Format
         {
-            if (_NewState._TextFormat != _State._TextFormat)
+            if (_NewState._TextFormat != _State->_TextFormat)
                 return true;
         }
 
         // Text Format
         {
-            if (_NewState._ToolTipFormat != _State._ToolTipFormat)
+            if (_NewState._ToolTipFormat != _State->_ToolTipFormat)
                 return true;
         }
 
@@ -517,34 +527,34 @@ private:
 
         // File Path and Icon Index
         {
-            if (Image._FilePath != _State._Images[_SelectedImage]._FilePath)
+            if (Image._FilePath != _State->_Images[_SelectedImage]._FilePath)
                 return true;
 
-            if (Image._IconIndex != _State._Images[_SelectedImage]._IconIndex)
+            if (Image._IconIndex != _State->_Images[_SelectedImage]._IconIndex)
                 return true;
         }
 
         // Image Size
         {
-            if (_NewState._ImageSize != _State._ImageSize)
+            if (_NewState._ImageSize != _State->_ImageSize)
                 return true;
         }
 
         // Quick Search
         {
-            if (_NewState._UseQuickSearch != _State._UseQuickSearch)
+            if (_NewState._UseQuickSearch != _State->_UseQuickSearch)
                 return true;
         }
 
         // Horizontal scrollbar
         {
-            if (_NewState._UseHorizontalScrollbar != _State._UseHorizontalScrollbar)
+            if (_NewState._UseHorizontalScrollbar != _State->_UseHorizontalScrollbar)
                 return true;
         }
 
         // Expand drop target
         {
-            if (_NewState._ExpandDropTarget != _State._ExpandDropTarget)
+            if (_NewState._ExpandDropTarget != _State->_ExpandDropTarget)
                 return true;
         }
 
@@ -631,6 +641,7 @@ private:
     size_t _SelectedImage;
     bool _IgnoreNotifications;
 
+    state_t * _State;
     state_t _NewState;
 
     std::string _ImageListFilePath; // The file path of the last loaded image list.
@@ -638,6 +649,7 @@ private:
 
     fb2k::CDarkModeHooks _DarkMode;
     CToolTipCtrl _ToolTipControl;
+
 };
 
 #pragma region PreferencesPage

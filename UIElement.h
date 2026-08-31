@@ -1,10 +1,11 @@
 
-/** $VER: UIElement.h (2026.08.10) P. Stuer **/
+/** $VER: UIElement.h (2026.08.31) P. Stuer **/
 
 #pragma once
 
 #include "pch.h"
 
+#include "State.h"
 #include "Resources.h"
 
 #include <sdk/coreDarkMode.h>
@@ -48,5 +49,6 @@ protected:
     virtual void GetFonts() noexcept = 0;
 
 protected:
+    state_t _State;
     fb2k::CCoreDarkModeHooks _DarkMode;
 };

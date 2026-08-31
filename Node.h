@@ -1,5 +1,5 @@
 
-/** $VER: Node.h (2026.08.13) P. Stuer **/
+/** $VER: Node.h (2026.08.31) P. Stuer **/
 
 #pragma once
 
@@ -20,4 +20,6 @@ struct node_t
     GUID Id;
     bool IsFolder;
     bool IsFrozen;
+
+    std::wstring FormattedText;
 };

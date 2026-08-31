@@ -330,7 +330,6 @@ public:
         ::SetWindowPos(_TreeView.Get(), NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
     }
 */
-
     /// <summary>
     /// Enables or disables expanding the drop target after a drop.
     /// </summary>

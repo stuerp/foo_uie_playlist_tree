@@ -1,5 +1,5 @@
 
-/** $VER: PlaylistsTreeView.cpp (2026.08.04) P. Stuer **/
+/** $VER: PlaylistsTreeView.cpp (2026.08.31) P. Stuer **/
 
 #include "pch.h"
 
@@ -104,9 +104,9 @@ bool playlist_tree_view_t::SelectItem(const GUID & id) const noexcept
 /// <summary>
 /// Selects the item with the specified name.
 /// </summary>
-bool playlist_tree_view_t::SelectItem(const std::string & name) const noexcept
+HTREEITEM playlist_tree_view_t::SelectItem(const std::string & name) const noexcept
 {
-    bool IsSelected = false;
+    HTREEITEM hSelectedItem = NULL;
 
     __super::Walk([&](HTREEITEM hItem, void * context) -> bool
     {
@@ -114,7 +114,8 @@ bool playlist_tree_view_t::SelectItem(const std::string & name) const noexcept
 
         if ((Node != nullptr) && (Node->Name == name))
         {
-            IsSelected = SelectItem(hItem);
+            if (SelectItem(hItem))
+                hSelectedItem = hItem;
 
             return false;
         }
@@ -122,7 +123,7 @@ bool playlist_tree_view_t::SelectItem(const std::string & name) const noexcept
         return true; // Continue walking.
     });
 
-    return IsSelected;
+    return hSelectedItem;
 }
 
 /// <summary>
@@ -188,6 +189,11 @@ bool playlist_tree_view_t::RefreshItem(const GUID & id) const noexcept
         return false;
 
     __super::RefreshItem(hItem);
+
+    auto Node = (node_t *) GetData(hItem);
+
+    if (Node != nullptr)
+        Node->FormattedText.clear();
 
     return true;
 }

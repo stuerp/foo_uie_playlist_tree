@@ -18,7 +18,6 @@
 namespace fs = std::filesystem;
 
 #include "CriticalSection.h"
-#include "Direct2D.h"
 #include "Encoding.h"
 #include "Enum.h"
 #include "Exception.h"

@@ -21,8 +21,6 @@ namespace
 dui_element_t::dui_element_t(ui_element_config::ptr data, ui_element_instance_callback::ptr callback) : m_callback(callback)
 {
     set_configuration(data);
-
-    _Theme.Initialize(m_hWnd, true);
 }
 
 #pragma region ui_element_instance interface
@@ -78,6 +76,8 @@ void dui_element_t::initialize_window(HWND hWndParent) noexcept
     constexpr DWORD ExStyle = 0;
 
     this->Create(hWndParent, nullptr, nullptr, Style, ExStyle);
+
+    _Theme.Initialize(m_hWnd, true);
 }
 
 /// <summary>
